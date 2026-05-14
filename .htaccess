@@ -1,0 +1,6 @@
+# Optional: block direct download of SQL backups if placed under web root
+<FilesMatch "\.(sql)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>
