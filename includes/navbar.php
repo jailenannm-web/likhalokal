@@ -6,11 +6,14 @@ $active = $activeNav ?? '';
 $isLoggedIn = is_logged_in();
 $role = current_user_role();
 ?>
-<nav class="navbar navbar-expand-lg navbar-dark lk-navbar sticky-top">
+<nav class="navbar navbar-expand-lg navbar-dark lk-navbar fixed-top">
     <div class="container">
         <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="<?= e(BASE_URL) ?>index.php">
-            <i class="bi bi-binoculars fs-4 text-warning"></i>
-            <span class="brand-text">LikhaLokal <small class="d-none d-md-inline text-white-50 fw-normal">Tuklas, Kultura, Kabuhayan</small></span>
+            <i class="bi bi-binoculars fs-3 text-white"></i>
+            <div class="d-flex flex-column lh-1">
+                <span class="text-warning fw-bold" style="font-size: 1.1rem;">LikhaLokal:</span>
+                <span class="text-white fw-bold" style="font-size: 0.8rem;">Tuklas, Kultura, Kabuhayan</span>
+            </div>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#lkNav" aria-controls="lkNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -25,7 +28,6 @@ $role = current_user_role();
             </ul>
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
                 <li class="nav-item"><a class="nav-link" href="<?= e(BASE_URL) ?>products.php" title="Search products"><i class="bi bi-search"></i></a></li>
-                <li class="nav-item"><span class="nav-link disabled opacity-50" title="Cart (placeholder)"><i class="bi bi-cart3"></i></span></li>
                 <?php if ($isLoggedIn): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -44,8 +46,8 @@ $role = current_user_role();
                         </ul>
                     </li>
                 <?php else: ?>
-                    <li class="nav-item"><a class="btn btn-outline-light btn-sm ms-lg-2" href="<?= e(BASE_URL) ?>login.php">Login</a></li>
-                    <li class="nav-item"><a class="btn btn-warning btn-sm text-dark ms-lg-2 mt-2 mt-lg-0" href="<?= e(BASE_URL) ?>register.php">Register</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="<?= e(BASE_URL) ?>login.php" title="Login"><i class="bi bi-box-arrow-in-right fs-5"></i></a></li>
+                    <li class="nav-item"><a class="nav-link text-warning" href="<?= e(BASE_URL) ?>register.php" title="Register"><i class="bi bi-person-plus fs-5"></i></a></li>
                 <?php endif; ?>
             </ul>
         </div>

@@ -2,25 +2,24 @@
 
 declare(strict_types=1);
 ?>
-<footer class="lk-footer text-white mt-5">
-    <div class="container py-4 text-center">
-        <div class="d-flex justify-content-center gap-3 mb-3 fs-4">
-            <a href="#" class="text-white" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
-            <a href="#" class="text-white" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
-            <a href="#" class="text-white" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
-            <a href="#" class="text-white" aria-label="Phone"><i class="bi bi-telephone"></i></a>
-            <a href="#" class="text-white" aria-label="Email"><i class="bi bi-envelope"></i></a>
+<footer class="lk-footer text-white py-5 mt-5" style="background: var(--lk-navy);">
+    <div class="container text-center">
+        <h3 class="fw-bold mb-4" style="font-family: Impact, sans-serif; letter-spacing: 1px; color: var(--lk-orange);">LIKHALOKAL</h3>
+        <div class="d-flex justify-content-center gap-4 mb-4 fs-4">
+            <a href="#" class="text-white text-decoration-none border rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width: 45px; height: 45px; transition: all 0.3s;" onmouseover="this.style.background='#fff'; this.style.color='var(--lk-navy)';" onmouseout="this.style.background='transparent'; this.style.color='#fff';" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#" class="text-white text-decoration-none border rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width: 45px; height: 45px; transition: all 0.3s;" onmouseover="this.style.background='#fff'; this.style.color='var(--lk-navy)';" onmouseout="this.style.background='transparent'; this.style.color='#fff';" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" class="text-white text-decoration-none border rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width: 45px; height: 45px; transition: all 0.3s;" onmouseover="this.style.background='#fff'; this.style.color='var(--lk-navy)';" onmouseout="this.style.background='transparent'; this.style.color='#fff';" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="#" class="text-white text-decoration-none border rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width: 45px; height: 45px; transition: all 0.3s;" onmouseover="this.style.background='#fff'; this.style.color='var(--lk-navy)';" onmouseout="this.style.background='transparent'; this.style.color='#fff';" aria-label="Phone"><i class="fa-solid fa-phone"></i></a>
+            <a href="#" class="text-white text-decoration-none border rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width: 45px; height: 45px; transition: all 0.3s;" onmouseover="this.style.background='#fff'; this.style.color='var(--lk-navy)';" onmouseout="this.style.background='transparent'; this.style.color='#fff';" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
         </div>
-        <div class="small mb-2">
-            <a class="text-white-50 text-decoration-none me-2" href="<?= e(BASE_URL) ?>index.php">Home</a>
-            <a class="text-white-50 text-decoration-none me-2" href="<?= e(BASE_URL) ?>tourism.php">Tourism</a>
-            <a class="text-white-50 text-decoration-none me-2" href="<?= e(BASE_URL) ?>products.php">Products</a>
-            <a class="text-white-50 text-decoration-none me-2" href="<?= e(BASE_URL) ?>events.php">Events</a>
-            <a class="text-white-50 text-decoration-none me-2" href="<?= e(BASE_URL) ?>cultural-info.php">Culture</a>
-            <a class="text-white-50 text-decoration-none me-2" href="<?= e(BASE_URL) ?>about.php">About</a>
-            <a class="text-white-50 text-decoration-none" href="<?= e(BASE_URL) ?>about.php#team">Our Team</a>
+        <div class="mb-4">
+            <a class="text-white text-decoration-none fw-bold me-3 text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;" href="<?= e(BASE_URL) ?>index.php">Home</a>
+            <a class="text-white text-decoration-none fw-bold me-3 text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;" href="<?= e(BASE_URL) ?>tourism.php">Tourism</a>
+            <a class="text-white text-decoration-none fw-bold me-3 text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;" href="<?= e(BASE_URL) ?>products.php">Products</a>
+            <a class="text-white text-decoration-none fw-bold me-3 text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;" href="<?= e(BASE_URL) ?>events.php">Events</a>
+            <a class="text-white text-decoration-none fw-bold text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;" href="<?= e(BASE_URL) ?>about.php">About</a>
         </div>
-        <p class="small text-white-50 mb-0">Copyright © 2025: Designed by Talisay-Vinzons Team, BSIT 2B - AY 25-26</p>
+        <p class="small text-white-50 mb-0 fw-bold">Designed by Talisay-Vinzons Team</p>
     </div>
 </footer>
 <div class="modal fade" id="guestAuthModal" tabindex="-1" aria-hidden="true">
@@ -40,7 +39,7 @@ declare(strict_types=1);
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="<?= e(ASSET_URL) ?>js/app.js"></script>
+<script src="<?= e(ASSET_URL) ?>js/app.js?v=<?= time() ?>"></script>
 <?php if (!empty($extraScripts)): ?>
     <?= $extraScripts ?>
 <?php endif; ?>

@@ -29,12 +29,14 @@
       bubble.className = "p-3 shadow-sm " + (mine ? "chat-bubble-out" : "chat-bubble-in");
       bubble.style.maxWidth = "78%";
       bubble.innerHTML =
-        "<div>" +
+        "<div style='font-family: Poppins, sans-serif; font-size: 0.95rem;'>" +
         escapeHtml(m.message_content).replace(/\n/g, "<br>") +
-        '</div><div class="small mt-1 ' +
+        '</div><div class="small mt-1 d-flex justify-content-between align-items-center ' +
         (mine ? "text-white-50" : "text-muted") +
-        '">' +
+        '"><span style="font-size: 0.75rem;">' +
         escapeHtml(m.created_at) +
+        "</span>" +
+        (mine ? '<i class="fa-solid fa-check-double ms-3 text-white" style="font-size: 0.8rem;" title="Read"></i>' : "") +
         "</div>";
       wrap.appendChild(bubble);
       listEl.appendChild(wrap);

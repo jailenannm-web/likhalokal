@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-$pageTitle = 'Vendor';
+$pageTitle = 'View Shop';
 $activeNav = 'products';
 require_once dirname(__DIR__) . '/bootstrap.php';
 
@@ -16,9 +16,21 @@ if (!$b || $b['status'] !== 'approved') {
     exit;
 }
 
-$pstmt = db()->prepare('SELECT * FROM products WHERE business_id = ? ORDER BY is_featured DESC, product_name ASC');
+$pstmt = db()->prepare('SELECT * FROM products WHERE business_id = ? ORDER BY category, is_featured DESC, product_name ASC');
 $pstmt->execute([$id]);
 $products = $pstmt->fetchAll();
+
+// Group products for this shop
+$groupedProducts = [];
+foreach ($products as $p) {
+    $groupedProducts[$p['category']][] = $p;
+}
+
+$categoryTitles = [
+    'local_delicacy' => 'LOCAL DELICACIES',
+    'handicraft' => 'HANDICRAFTS',
+    'fresh_produce' => 'FRESH PRODUCE'
+];
 
 $rstmt = db()->prepare(
     "SELECT r.*, u.full_name AS reviewer_name FROM reviews r JOIN users u ON u.id = r.user_id WHERE r.business_id = ? AND r.status = 'approved' ORDER BY r.created_at DESC LIMIT 20"
@@ -51,103 +63,176 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['review_submit'])) {
     redirect(BASE_URL . 'vendor-profile.php?id=' . $id);
 }
 
-$pageTitle = $b['business_name'];
 require BASE_PATH . '/includes/header.php';
-require BASE_PATH . '/includes/navbar.php';
 
 if ($m = flash('success')) {
-    echo '<div class="container mt-3"><div class="alert alert-success">' . e($m) . '</div></div>';
+    echo '<div class="container mt-3"><div class="alert alert-success shadow-sm fw-bold"><i class="fa-solid fa-circle-check me-2"></i>' . e($m) . '</div></div>';
 }
 if ($m = flash('error')) {
-    echo '<div class="container mt-3"><div class="alert alert-danger">' . e($m) . '</div></div>';
+    echo '<div class="container mt-3"><div class="alert alert-danger shadow-sm fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>' . e($m) . '</div></div>';
 }
 
-$payments = json_decode((string) ($b['accepted_payments'] ?? '[]'), true) ?: [];
+$cover = $b['cover_image'] ? asset_url($b['cover_image']) : 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1600&q=80';
+$logo = $b['logo'] ? asset_url($b['logo']) : 'https://ui-avatars.com/api/?name=' . urlencode($b['business_name']);
 ?>
-<section class="py-4 bg-dark text-white">
-    <div class="container">
-        <div class="d-flex align-items-center gap-2 mb-2">
-            <a href="<?= e(BASE_URL) ?>products.php" class="text-white-50 text-decoration-none"><i class="bi bi-arrow-left"></i> Back</a>
-        </div>
-        <h1 class="h3 mb-0"><?= e($b['business_name']) ?></h1>
-        <p class="mb-0 small text-white-50"><?= e($b['business_type']) ?> · <?= e($b['barangay'] ?? '') ?></p>
+
+<!-- Custom Topbar for View Shop -->
+<div style="background: var(--lk-orange); height: 60px; display: flex; align-items: center; padding: 0 1rem; color: white;">
+    <a href="<?= e(BASE_URL) ?>products.php" class="text-white text-decoration-none me-3"><i class="fa-solid fa-arrow-left fs-4"></i></a>
+    <span class="prototype-title text-white m-0" style="font-size: 1.5rem; letter-spacing: 1px;">VIEW SHOP</span>
+    <div class="ms-auto">
+        <i class="fa-solid fa-magnifying-glass fs-5"></i>
     </div>
-</section>
+</div>
 
-<div class="container py-4">
-    <div class="row g-4">
-        <div class="col-lg-5">
-            <?php $cover = $b['cover_image'] ? asset_url($b['cover_image']) : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80'; ?>
-            <div class="ratio ratio-4x3 rounded overflow-hidden shadow mb-3">
-                <img src="<?= e($cover) ?>" class="object-fit-cover" alt="">
+<!-- Immersive Header Area -->
+<div class="position-relative" style="height: 300px; background: url('<?= e($cover) ?>') center/cover no-repeat;">
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: rgba(0,0,0,0.3);"></div>
+    
+    <div class="container position-relative h-100 d-flex align-items-center justify-content-center">
+        <!-- Floating Profile Box -->
+        <div class="glass-panel d-flex align-items-center gap-4 p-4 shadow-lg w-100" style="max-width: 800px; background: rgba(255,255,255,0.85); backdrop-filter: blur(5px); border-radius: 12px; transform: translateY(50px);">
+            <div class="bg-navy rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 100px; height: 100px; background: var(--lk-navy);">
+                <?php if($b['logo']): ?>
+                    <img src="<?= e($logo) ?>" class="w-100 h-100 rounded-circle object-fit-cover" alt="">
+                <?php else: ?>
+                    <i class="fa-solid fa-user text-white fs-1"></i>
+                <?php endif; ?>
             </div>
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <?php $logo = $b['logo'] ? asset_url($b['logo']) : 'https://ui-avatars.com/api/?name=' . urlencode($b['business_name']); ?>
-                <img src="<?= e($logo) ?>" width="72" height="72" class="rounded-circle border" alt="">
-                <div>
-                    <div class="fw-bold"><i class="bi bi-star-fill text-warning"></i> <?= e((string) $avg) ?> rating</div>
-                    <div class="small text-muted"><?= e($b['address'] ?? '') ?></div>
+            
+            <div class="flex-grow-1 text-dark">
+                <h2 class="fw-bold mb-1" style="font-family: Impact, sans-serif; letter-spacing: 1px;"><?= e($b['business_name']) ?></h2>
+                <div class="d-flex align-items-center gap-3 mb-1 fw-bold" style="font-size: 0.9rem;">
+                    <span class="text-dark"><i class="fa-solid fa-star"></i> <?= e((string) $avg) ?></span>
                 </div>
+                <div class="small fw-bold text-dark mb-1"><i class="fa-solid fa-location-dot me-1"></i> <?= e($b['address'] ?? 'Vinzons') ?></div>
+                <div class="small fw-bold text-dark"><i class="fa-solid fa-phone me-1"></i> <?= e($b['contact_number'] ?? 'N/A') ?></div>
             </div>
-            <p><?= nl2br(e((string) $b['description'])) ?></p>
-            <p class="mb-1"><i class="bi bi-telephone"></i> <?= e($b['contact_number'] ?? '') ?></p>
-            <p class="mb-1"><i class="bi bi-clock"></i> <?= e($b['operating_hours'] ?? '') ?></p>
-            <p class="mb-2"><strong>Payments:</strong> <?= e(implode(', ', $payments)) ?></p>
-            <?php if (is_logged_in() && current_user_role() === 'local_user'): ?>
-                <a class="btn btn-lk-orange" href="<?= e(BASE_URL) ?>message.php?business_id=<?= $id ?>"><i class="bi bi-chat-dots"></i> Chat seller</a>
-            <?php else: ?>
-                <a class="btn btn-lk-orange" href="#" data-require-auth><i class="bi bi-chat-dots"></i> Chat seller</a>
-            <?php endif; ?>
-            <div id="bizMap" class="mt-3 rounded" style="height:220px;background:#e9ecef;"></div>
-        </div>
-        <div class="col-lg-7">
-            <h2 class="h5 mb-3">Products &amp; services</h2>
-            <div class="row g-3">
-                <?php foreach ($products as $p): ?>
-                    <div class="col-md-6">
-                        <div class="card card-lk h-100">
-                            <?php $pi = $p['image'] ? asset_url($p['image']) : 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80'; ?>
-                            <img src="<?= e($pi) ?>" class="w-100" style="height:120px;object-fit:cover;" alt="">
-                            <div class="card-body">
-                                <h3 class="h6"><?= e($p['product_name']) ?></h3>
-                                <p class="small mb-1">₱<?= e(number_format((float) $p['price'], 2)) ?></p>
-                                <p class="small text-muted"><?= e(str_limit((string) $p['description'], 70)) ?></p>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+            
+            <div>
+                <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= $id ?>" class="btn shadow-sm fw-bold px-4 rounded-pill text-white" style="background: var(--lk-orange);">
+                    <i class="fa-regular fa-comment-dots me-1"></i> Chat Seller
+                </a>
             </div>
-
-            <h2 class="h5 mt-4 mb-3">Reviews</h2>
-            <?php foreach ($reviews as $r): ?>
-                <div class="border rounded p-3 mb-2 bg-white">
-                    <div class="fw-semibold"><?= e($r['reviewer_name']) ?> · <?= (int) $r['rating'] ?>★</div>
-                    <div class="small text-muted"><?= e($r['comment'] ?? '') ?></div>
-                </div>
-            <?php endforeach; ?>
-
-            <?php if (is_logged_in() && current_user_role() === 'local_user'): ?>
-                <form method="post" class="mt-3">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="review_submit" value="1">
-                    <label class="form-label">Rate your experience</label>
-                    <select name="rating" class="form-select mb-2" required>
-                        <?php for ($i = 5; $i >= 1; $i--): ?>
-                            <option value="<?= $i ?>"><?= $i ?> stars</option>
-                        <?php endfor; ?>
-                    </select>
-                    <textarea name="comment" class="form-control mb-2" rows="3" placeholder="Comment" required></textarea>
-                    <button class="btn btn-primary btn-sm" type="submit">Submit review</button>
-                </form>
-            <?php endif; ?>
         </div>
     </div>
 </div>
 
-<?php
-$extraScripts = '<script src="' . e(ASSET_URL) . 'js/maps.js"></script><script>
-document.addEventListener("DOMContentLoaded", function () {
-  likhaInitMap(document.getElementById("bizMap"), ' . json_encode($b['latitude']) . ', ' . json_encode($b['longitude']) . ', ' . json_encode($b['business_name']) . ', ' . json_encode($b['address'] ?? '') . ');
-});
-</script>';
-require BASE_PATH . '/includes/footer.php';
+<div class="container py-5 mt-4" style="font-family: 'Poppins', sans-serif;">
+    
+    <?php if (empty($groupedProducts)): ?>
+        <div class="alert alert-secondary">This shop hasn't listed any products yet.</div>
+    <?php else: ?>
+        <?php foreach (['local_delicacy', 'handicraft', 'fresh_produce'] as $cat): ?>
+            <?php if (!empty($groupedProducts[$cat])): ?>
+                <div class="mb-5">
+                    <h3 class="prototype-title mb-4" style="font-size: 1.8rem;"><?= $categoryTitles[$cat] ?></h3>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;">
+                        <?php foreach ($groupedProducts[$cat] as $p): ?>
+                            <div class="card overflow-hidden shadow-sm" style="border-radius: 8px;">
+                                <?php $pi = $p['image'] ? asset_url($p['image']) : 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80'; ?>
+                                <div class="ratio ratio-4x3">
+                                    <img src="<?= e($pi) ?>" class="object-fit-cover" alt="">
+                                </div>
+                                <div class="p-2 bg-light d-flex flex-column h-100">
+                                    <div class="fw-bold" style="font-size: 0.9rem; font-family: 'Montserrat', sans-serif;"><?= e($p['product_name']) ?></div>
+                                    <div class="small text-muted mb-2" style="font-size: 0.75rem; line-height: 1.2; flex-grow: 1;">
+                                        <?= e(str_limit((string) $p['description'], 50)) ?>
+                                    </div>
+                                    <div class="d-flex justify-content-end align-items-center mt-auto">
+                                        <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int) $p['business_id'] ?>&product_id=<?= (int) $p['id'] ?>" class="badge rounded-pill text-decoration-none" style="background: var(--lk-orange); font-size: 0.7rem; padding: 0.3rem 0.6rem;">
+                                            <i class="fa-solid fa-cart-shopping me-1"></i> Buy Now
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    <?php endif; ?>
+
+    <!-- Reviews Section -->
+    <div class="mt-5 p-4 rounded" style="background: #e8dcc4; border: 1px solid #ccc; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);">
+        <h3 class="prototype-title mb-3" style="color: var(--lk-navy); font-size: 1.5rem;">REVIEWS & FEEDBACKS</h3>
+        <div class="d-flex align-items-end mb-4">
+            <span class="fw-bold text-dark" style="font-size: 3rem; font-family: Impact, sans-serif; line-height: 1;"><?= number_format((float)$avg, 1) ?></span>
+            <div class="ms-2 pb-1">
+                <div class="text-warning fs-5">
+                    <?php for($i=1; $i<=5; $i++): ?>
+                        <i class="fa-solid fa-star"></i>
+                    <?php endfor; ?>
+                </div>
+                <div class="small fw-bold text-dark"><?= count($reviews) ?> Reviews</div>
+            </div>
+        </div>
+        
+        <?php if (!empty($reviews)): ?>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+                <?php foreach ($reviews as $r): ?>
+                    <div class="bg-white p-3 rounded shadow-sm border text-center">
+                        <div class="d-flex justify-content-center mb-2">
+                            <span class="badge bg-light text-dark border shadow-sm">
+                                <i class="fa-solid fa-user me-1"></i> <?= e($r['reviewer_name']) ?>
+                            </span>
+                        </div>
+                        <div class="text-warning mb-2" style="font-size: 0.8rem;">
+                            <?php for($i=1; $i<=5; $i++): ?>
+                                <i class="<?= $i <= (int)$r['rating'] ? 'fa-solid fa-star' : 'fa-regular fa-star' ?>"></i>
+                            <?php endfor; ?>
+                        </div>
+                        <p class="small text-muted mb-0 font-italic">"<?= e($r['comment'] ?? '') ?>"</p>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <p class="text-muted fw-bold">No reviews yet.</p>
+        <?php endif; ?>
+
+        <?php if (is_logged_in() && current_user_role() === 'local_user'): ?>
+            <div class="mt-4 text-center">
+                <button type="button" class="btn bg-white border border-secondary rounded-pill px-5 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                    Rate your experience now!
+                </button>
+            </div>
+
+            <!-- Review Modal -->
+            <div class="modal fade" id="reviewModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form method="post" class="modal-content">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="review_submit" value="1">
+                        <div class="modal-header bg-warning">
+                            <h5 class="modal-title fw-bold text-dark">Leave a Review</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Rating</label>
+                                <select name="rating" class="form-select" required>
+                                    <option value="5">5 Stars</option>
+                                    <option value="4">4 Stars</option>
+                                    <option value="3">3 Stars</option>
+                                    <option value="2">2 Stars</option>
+                                    <option value="1">1 Star</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Comment</label>
+                                <textarea name="comment" class="form-control" rows="3" required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-lk-orange">Submit Review</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<?php require BASE_PATH . '/includes/footer.php'; ?>

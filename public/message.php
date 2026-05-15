@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-$pageTitle = 'Messages';
+$pageTitle = 'Chat';
 $activeNav = '';
 require_once dirname(__DIR__) . '/bootstrap.php';
 require_once BASE_PATH . '/middleware/auth.php';
@@ -32,43 +32,71 @@ if (!in_array($role, ['local_user', 'seller'], true)) {
     set_flash('error', 'Please use a local or seller account for messaging.');
     redirect(BASE_URL . 'index.php');
 }
-if ($role === 'local_user' && $ownerId === $me) {
-    http_response_code(403);
-    exit('Cannot message your own business.');
-}
-if ($role === 'seller' && (int) $b['user_id'] !== $me) {
-    http_response_code(403);
-    exit('You can only open chats for your own business.');
-}
 
 require_once BASE_PATH . '/middleware/csrf.php';
 $csrf = csrf_token();
 $receiverJs = ($role === 'local_user') ? $ownerId : null;
 
+// Product Context
+$productContext = null;
+if ($productId > 0) {
+    $pstmt = db()->prepare('SELECT product_name, image, price FROM products WHERE id = ? AND business_id = ? LIMIT 1');
+    $pstmt->execute([$productId, $businessId]);
+    $productContext = $pstmt->fetch();
+}
+
 require BASE_PATH . '/includes/header.php';
-require BASE_PATH . '/includes/navbar.php';
 ?>
-<div class="bg-light py-4">
-    <div class="container">
-        <div class="chat-shell">
-            <div class="chat-header p-3 d-flex align-items-center justify-content-between bg-white">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="rounded-circle bg-secondary" style="width:40px;height:40px;"></div>
+
+<!-- Custom Topbar for Chat -->
+<div style="background: var(--lk-orange); height: 60px; display: flex; align-items: center; padding: 0 1rem; color: white;">
+    <a href="<?= e(BASE_URL) ?>products.php" class="text-white text-decoration-none me-3"><i class="fa-solid fa-arrow-left fs-4"></i></a>
+    <span class="prototype-title text-white m-0" style="font-size: 1.5rem; letter-spacing: 1px;">CHAT</span>
+</div>
+
+<div class="py-5" style="background: #fafafa; min-height: calc(100vh - 60px); font-family: 'Poppins', sans-serif;">
+    <div class="container d-flex justify-content-center">
+        
+        <!-- Chat Shell -->
+        <div class="bg-white border shadow-sm w-100 position-relative" style="max-width: 800px; border-radius: 12px; height: 75vh; display: flex; flex-direction: column;">
+            
+            <!-- Chat Header -->
+            <div class="p-3 border-bottom d-flex align-items-center justify-content-between position-relative bg-white" style="border-radius: 12px 12px 0 0; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <div class="d-flex align-items-center gap-3">
+                    <?php $logo = $b['logo'] ? asset_url($b['logo']) : 'https://ui-avatars.com/api/?name=' . urlencode($b['business_name']); ?>
+                    <div class="rounded-circle bg-navy d-flex align-items-center justify-content-center overflow-hidden" style="width: 45px; height: 45px; background: var(--lk-navy);">
+                        <?php if($b['logo']): ?>
+                            <img src="<?= e($logo) ?>" class="w-100 h-100 object-fit-cover" alt="">
+                        <?php else: ?>
+                            <i class="fa-solid fa-user text-white"></i>
+                        <?php endif; ?>
+                    </div>
                     <div>
-                        <div class="fw-bold"><?= e($b['business_name']) ?></div>
-                        <div class="small text-success"><span class="badge bg-success rounded-pill">&nbsp;</span> Active now</div>
+                        <div class="fw-bold prototype-title" style="font-size: 1.2rem; color: var(--lk-navy); letter-spacing: 0.5px;"><?= e($b['business_name']) ?></div>
+                        <div class="small fw-bold text-muted" style="font-size: 0.75rem;"><i class="fa-solid fa-circle text-success me-1"></i> Active Now</div>
                     </div>
                 </div>
-                <a href="<?= e(BASE_URL) ?>vendor-profile.php?id=<?= $businessId ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-info-circle"></i></a>
+                <a href="<?= e(BASE_URL) ?>vendor-profile.php?id=<?= $businessId ?>" class="text-dark fs-4"><i class="fa-regular fa-circle-info"></i></a>
             </div>
-            <div id="chatMessages" class="chat-messages-area p-3"></div>
-            <form id="chatForm" class="p-3 bg-white border-top d-flex gap-2">
-                <input type="text" id="chatInput" class="form-control" placeholder="Type something..." autocomplete="off">
-                <button class="btn btn-lk-orange" type="submit"><i class="bi bi-send"></i></button>
-            </form>
+
+            <!-- Date Separator -->
+            <div class="text-center py-2 text-muted fw-bold small" style="background: #fdfdfd;">Today <?= date('g:i A') ?></div>
+
+            <!-- Messages Area -->
+            <div id="chatMessages" class="chat-messages-area p-4 flex-grow-1 overflow-auto" style="background: #fdfdfd;"></div>
+            
+            <!-- Input Area -->
+            <div class="p-4 bg-white border-top" style="border-radius: 0 0 12px 12px;">
+                <form id="chatForm" class="d-flex align-items-center border rounded-pill px-3 py-2">
+                    <input type="text" id="chatInput" class="form-control border-0 shadow-none bg-transparent" placeholder="Type something..." autocomplete="off">
+                    <button class="btn text-navy fs-4 p-0 shadow-none border-0" type="submit" style="color: var(--lk-navy);"><i class="fa-regular fa-paper-plane"></i></button>
+                </form>
+            </div>
+            
         </div>
     </div>
 </div>
+
 <script>
 window.LK_CHAT = {
   businessId: <?= (int) $businessId ?>,
@@ -77,6 +105,13 @@ window.LK_CHAT = {
   me: <?= (int) $me ?>,
   csrf: <?= json_encode($csrf) ?>
 };
+
+<?php if($productContext): ?>
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('chatInput');
+    input.value = `Regarding <?= addslashes($productContext['product_name']) ?> (₱<?= number_format((float)$productContext['price'], 2) ?>): `;
+});
+<?php endif; ?>
 </script>
 <?php
 $extraScripts = '<script src="' . e(ASSET_URL) . 'js/chat.js"></script>';
