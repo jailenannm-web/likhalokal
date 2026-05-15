@@ -18,13 +18,13 @@ body {
 }
 
 .lk-navbar {
-  background: rgba(0, 31, 63, 0.8) !important;
+  background: rgba(27, 67, 50, 0.8) !important;
   backdrop-filter: blur(5px);
   transition: all 0.3s ease-in-out;
 }
 
 .lk-navbar-scrolled {
-  background: rgba(11, 29, 38, 0.85) !important;
+  background: rgba(13, 33, 25, 0.95) !important;
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }

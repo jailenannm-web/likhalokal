@@ -9,7 +9,7 @@ $role = current_user_role();
 <nav class="navbar navbar-expand-lg navbar-dark lk-navbar fixed-top">
     <div class="container">
         <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="<?= e(BASE_URL) ?>index.php">
-            <i class="bi bi-binoculars fs-3 text-white"></i>
+            <img src="<?= asset_url('images/likhalokal-logo.png') ?>" alt="LikhaLokal Logo" style="height: 40px; width: auto; object-fit: contain;">
             <div class="d-flex flex-column lh-1">
                 <span class="text-warning fw-bold" style="font-size: 1.1rem;">LikhaLokal:</span>
                 <span class="text-white fw-bold" style="font-size: 0.8rem;">Tuklas, Kultura, Kabuhayan</span>

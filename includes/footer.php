@@ -2,24 +2,40 @@
 
 declare(strict_types=1);
 ?>
-<footer class="lk-footer text-white py-5 mt-5" style="background: var(--lk-navy);">
-    <div class="container text-center">
-        <h3 class="fw-bold mb-4" style="font-family: Impact, sans-serif; letter-spacing: 1px; color: var(--lk-orange);">LIKHALOKAL</h3>
-        <div class="d-flex justify-content-center gap-4 mb-4 fs-4">
-            <a href="#" class="text-white text-decoration-none border rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width: 45px; height: 45px; transition: all 0.3s;" onmouseover="this.style.background='#fff'; this.style.color='var(--lk-navy)';" onmouseout="this.style.background='transparent'; this.style.color='#fff';" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
-            <a href="#" class="text-white text-decoration-none border rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width: 45px; height: 45px; transition: all 0.3s;" onmouseover="this.style.background='#fff'; this.style.color='var(--lk-navy)';" onmouseout="this.style.background='transparent'; this.style.color='#fff';" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-            <a href="#" class="text-white text-decoration-none border rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width: 45px; height: 45px; transition: all 0.3s;" onmouseover="this.style.background='#fff'; this.style.color='var(--lk-navy)';" onmouseout="this.style.background='transparent'; this.style.color='#fff';" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
-            <a href="#" class="text-white text-decoration-none border rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width: 45px; height: 45px; transition: all 0.3s;" onmouseover="this.style.background='#fff'; this.style.color='var(--lk-navy)';" onmouseout="this.style.background='transparent'; this.style.color='#fff';" aria-label="Phone"><i class="fa-solid fa-phone"></i></a>
-            <a href="#" class="text-white text-decoration-none border rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width: 45px; height: 45px; transition: all 0.3s;" onmouseover="this.style.background='#fff'; this.style.color='var(--lk-navy)';" onmouseout="this.style.background='transparent'; this.style.color='#fff';" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
+<footer class="text-white py-4 mt-auto position-relative" style="background: linear-gradient(to right, #1b4332, #0d2119); overflow: hidden;">
+    <!-- Abstract background shape -->
+    <div class="position-absolute rounded-circle" style="background: #f39200; width: 150px; height: 150px; bottom: -50px; right: 5%; opacity: 0.1; filter: blur(20px);"></div>
+
+    <div class="container position-relative z-1">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            
+            <!-- Left: Logo & Copyright -->
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-white px-3 py-1 rounded-pill shadow-sm">
+                    <img src="<?= asset_url('images/likhalokal-logo.png') ?>" alt="LikhaLokal Logo" style="height: 30px; object-fit: contain;">
+                </div>
+                <span class="small text-white-50 fw-bold" style="font-family: 'Montserrat', sans-serif; letter-spacing: 1px;">&copy; <?= date('Y') ?> LikhaLokal</span>
+            </div>
+
+            <!-- Center: Links -->
+            <div class="d-flex flex-wrap justify-content-center gap-4">
+                <a href="<?= e(BASE_URL) ?>index.php" class="text-white-50 text-decoration-none fw-medium hover-white" style="transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Home</a>
+                <a href="<?= e(BASE_URL) ?>tourism.php" class="text-white-50 text-decoration-none fw-medium hover-white" style="transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Tourism</a>
+                <a href="<?= e(BASE_URL) ?>products.php" class="text-white-50 text-decoration-none fw-medium hover-white" style="transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Products</a>
+                <a href="<?= e(BASE_URL) ?>about.php" class="text-white-50 text-decoration-none fw-medium hover-white" style="transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">About</a>
+                <a href="<?= e(BASE_URL) ?>team.php" class="text-white-50 text-decoration-none fw-medium hover-white" style="transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Our Team</a>
+            </div>
+
+            <!-- Right: Socials -->
+            <div class="d-flex gap-3">
+                <a href="#" class="text-white-50 text-decoration-none fs-5" style="transition: color 0.3s;" onmouseover="this.style.color='#f39200'" onmouseout="this.style.color='rgba(255,255,255,0.5)'" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="#" class="text-white-50 text-decoration-none fs-5" style="transition: color 0.3s;" onmouseover="this.style.color='#f39200'" onmouseout="this.style.color='rgba(255,255,255,0.5)'" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#" class="text-white-50 text-decoration-none fs-5" style="transition: color 0.3s;" onmouseover="this.style.color='#f39200'" onmouseout="this.style.color='rgba(255,255,255,0.5)'" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="#" class="text-white-50 text-decoration-none fs-5" style="transition: color 0.3s;" onmouseover="this.style.color='#f39200'" onmouseout="this.style.color='rgba(255,255,255,0.5)'" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                <a href="#" class="text-white-50 text-decoration-none fs-5" style="transition: color 0.3s;" onmouseover="this.style.color='#f39200'" onmouseout="this.style.color='rgba(255,255,255,0.5)'" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+            </div>
+
         </div>
-        <div class="mb-4">
-            <a class="text-white text-decoration-none fw-bold me-3 text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;" href="<?= e(BASE_URL) ?>index.php">Home</a>
-            <a class="text-white text-decoration-none fw-bold me-3 text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;" href="<?= e(BASE_URL) ?>tourism.php">Tourism</a>
-            <a class="text-white text-decoration-none fw-bold me-3 text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;" href="<?= e(BASE_URL) ?>products.php">Products</a>
-            <a class="text-white text-decoration-none fw-bold me-3 text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;" href="<?= e(BASE_URL) ?>events.php">Events</a>
-            <a class="text-white text-decoration-none fw-bold text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;" href="<?= e(BASE_URL) ?>about.php">About</a>
-        </div>
-        <p class="small text-white-50 mb-0 fw-bold">Designed by Talisay-Vinzons Team</p>
     </div>
 </footer>
 <div class="modal fade" id="guestAuthModal" tabindex="-1" aria-hidden="true">
