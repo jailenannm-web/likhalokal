@@ -703,16 +703,16 @@ body {
 <section class="hero-section">
   <div class="cards-container">
     <div class="card">
-      <img src="path-to-your-image1.jpg" alt="Historical Marker">
+      <img src="historicalmaker.jpg" alt="Historical Marker">
     </div>
     <div class="card">
-      <img src="path-to-your-image2.jpg" alt="Vinzons House">
+      <img src="vinzonshouse.jpg" alt="Vinzons House">
     </div>
     <div class="card">
-      <img src="path-to-your-image3.jpg" alt="Beach Boat">
+      <img src="beachboat.jpg" alt="Beach Boat">
     </div>
     <div class="card">
-      <img src="path-to-your-image4.jpg" alt="Clear Kayak">
+      <img src="clearkayak.jpg" alt="Clear Kayak">
     </div>
   </div>
 </section>
@@ -727,7 +727,7 @@ body {
     <div class="agencies-grid">
       <div class="agency-card">
         <div class="logo-box">
-          <img src="logo-placeholder.png" alt="Logo">
+          <img src="Baybreeze.png" alt="Logo">
         </div>
         <div class="agency-info">
           <h3>Baybreeze Escapes</h3>
@@ -739,7 +739,7 @@ body {
 
       <div class="agency-card">
         <div class="logo-box">
-          <img src="logo-placeholder.png" alt="Logo">
+          <img src="sunriseshorer.png" alt="Logo">
         </div>
         <div class="agency-info">
           <h3>Sunrise Shores Travel Co.</h3>
@@ -751,7 +751,7 @@ body {
 
       <div class="agency-card">
         <div class="logo-box">
-          <img src="logo-placeholder.png" alt="Logo">
+          <img src="buhanginvoyages.png" alt="Logo">
         </div>
         <div class="agency-info">
           <h3>Mahabang Buhangin Voyages</h3>
@@ -763,7 +763,7 @@ body {
 
       <div class="agency-card">
         <div class="logo-box">
-          <img src="logo-placeholder.png" alt="Logo">
+          <img src="trailadventures.png" alt="Logo">
         </div>
         <div class="agency-info">
           <h3>Mangrove Trail Adventures</h3>
@@ -775,7 +775,7 @@ body {
 
       <div class="agency-card">
         <div class="logo-box">
-          <img src="logo-placeholder.png" alt="Logo">
+          <img src="islanorte.png" alt="Logo">
         </div>
         <div class="agency-info">
           <h3>Isla Norte Backpacking Tours</h3>
@@ -787,12 +787,12 @@ body {
 
       <div class="agency-card">
         <div class="logo-box">
-          <img src="logo-placeholder.png" alt="Logo">
+          <img src="greencoast.png" alt="Logo">
         </div>
         <div class="agency-info">
           <h3>Green Coast Expeditions</h3>
           <p>Local community tour group providing nature trekking, fishing trips, and waterfall adventures.</p>
-          <span class="phone">09123456879</span>
+          <span class="phone">09123456879</span>s
           <button class="msg-btn">Message now</button>
         </div>
       </div>

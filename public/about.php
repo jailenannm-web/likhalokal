@@ -163,7 +163,7 @@ require BASE_PATH . '/includes/navbar.php';
             <p class="mb-4">Named after the legendary Wenceslao Q. Vinzons—the "Father of the Resistance" in the Philippines—our town embodies a spirit of bravery. From the intricate stone carvings of the St. Peter the Apostle Parish to the bustling local markets filled with the aroma of <em>Angol</em> and fresh seafood, every corner offers an invitation to slow down and rediscover the soul of Bicolano culture.</p>
         </div>
         <div class="col-lg-6">
-            <img src="image_94713e.png" alt="Heritage Church" class="img-fluid unified-card shadow-lg border border-5 border-white">
+            <img src="heritagechurch.png" alt="Heritage Church" class="img-fluid unified-card shadow-lg border border-5 border-white">
         </div>
     </div>
 
@@ -221,7 +221,7 @@ require BASE_PATH . '/includes/navbar.php';
                     <div class="gov-header-amber">MUNICIPAL OFFICE</div>
                     <div class="gov-content">
                         <div class="d-flex align-items-center mb-4">
-                            <img src="image_9465b8.jpg" class="leader-profile-img me-4" alt="Mayor">
+                            <img src="mayor.jpg" class="leader-profile-img me-4" alt="Mayor">
                             <div>
                                 <h3 class="text-amber h4 mb-1">HON. ELEANOR F. PAJARILLO</h3>
                                 <p class="small text-white-50 mb-0">Local Chief Executive</p>
@@ -236,7 +236,7 @@ require BASE_PATH . '/includes/navbar.php';
                     <div class="gov-header-amber">TOURISM HUB</div>
                     <div class="gov-content">
                         <div class="d-flex align-items-center mb-4">
-                            <img src="image_9465b8.jpg" class="leader-profile-img me-4" alt="Tourism Officer">
+                            <img src="tourismofficer.jpg" class="leader-profile-img me-4" alt="Tourism Officer">
                             <div>
                                 <h3 class="text-amber h4 mb-1">GARY L. PAJARILLO</h3>
                                 <p class="small text-white-50 mb-0">Municipal Tourism Officer</p>
