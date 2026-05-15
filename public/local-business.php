@@ -853,7 +853,7 @@ require BASE_PATH . '/includes/navbar.php';
         </div>
 
         <div style="text-align: center;">
-            <button class="apply-button">APPLY NOW</button>
+            <a href="register-business.php" button class="apply-button">APPLY BUSINESS</a>
         </div>
     </div>
 </section>
