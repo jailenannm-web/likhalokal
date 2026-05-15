@@ -17,6 +17,7 @@ require BASE_PATH . '/includes/navbar.php';
 <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bungee&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Lisu+Bosa:wght@400;500;600&display=swap');
     :root {
         --vinzons-blue: #0077C2;
         --vinzons-dark-blue: #050A30;
@@ -421,116 +422,131 @@ require BASE_PATH . '/includes/navbar.php';
     --dark-navy: #051024;
     --light-blue-bg: #a8e0ff;
 }
+/* Registration Container */
+    .reg-container {
+        background-color: var(--light-blue-bg);
+        padding-bottom: 80px;
+        margin-top: -1px; /* Prevents white line gaps between sections */
+    }
 
-/* Container Reset to remove white lines */
-.reg-container {
-    background-color: var(--light-blue-bg);
-    padding-bottom: 100px;
-    margin: 0;
-    margin-top: -1px;
-}
+    .reg-banner {
+        background-color: var(--dark-navy);
+        padding: 20px 0;
+        text-align: center;
+    }
 
-.reg-banner {
-    background-color: var(--dark-navy);
-    padding: 25px 0;
-    text-align: center;
-}
+    .reg-banner h2 {
+        font-family: 'Bungee', cursive;
+        color: white;
+        margin: 0;
+        font-size: 1.8rem;
+        letter-spacing: 2px;
+    }
 
-.reg-banner h2 {
-    font-family: 'Bungee', cursive;
-    color: white;
-    margin: 0;
-    font-size: 2.2rem;
-    letter-spacing: 2px;
-}
+    /* The Registration Card */
+    .registration-card {
+        max-width: 900px;
+        margin: 50px auto;
+        padding: 45px 70px;
+        background: rgba(255, 255, 255, 0.35); /* Glassmorphism effect */
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 35px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
 
-/* Glassmorphism Card for Alignment */
-.registration-card {
-    max-width: 1000px;
-    margin: 60px auto;
-    padding: 60px;
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border-radius: 40px;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-}
+    .reg-title {
+        font-family: 'Bungee', cursive;
+        color: var(--amber-orange);
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+    }
 
-.reg-title {
-    font-family: 'Bungee', cursive;
-    color: var(--amber-orange);
-    font-size: 3rem;
-    margin-bottom: 25px;
-}
+    /* Lisu Bosa Styling with Tight Spacing */
+    .lisu-description {
+        font-family: 'Lisu Bosa', serif !important;
+        font-size: 1.15rem;
+        font-weight: 500;
+        line-height: 1.35; /* Tight line spacing */
+        color: var(--dark-navy);
+        margin-bottom: 20px;
+    }
 
-/* Lisu Bosa Emphasis */
-.lisu-info {
-    font-family: 'Lisu Bosa', serif;
-    font-size: 1.45rem;
-    font-weight: 500;
-    line-height: 1.7;
-    color: var(--dark-navy);
-}
+    .step-box {
+        margin-bottom: 22px; /* Compact gap between steps */
+    }
 
-.step-header {
-    font-family: 'Inter', sans-serif;
-    font-weight: 900;
-    font-size: 1.5rem;
-    color: var(--dark-navy);
-    display: block;
-    margin-top: 40px;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    border-left: 5px solid var(--amber-orange);
-    padding-left: 15px;
-}
+    .step-label {
+        font-family: 'Inter', sans-serif;
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: var(--dark-navy);
+        display: block;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        border-left: 4px solid var(--amber-orange);
+        padding-left: 12px;
+    }
 
-.step-details {
-    list-style: none;
-    padding-left: 40px;
-    margin-top: 15px;
-}
+    .step-details {
+        list-style: none;
+        padding-left: 35px;
+        margin-top: 8px;
+    }
 
-.step-details li {
-    font-family: 'Lisu Bosa', serif;
-    font-size: 1.3rem;
-    margin-bottom: 12px;
-    position: relative;
-}
+    .step-details li {
+        font-family: 'Lisu Bosa', serif !important;
+        font-size: 1.1rem;
+        line-height: 1.25; /* Tightened line spacing for lists */
+        margin-bottom: 6px;
+        position: relative;
+        color: var(--dark-navy);
+    }
 
-.step-details li::before {
-    content: "→"; /* Stylized arrow for emphasis */
-    color: var(--amber-orange);
-    position: absolute;
-    left: -25px;
-    font-weight: bold;
-}
+    .step-details li::before {
+        content: "→";
+        color: var(--amber-orange);
+        position: absolute;
+        left: -22px;
+        font-weight: bold;
+    }
 
-.apply-button {
-    background-color: var(--amber-orange);
-    color: var(--dark-navy);
-    font-family: 'Bungee', cursive;
-    padding: 20px 100px;
-    border: none;
-    border-radius: 15px;
-    font-size: 1.4rem;
-    cursor: pointer;
-    box-shadow: 0 6px 0px #c98220;
-    transition: all 0.2s ease;
-    display: inline-block;
-}
+    /* Footer Button Styling */
+    .apply-button-wrap {
+        text-align: center;
+        margin-top: 30px;
+    }
 
-.apply-button:hover {
-    transform: translateY(3px);
-    box-shadow: 0 3px 0px #c98220;
-}
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-    .biz-hero-title { font-size: 2.5rem; }
-    .biz-keywords { font-size: 1.5rem; }
-    .biz-main-heading { font-size: 1.8rem; }
-}
+    .apply-button {
+        background-color: var(--amber-orange);
+        color: var(--dark-navy);
+        font-family: 'Bungee', cursive;
+        padding: 15px 80px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.3rem;
+        cursor: pointer;
+        box-shadow: 0 5px 0px #c98220;
+        transition: all 0.2s ease;
+        display: inline-block;
+        text-decoration: none;
+    }
+
+    .apply-button:hover {
+        transform: translateY(2px);
+        box-shadow: 0 3px 0px #c98220;
+        color: var(--dark-navy);
+    }
+
+    /* Mobile Tweaks */
+    @media (max-width: 768px) {
+        .registration-card {
+            margin: 20px;
+            padding: 30px;
+        }
+        .reg-title { font-size: 1.8rem; }
+    }
 </style> 
 
 <section class="biz-hero">
@@ -798,7 +814,6 @@ require BASE_PATH . '/includes/navbar.php';
 
     </div>
 </section>
-
 <section class="reg-container">
     <div class="reg-banner">
         <h2>REGISTER YOUR BUSINESS</h2>
@@ -812,41 +827,33 @@ require BASE_PATH . '/includes/navbar.php';
         </p>
 
         <div class="step-box">
-            <span class="step-label">Step 1 – Prepare Your Business Information</span>
-            <p class="lisu-description" style="font-size: 1.2rem; margin-bottom: 15px;">Gather the following:</p>
+            <span class="step-label">Step 1 – Prepare Your Information</span>
             <ul class="step-details">
-                <li>Business Name</li>
-                <li>Business Category (e.g., Food, Services, Local Products)</li>
+                <li>Business Name & Category</li>
                 <li>Address / Barangay</li>
-                <li>Contact Number</li>
-                <li>Short Business Description</li>
+                <li>Contact Number & Short Description</li>
                 <li>Logo or Photo</li>
             </ul>
         </div>
 
         <div class="step-box">
             <span class="step-label">Step 2 – Submit Your Details</span>
-            <p class="lisu-description" style="font-size: 1.2rem; margin-bottom: 15px;">Send your information through:</p>
             <ul class="step-details">
-                <li><strong>Website</strong> - LikhaLokal: Tuklas, Kultura, Kabuhayan (likhalokal.com)</li>
-                <li><strong>Email</strong>: talisayvinzons.directory@gmail.com</li>
-                <li style="list-style: none; margin: 5px 0;">or</li>
-                <li><strong>Facebook Page</strong>: LikhaLokal: Tuklas, Kultura, Kabuhayan</li>
+                <li><strong>Website:</strong> likhalokal.com</li>
+                <li><strong>Email:</strong> talisayvinzons.directory@gmail.com</li>
+                <li><strong>FB:</strong> LikhaLokal: Tuklas, Kultura, Kabuhayan</li>
             </ul>
         </div>
 
         <div class="step-box">
-            <span class="step-label">Step 3 – Verification</span>
-            <p class="lisu-description">Our team will review your submission to ensure all information is correct.</p>
-        </div>
-
-        <div class="step-box">
-            <span class="step-label">Step 4 – Listing</span>
-            <p class="lisu-description">Once approved, your business will be added to the Business Directory page within 1–2 days.</p>
+            <span class="step-label">Step 3 – Verification & Listing</span>
+            <p class="lisu-description">
+                Our team will review your submission. Approved businesses are added within 1–2 days.
+            </p>
         </div>
 
         <div style="text-align: center;">
-            <button class="apply-button">APPLY BUSINESS</button>
+            <button class="apply-button">APPLY NOW</button>
         </div>
     </div>
 </section>
