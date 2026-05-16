@@ -539,7 +539,7 @@ body {
                     <div class="position-absolute" style="width: 60%; height: 60%; background: #dc3545; bottom: -10%; right: 10%; opacity: 0.3; filter: blur(70px); z-index: 0; border-radius: 50%;"></div>
                     
                     <div class="position-relative z-2 animate-scale" style="border-radius: 16px;">
-                        <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1000&q=80" class="w-100 shadow-lg" style="height: 420px; object-fit: cover; border-radius: 16px;" alt="Festival Main">
+                        <img src="assets/images/mainimage.png" class="w-100 shadow-lg" style="height: 420px; object-fit: cover; border-radius: 16px;" alt="Festival Main">
                         
                         <div class="position-absolute bg-white shadow-lg p-3 rounded-4 z-3 rotate-badge" style="top: -20px; right: -20px; border-left: 6px solid #dc3545;">
                             <div class="text-center">
@@ -550,11 +550,11 @@ body {
                     </div>
                     
                     <div class="position-absolute hover-tilt-left" style="bottom: -50px; left: -20px; z-index: 3; width: 55%;">
-                        <img src="https://images.unsplash.com/photo-1543807535-eceef0bc6599?auto=format&fit=crop&w=600&q=80" class="w-100 shadow-lg" style="height: 200px; object-fit: cover; border-radius: 12px; border: 6px solid #fff;" alt="Festival Crowd">
+                        <img src="assets/images/festival2.png" class="w-100 shadow-lg" style="height: 200px; object-fit: cover; border-radius: 12px; border: 6px solid #fff;" alt="Festival Crowd">
                     </div>
 
                     <div class="position-absolute hover-tilt-right" style="bottom: 20px; right: -40px; z-index: 3; width: 45%;">
-                        <img src="https://images.unsplash.com/photo-1533613220915-609f661a6fe1?auto=format&fit=crop&w=600&q=80" class="w-100 shadow-lg" style="height: 180px; object-fit: cover; border-radius: 12px; border: 5px solid #fff;" alt="Festival Mask">
+                        <img src="assets/images/tacboanfes1.png" class="w-100 shadow-lg" style="height: 180px; object-fit: cover; border-radius: 12px; border: 5px solid #fff;" alt="Festival Mask">
                     </div>
                 </div>
             </div>
