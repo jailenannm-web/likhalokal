@@ -244,8 +244,14 @@ body, p, span, li, small, a:not(.font-bungee) {
    DIRECTORY SECTION
    ============================================ */
 .directory-section {
-    padding: 60px 10%;
+    padding: 60px 4%;
     background-color: #fffaf5;
+}
+
+@media (max-width: 768px) {
+    .directory-section {
+        padding: 60px 15px;
+    }
 }
 
 .section-title {
@@ -480,8 +486,14 @@ body, p, span, li, small, a:not(.font-bungee) {
                 url('images/local.png'); 
     background-size: cover;
     background-position: center;
-    padding: 120px 10%;
+    padding: 120px 4%;
     color: white;
+}
+
+@media (max-width: 768px) {
+    .biz-hero {
+        padding: 120px 15px;
+    }
 }
 
 .biz-hero-title {
@@ -499,9 +511,15 @@ body, p, span, li, small, a:not(.font-bungee) {
 
 .biz-cta-section {
     background-color: var(--dark-navy);
-    padding: 80px 15%;
+    padding: 80px 4%;
     text-align: center;
     color: white;
+}
+
+@media (max-width: 768px) {
+    .biz-cta-section {
+        padding: 80px 15px;
+    }
 }
 
 .biz-keywords {
@@ -538,7 +556,13 @@ body, p, span, li, small, a:not(.font-bungee) {
    ============================================ */
 .directory-wrapper {
     background-color: var(--section-bg);
-    padding: 80px 10%;
+    padding: 80px 4%;
+}
+
+@media (max-width: 768px) {
+    .directory-wrapper {
+        padding: 80px 15px;
+    }
 }
 
 .section-label {
@@ -633,7 +657,13 @@ body, p, span, li, small, a:not(.font-bungee) {
    ============================================ */
 .listings-wrapper {
     background-color: var(--section-bg);
-    padding: 0 10% 100px;
+    padding: 0 4% 100px;
+}
+
+@media (max-width: 768px) {
+    .listings-wrapper {
+        padding: 0 15px 100px;
+    }
 }
 
 .listings-grid {
@@ -939,13 +969,13 @@ body, p, span, li, small, a:not(.font-bungee) {
 <!-- HERO SECTION -->
 <section class="hero position-relative" 
     style="min-height: 65vh; 
-           background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('<?= asset_url('images/localbg.png') ?>'); 
+           background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('<?= asset_url('images/tourismbackground.png') ?>'); 
            background-position: center; 
            background-size: cover; 
            background-repeat: no-repeat;
            display: flex;
-           align-items: flex-end; 
-           padding-bottom: 50px;
+           align-items: center;
+           padding-bottom: 100px;
            overflow: hidden;"> 
 
     <!-- Floating particles -->
@@ -959,16 +989,15 @@ body, p, span, li, small, a:not(.font-bungee) {
         <span style="left:60%;top:15%;--dur:7.5s;--delay:3s;width:9px;height:9px;opacity:0.1;"></span>
     </div>
     
-    <div class="container position-relative hero-text-animate" 
-         style="text-align: left; margin-left: 0; padding-left: 25px; max-width: 100%; z-index: 2;">
-         
-        <h1 class="display-3 fw-bold text-white mb-3" style="font-family: 'Bungee', sans-serif; letter-spacing: 1px; line-height: 1.1; text-shadow: 3px 3px 10px rgba(0,0,0,0.6);">
+ <div class="container position-relative h-100 py-5 d-flex flex-column justify-content-center mt-5 hero-text-animate" style="z-index:2; padding-left: 25px; padding-right: 25px;">
+        <h1 class="display-3 fw-bold text-white mb-2" style="font-family: Impact, sans-serif; letter-spacing: 2px; text-shadow: 2px 2px 8px rgba(0,0,0,0.4);">
             LOKAL NA NEGOSYO,<br><span style="color: #c98220;">LOKAL NA ASENSO</span>
         </h1>
         <p class="text-white mb-0 font-dancing" style="font-size: 2.5rem; line-height: 1.2; text-shadow: 2px 2px 6px rgba(0,0,0,0.6); max-width: 750px;">
             Building community livelihoods.
         </p>
     </div>
+
 </section>
 
 <!-- CTA SECTION -->
@@ -1230,7 +1259,7 @@ body, p, span, li, small, a:not(.font-bungee) {
 
 <!-- ============================================
      SCROLL REVEAL + ANIMATION JAVASCRIPT
-     ============================================ -->
+     ============================================ */ -->
 <script>
 (function () {
     'use strict';

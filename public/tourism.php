@@ -5,7 +5,6 @@ $pageTitle = 'Tourism';
 $activeNav = 'tourism';
 require_once dirname(__DIR__) . '/bootstrap.php';
 
-// Database query logic (kept from your base code)
 $cat = $_GET['category'] ?? '';
 $q = trim($_GET['q'] ?? '');
 $sql = "SELECT * FROM tourist_attractions WHERE status = 'published'";
@@ -41,7 +40,7 @@ require BASE_PATH . '/includes/navbar.php';
     body {
         background: var(--sky-gradient);
         font-family: 'Inter', sans-serif;
-    }
+    } jubilee-fixed { padding-left: 15px; padding-right: 15px; }
 
     /* ============================================
        ANIMATION KEYFRAMES
@@ -454,7 +453,7 @@ require BASE_PATH . '/includes/navbar.php';
     .hero-brand {
         position: absolute;
         top: 25%;
-        left: 15px;
+        left: 25px;
         font-family: 'Abril Fatface', serif;
         color: #FFC107;
         font-size: 3.5rem;
@@ -464,7 +463,7 @@ require BASE_PATH . '/includes/navbar.php';
     .hero-quote {
         position: absolute;
         bottom: 50px;
-        right: 20px;
+        right: 25px;
         color: white;
         max-width: 400px;
         text-align: right;
@@ -485,11 +484,17 @@ require BASE_PATH . '/includes/navbar.php';
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 50px 20px;
+        padding: 50px 4%;
         overflow: hidden;
         background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)), 
                     url('background-beach.jpg') no-repeat center center;
         background-size: cover;
+    }
+
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 50px 15px;
+        }
     }
 
     .hero-section::before {
@@ -578,7 +583,13 @@ require BASE_PATH . '/includes/navbar.php';
     .content-container {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 0 40px;
+        padding: 0 4%;
+    }
+
+    @media (max-width: 768px) {
+        .content-container {
+            padding: 0 15px;
+        }
     }
 
     .agencies-grid {
@@ -586,6 +597,12 @@ require BASE_PATH . '/includes/navbar.php';
         grid-template-columns: 1fr 1fr;
         gap: 30px;
         align-items: stretch;
+    }
+
+    @media (max-width: 768px) {
+        .agencies-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     .agency-card {
@@ -767,7 +784,7 @@ require BASE_PATH . '/includes/navbar.php';
         <span style="left:15%;top:45%;--dur:5.5s;--delay:0.3s;width:4px;height:4px;"></span>
     </div>
 
-    <div class="container position-relative h-100 py-5 d-flex flex-column justify-content-center mt-5 hero-text-animate" style="z-index:2;">
+    <div class="container position-relative h-100 py-5 d-flex flex-column justify-content-center mt-5 hero-text-animate" style="z-index:2; padding-left: 25px; padding-right: 25px;">
         <h1 class="display-3 fw-bold text-white mb-2" style="font-family: Impact, sans-serif; letter-spacing: 2px; text-shadow: 2px 2px 8px rgba(0,0,0,0.4);">
             TUKLAS LAKBAY<br><span style="color: #ffda79;">LOKAL</span>
         </h1>
@@ -778,7 +795,7 @@ require BASE_PATH . '/includes/navbar.php';
 </section>
 
 <!-- OVERLAP IMAGES -->
-<section class="overlap-section container stagger" style="margin-top: -100px; position: relative; z-index: 10;">
+<section class="overlap-section container stagger" style="margin-top: -100px; position: relative; z-index: 10; padding-left: 15px; padding-right: 15px;">
     <div class="row g-4 justify-content-center">
         <div class="col-md-4 reveal reveal-scale">
             <div class="overlap-img-wrapper float-img-1 shadow-lg">
@@ -798,7 +815,7 @@ require BASE_PATH . '/includes/navbar.php';
     </div>
 </section>
 
-<div class="container">
+<div class="container jubilee-fixed">
     <p class="transition-text reveal">
         From heritage trails to pristine islands and farm escapes—discover the beauty of Vinzons, crafted by nature and shaped by culture.
     </p>
@@ -814,7 +831,7 @@ require BASE_PATH . '/includes/navbar.php';
 </div>
 
 <!-- ABOUT GLASS CARD -->
-<div class="container my-5">
+<div class="container my-5 jubilee-fixed">
     <div class="glass-card reveal">
         <div class="row align-items-center g-0">
             <div class="col-md-5 p-4">
@@ -847,7 +864,7 @@ require BASE_PATH . '/includes/navbar.php';
 </div>
 
 <!-- HERITAGE IMAGE CARD -->
-<div class="container my-5">
+<div class="container my-5 jubilee-fixed">
     <div class="heritage-card shadow-lg reveal">
         <div class="heritage-image-container">
             <img src="assets/images/kasaysayan.png" class="heritage-img">
@@ -857,7 +874,7 @@ require BASE_PATH . '/includes/navbar.php';
 </div>
 
 <!-- VINZONS SHRINE INFO CARD -->
-<div class="container pb-5">
+<div class="container pb-5 jubilee-fixed">
     <div class="glass-info-card p-0 overflow-hidden reveal">
         <div class="row g-0">
             <div class="col-lg-7 p-5">
@@ -914,7 +931,7 @@ require BASE_PATH . '/includes/navbar.php';
 </div>
 
 <!-- CALAGUAS ISLAND -->
-<div class="container overlap-adjustment pb-5">
+<div class="container overlap-adjustment pb-5 jubilee-fixed">
     <div class="row">
         <div class="col-lg-5 reveal reveal-left">
             <div class="island-frame shadow-lg">
