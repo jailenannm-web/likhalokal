@@ -54,49 +54,308 @@ $dir = ($a['latitude'] && $a['longitude'])
     ? 'https://www.google.com/maps/dir/?api=1&destination=' . urlencode($a['latitude'] . ',' . $a['longitude'])
     : 'https://www.google.com/maps/search/?api=1&query=' . urlencode($a['address'] ?: $a['attraction_name']);
 ?>
-<div class="container py-4">
-    <?php if ($m = flash('success')): ?><div class="alert alert-success"><?= e($m) ?></div><?php endif; ?>
-    <?php if ($m = flash('error')): ?><div class="alert alert-danger"><?= e($m) ?></div><?php endif; ?>
-    <div class="row g-4">
-        <div class="col-lg-6">
+
+<!-- Google Fonts & Animate.css -->
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bungee&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+<style>
+    :root {
+        --vinzons-blue: #0077C2;
+        --vinzons-dark-blue: #004A7C;
+        --vinzons-amber: #FFBF00;
+        --vinzons-white: #FFFFFF;
+        --vinzons-black: #000000;
+        --light-sky: #B3E5FC;
+        --card-radius: 40px;
+    }
+
+    body {
+        background: radial-gradient(circle, #E3F2FD 0%, var(--light-sky) 100%);
+        background-attachment: fixed;
+        color: var(--vinzons-black);
+    }
+
+    /* Fixed Header Safety Margin */
+    .page-main-container {
+        padding-top: 6.5rem !important;
+    }
+
+    /* Consistent Card Logic & Aesthetics */
+    .unified-card {
+        border-radius: var(--card-radius);
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        transition: all 0.3s ease;
+    }
+
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.35);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+    }
+
+    .glass-blue {
+        background: rgba(0, 119, 194, 0.88);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: var(--vinzons-white);
+    }
+
+    /* Typography Overrides */
+    .attraction-title {
+        font-family: 'Abril Fatface', cursive;
+        color: var(--vinzons-dark-blue);
+    }
+
+    .section-heading {
+        font-family: 'Bungee', cursive;
+        color: var(--vinzons-blue);
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+    }
+
+    .badge-pill-custom {
+        background: rgba(0, 119, 194, 0.12);
+        border: 1.5px solid var(--vinzons-blue);
+        color: var(--vinzons-blue);
+        font-family: 'Bungee', cursive;
+        padding: 8px 18px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        display: inline-block;
+    }
+
+    /* Form and Review Aesthetics */
+    .gov-header-amber {
+        background-color: var(--vinzons-amber);
+        color: var(--vinzons-black);
+        padding: 15px 30px;
+        font-family: 'Bungee', cursive;
+        font-size: 1rem;
+    }
+
+    .gov-content {
+        background-color: var(--vinzons-dark-blue);
+        padding: 30px;
+        color: var(--vinzons-white);
+    }
+
+    .custom-input {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        color: var(--vinzons-white) !important;
+        border-radius: 12px;
+    }
+
+    .custom-input:focus {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: var(--vinzons-amber);
+        box-shadow: none;
+    }
+
+    .custom-input option {
+        color: var(--vinzons-black);
+    }
+
+    .btn-amber {
+        background-color: var(--vinzons-amber);
+        border-color: var(--vinzons-amber);
+        color: var(--vinzons-black);
+        font-family: 'Bungee', cursive;
+        border-radius: 50px;
+        padding: 10px 25px;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-amber:hover {
+        background-color: #e5ab00;
+        border-color: #e5ab00;
+        transform: translateY(-2px);
+    }
+
+    .btn-outline-custom {
+        border: 2px solid var(--vinzons-blue);
+        color: var(--vinzons-blue);
+        font-family: 'Bungee', cursive;
+        border-radius: 50px;
+        padding: 8px 20px;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-custom:hover {
+        background-color: var(--vinzons-blue);
+        color: var(--vinzons-white);
+    }
+
+    /* Scroll Animation Utilities */
+    .reveal-on-scroll {
+        opacity: 0;
+        transition: all 0.8s ease;
+    }
+
+    .reveal-on-scroll.animated {
+        opacity: 1;
+    }
+</style>
+
+<div class="container page-main-container py-4">
+    <?php if ($m = flash('success')): ?><div class="alert alert-success border-0 shadow-sm animate__animated animate__fadeIn" style="border-radius: 15px;"><?= e($m) ?></div><?php endif; ?>
+    <?php if ($m = flash('error')): ?><div class="alert alert-danger border-0 shadow-sm animate__animated animate__fadeIn" style="border-radius: 15px;"><?= e($m) ?></div><?php endif; ?>
+    
+    <div class="row g-5">
+        <div class="col-lg-6 animate__animated animate__fadeInLeft">
             <?php $im = $a['image'] ? asset_url($a['image']) : 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80'; ?>
-            <img src="<?= e($im) ?>" class="img-fluid rounded shadow" alt="">
+            <div class="unified-card shadow-lg border border-5 border-white h-100">
+                <img src="<?= e($im) ?>" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="">
+            </div>
         </div>
-        <div class="col-lg-6">
-            <span class="badge bg-secondary mb-2"><?= e($a['category']) ?></span>
-            <h1 class="h3"><?= e($a['attraction_name']) ?></h1>
-            <p><?= nl2br(e((string) $a['description'])) ?></p>
-            <h2 class="h6">History</h2>
-            <p class="small text-muted"><?= nl2br(e((string) ($a['history'] ?? ''))) ?></p>
-            <h2 class="h6">Travel guide</h2>
-            <p class="small"><?= nl2br(e((string) ($a['travel_guide'] ?? ''))) ?></p>
-            <p><strong>Entrance fee:</strong> <?= e($a['entrance_fee'] ?? '') ?></p>
-            <p><strong>Best time to visit:</strong> <?= e($a['best_time_to_visit'] ?? '') ?></p>
-            <a class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener" href="<?= e($dir) ?>">Get directions</a>
-            <div id="attMap" class="mt-3 rounded" style="height:240px;background:#e9ecef;"></div>
+        
+        <div class="col-lg-6 d-flex flex-column justify-content-between animate__animated animate__fadeInRight">
+            <div>
+                <span class="badge-pill-custom mb-3"><?= e($a['category']) ?></span>
+                <h1 class="display-5 fw-bold attraction-title mb-4"><?= e($a['attraction_name']) ?></h1>
+                
+                <!-- Organized structured details -->
+                <div class="mb-4">
+                    <h2 class="section-heading mb-2">Overview</h2>
+                    <p class="lead mb-0" style="line-height: 1.8; opacity: 0.85; font-size: 1.15rem;"><?= nl2br(e((string) $a['description'])) ?></p>
+                </div>
+                
+                <div class="mb-4">
+                    <h2 class="section-heading mb-2">History & Background</h2>
+                    <p class="small text-muted mb-0" style="line-height: 1.7; font-size: 0.95rem; text-align: justify;"><?= nl2br(e((string) ($a['history'] ?? ''))) ?></p>
+                </div>
+                
+                <div class="mb-4">
+                    <h2 class="section-heading mb-2">Travel Guide & Quick Tips</h2>
+                    <p class="small mb-0" style="line-height: 1.7; opacity: 0.85; font-size: 0.95rem;"><?= nl2br(e((string) ($a['travel_guide'] ?? ''))) ?></p>
+                </div>
+                
+                <div class="row g-3 mb-4 py-3 px-2 rounded-3 bg-white bg-opacity-20 backdrop-blur" style="border: 1px solid rgba(255,255,255,0.4);">
+                    <div class="col-sm-6">
+                        <p class="mb-0 small text-uppercase font-monospace text-muted fw-bold" style="letter-spacing: 0.5px;">Entrance Fee</p>
+                        <p class="mb-0 fw-bold text-dark" style="font-size: 1.05rem;"><?= e($a['entrance_fee'] ?? 'Free') ?></p>
+                    </div>
+                    <div class="col-sm-6">
+                        <p class="mb-0 small text-uppercase font-monospace text-muted fw-bold" style="letter-spacing: 0.5px;">Best Time to Visit</p>
+                        <p class="mb-0 fw-bold text-dark" style="font-size: 1.05rem;"><?= e($a['best_time_to_visit'] ?? 'Anytime') ?></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <a class="btn btn-outline-custom w-100 mb-3 text-center d-block" target="_blank" rel="noopener" href="<?= e($dir) ?>">Get directions</a>
+                <div id="attMap" class="unified-card shadow-sm" style="height:240px;background:#e9ecef;"></div>
+            </div>
         </div>
     </div>
 
-    <h2 class="h5 mt-5">Reviews</h2>
-    <?php foreach ($reviews as $r): ?>
-        <div class="border rounded p-3 mb-2"><?= e($r['reviewer_name']) ?> — <?= (int) $r['rating'] ?>★<div class="small text-muted"><?= e($r['comment'] ?? '') ?></div></div>
-    <?php endforeach; ?>
+    <div class="row g-4 mt-5">
+        <div class="col-lg-6 reveal-on-scroll" data-animation="animate__fadeInLeft">
+            <h2 class="section-heading mb-4 text-uppercase">Reviews & Feedback</h2>
+            <div style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                <?php if (empty($reviews)): ?>
+                    <div class="unified-card glass-effect p-4 text-center text-muted">No reviews approved yet.</div>
+                <?php endif; ?>
+                <?php foreach ($reviews as $r): ?>
+                    <div class="unified-card glass-effect p-4 mb-3 shadow-sm border-0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h3 class="h6 mb-0 fw-bold text-dark" style="font-family: 'Bungee', sans-serif; font-size:0.85rem; color: var(--vinzons-dark-blue) !important;"><?= e($r['reviewer_name']) ?></h3>
+                            <span class="fw-bold" style="color: var(--vinzons-amber); font-size:1.1rem;"><?= str_repeat('★', (int) $r['rating']) . str_repeat('☆', 5 - (int) $r['rating']) ?></span>
+                        </div>
+                        <div class="small opacity-75 mt-2" style="line-height: 1.6; text-align: justify;"><?= e($r['comment'] ?? '') ?></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
 
-    <?php if (is_logged_in() && current_user_role() === 'local_user'): ?>
-        <form method="post" class="mt-3 col-lg-6">
-            <?= csrf_field() ?>
-            <input type="hidden" name="review_submit" value="1">
-            <label class="form-label">Your rating</label>
-            <select name="rating" class="form-select mb-2" required><?php for ($i = 5; $i >= 1; $i--): ?><option value="<?= $i ?>"><?= $i ?></option><?php endfor; ?></select>
-            <textarea name="comment" class="form-control mb-2" rows="3" required></textarea>
-            <button class="btn btn-primary" type="submit">Submit review</button>
-        </form>
-    <?php endif; ?>
+        <div class="col-lg-6 reveal-on-scroll" data-animation="animate__fadeInRight">
+            <?php if (is_logged_in() && current_user_role() === 'local_user'): ?>
+                <div class="unified-card shadow-lg" style="border:none;">
+                    <div class="gov-header-amber text-uppercase">Share Your Experience</div>
+                    <div class="gov-content">
+                        <form method="post">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="review_submit" value="1">
+                            <div class="mb-3">
+                                <label class="form-label small text-uppercase tracking-wider font-monospace" style="color: var(--vinzons-amber);">Your Rating</label>
+                                <select name="rating" class="form-select custom-input" required>
+                                    <?php for ($i = 5; $i >= 1; $i--): ?>
+                                        <option value="<?= $i ?>"><?= $i ?> Stars</option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label small text-uppercase tracking-wider font-monospace" style="color: var(--vinzons-amber);">Your Review</label>
+                                <textarea name="comment" class="form-control custom-input" rows="4" placeholder="Tell others about your visit..." required></textarea>
+                            </div>
+                            <button class="btn btn-amber w-100 text-uppercase" type="submit">Submit Review</button>
+                        </form>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
 </div>
+
 <?php
 $extraScripts = '<script src="' . e(ASSET_URL) . 'js/maps.js"></script><script>
 document.addEventListener("DOMContentLoaded", function () {
-  likhaInitMap(document.getElementById("attMap"), ' . json_encode($a['latitude']) . ', ' . json_encode($a['longitude']) . ', ' . json_encode($a['attraction_name']) . ', ' . json_encode($a['address'] ?? '') . ');
+  if (typeof likhaInitMap === "function") {
+    likhaInitMap(document.getElementById("attMap"), ' . json_encode($a['latitude']) . ', ' . json_encode($a['longitude']) . ', ' . json_encode($a['attraction_name']) . ', ' . json_encode($a['address'] ?? '') . ');
+  } else if (typeof google !== "undefined" && google.maps) {
+    const lat = parseFloat(' . json_encode($a['latitude']) . ');
+    const lng = parseFloat(' . json_encode($a['longitude']) . ');
+    if (!isNaN(lat) && !isNaN(lng)) {
+      const coords = { lat: lat, lng: lng };
+      const map = new google.maps.Map(document.getElementById("attMap"), {
+        zoom: 15,
+        center: coords,
+        disableDefaultUI: true,
+        zoomControl: true
+      });
+      new google.maps.Marker({
+        position: coords,
+        map: map,
+        title: ' . json_encode($a['attraction_name']) . '
+      });
+    }
+  } else {
+    const lat = ' . json_encode($a['latitude']) . ';
+    const lng = ' . json_encode($a['longitude']) . ';
+    if (lat && lng) {
+      document.getElementById("attMap").innerHTML = `<iframe width="100%" height="100%" style="border:0;" loading="lazy" allowfullscreen src="https://maps.google.com/maps?q=\${lat},\${lng}&z=15&output=embed"></iframe>`;
+    } else {
+      const addr = encodeURIComponent(' . json_encode($a['address'] ?: $a['attraction_name']) . ');
+      document.getElementById("attMap").innerHTML = `<iframe width="100%" height="100%" style="border:0;" loading="lazy" allowfullscreen src="https://maps.google.com/maps?q=\${addr}&z=15&output=embed"></iframe>`;
+    }
+  }
+  
+  const observerOptions = {
+      root: null,
+      rootMargin: "0px",
+      threshold: 0.10
+  };
+
+  const observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+          if (entry.isIntersecting) {
+              const element = entry.target;
+              const animationClass = element.getAttribute("data-animation");
+              element.classList.add("animate__animated", animationClass, "animated");
+              observer.unobserve(element);
+          }
+      });
+  }, observerOptions);
+
+  document.querySelectorAll(".reveal-on-scroll").forEach(el => {
+      observer.observe(el);
+  });
 });
 </script>';
 require BASE_PATH . '/includes/footer.php';
+?>

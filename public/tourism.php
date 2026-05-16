@@ -32,7 +32,6 @@ require BASE_PATH . '/includes/navbar.php';
 
 <style>
 
-    
     :root {
         --vinzons-blue: #00468C;
         --vinzons-amber: #FFB300;
@@ -44,88 +43,169 @@ require BASE_PATH . '/includes/navbar.php';
         font-family: 'Inter', sans-serif;
     }
 
-    /* --- NEW ANIMATION KEYFRAMES --- */
+    /* ============================================
+       ANIMATION KEYFRAMES
+       ============================================ */
+
     @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: translateY(40px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInLeft {
+        from { opacity: 0; transform: translateX(-50px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes fadeInRight {
+        from { opacity: 0; transform: translateX(50px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes scaleIn {
+        from { opacity: 0; transform: scale(0.85); }
+        to   { opacity: 1; transform: scale(1); }
     }
 
     @keyframes float {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-15px); }
-        100% { transform: translateY(0px); }
+        0%, 100% { transform: translateY(0px); }
+        50%       { transform: translateY(-15px); }
     }
 
-    /* Scroll Reveal Initial State */
+    @keyframes shimmer {
+        0%   { background-position: -200% center; }
+        100% { background-position:  200% center; }
+    }
+
+    @keyframes lineExpand {
+        from { transform: scaleX(0); }
+        to   { transform: scaleX(1); }
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(0, 70, 140, 0.3); }
+        50%       { box-shadow: 0 0 20px 8px rgba(0, 70, 140, 0.1); }
+    }
+
+    @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
+
+    @keyframes bounce-subtle {
+        0%, 100% { transform: translateY(0); }
+        40%       { transform: translateY(-6px); }
+        60%       { transform: translateY(-3px); }
+    }
+
+    @keyframes flicker {
+        0%, 100% { opacity: 1; }
+        92%       { opacity: 1; }
+        93%       { opacity: 0.85; }
+        94%       { opacity: 1; }
+    }
+
+    @keyframes hero-pan {
+        0%   { background-position: center 55%; }
+        50%  { background-position: center 45%; }
+        100% { background-position: center 55%; }
+    }
+
+    @keyframes card-drift {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        33%       { transform: translateY(-8px) rotate(0.5deg); }
+        66%       { transform: translateY(-4px) rotate(-0.5deg); }
+    }
+
+    @keyframes text-shimmer {
+        0%   { background-position: 0% center; }
+        100% { background-position: 200% center; }
+    }
+
+    /* ============================================
+       SCROLL REVEAL
+       ============================================ */
     .reveal {
         opacity: 0;
         transform: translateY(40px);
-        transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        transition: opacity 0.75s ease, transform 0.75s ease;
     }
+    .reveal.reveal-left  { transform: translateX(-45px); }
+    .reveal.reveal-right { transform: translateX(45px); }
+    .reveal.reveal-scale { transform: scale(0.88); }
+    .reveal.reveal-fade  { transform: none; }
 
     .reveal.active {
-        opacity: 1;
-        transform: translateY(0);
+        opacity: 1 !important;
+        transform: none !important;
     }
 
-    /* Hero Banner Section */
-    .hero-container {
-        position: relative;
-        background: url('assets/images/mountains-bg.jpg') no-repeat center center;
-        background-size: cover;
-        padding-top: 80px;
-        padding-bottom: 250px; /* Space for overlapping images */
-        text-align: left;
-        color: white;
-        animation: fadeInUp 1s ease-out; /* Added Animation */
+    /* Stagger helpers */
+    .stagger .reveal:nth-child(1) { transition-delay: 0.05s; }
+    .stagger .reveal:nth-child(2) { transition-delay: 0.18s; }
+    .stagger .reveal:nth-child(3) { transition-delay: 0.31s; }
+    .stagger .reveal:nth-child(4) { transition-delay: 0.44s; }
+
+    /* ============================================
+       HERO
+       ============================================ */
+    .hero-text-animate h1 {
+        animation: fadeInLeft 1s ease both;
+    }
+    .hero-text-animate p {
+        animation: fadeInLeft 1s ease 0.25s both;
     }
 
-    .hero-text-wrapper {
-        padding-left: 10%;
+    /* Subtle slow pan on hero bg */
+    .hero-animate-bg {
+        animation: hero-pan 18s ease-in-out infinite;
     }
 
-    .hero-main-title {
-        font-family: 'Bungee', cursive;
-        font-size: 5rem;
-        line-height: 0.9;
-        margin-bottom: 10px;
-        text-transform: uppercase;
+    /* Floating particles */
+    .hero-particles {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 1;
+    }
+    .hero-particles span {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        animation: float var(--dur, 6s) ease-in-out infinite;
+        animation-delay: var(--delay, 0s);
     }
 
-    .hero-sub-tagline {
-        font-family: 'Abril Fatface', serif;
-        font-size: 1.8rem;
-        font-style: italic;
-        line-height: 1.2;
-        margin-bottom: 20px;
+    /* ============================================
+       OVERLAP IMAGES
+       ============================================ */
+    .overlap-img-wrapper {
+        transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                    box-shadow 0.45s ease;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+    .overlap-img-wrapper:hover {
+        transform: translateY(-14px) scale(1.03);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.25) !important;
+        z-index: 5;
+    }
+    .overlap-img-wrapper img {
+        transition: transform 0.5s ease;
+    }
+    .overlap-img-wrapper:hover img {
+        transform: scale(1.07);
     }
 
-    /* Overlapping 3 Pictures */
-    .image-overlap-grid {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        margin-top: -200px; /* Pulls images up into the hero section */
-        position: relative;
-        z-index: 10;
-        padding: 0 5%;
-    }
+    /* Staggered float on the 3 hero images */
+    .float-img-1 { animation: card-drift 5s ease-in-out infinite; }
+    .float-img-2 { animation: card-drift 5s ease-in-out 0.8s infinite; }
+    .float-img-3 { animation: card-drift 5s ease-in-out 1.6s infinite; }
 
-    .overlap-img {
-        width: 30%;
-        aspect-ratio: 4/5;
-        object-fit: cover;
-        border-radius: 15px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        background-color: #eee;
-        animation: float 4s ease-in-out infinite; /* Added Floating Animation */
-    }
-
-    /* Staggered float timing */
-    .overlap-img:nth-child(2) { animation-delay: 0.5s; }
-    .overlap-img:nth-child(3) { animation-delay: 1s; }
-
-    /* Transition Text */
+    /* ============================================
+       TRANSITION TEXT
+       ============================================ */
     .transition-text {
         text-align: center;
         max-width: 800px;
@@ -135,7 +215,9 @@ require BASE_PATH . '/includes/navbar.php';
         line-height: 1.6;
     }
 
-    /* Discover More Divider */
+    /* ============================================
+       DISCOVER DIVIDER
+       ============================================ */
     .discover-divider {
         display: flex;
         align-items: center;
@@ -149,11 +231,14 @@ require BASE_PATH . '/includes/navbar.php';
         background-color: var(--vinzons-blue);
         flex-grow: 1;
         max-width: 300px;
+        transform-origin: left center;
+        transform: scaleX(0);
+        transition: transform 0.9s ease;
     }
+    .divider-line.line-right { transform-origin: right center; }
+    .discover-divider.active .divider-line { transform: scaleX(1); }
 
-    .discover-title-wrap {
-        text-align: center;
-    }
+    .discover-title-wrap { text-align: center; }
 
     .discover-small {
         font-family: 'Abril Fatface', serif;
@@ -168,22 +253,31 @@ require BASE_PATH . '/includes/navbar.php';
         color: var(--vinzons-amber);
         line-height: 0.8;
         margin: 0;
+        animation: flicker 7s infinite;
+        background: linear-gradient(90deg, var(--vinzons-amber), #ffd966, var(--vinzons-amber));
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: text-shimmer 4s linear infinite;
     }
 
-     /* Styling for the Glassmorphism Card */
+    /* ============================================
+       GLASS CARD (About section)
+       ============================================ */
     .glass-card {
-        background: rgba(255, 255, 255, 0.45); /* Semi-transparent white */
-        backdrop-filter: blur(15px); /* The "Frosted" effect */
+        background: rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(15px);
         -webkit-backdrop-filter: blur(15px);
         border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 25px;
         overflow: hidden;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1); /* Soft shadow */
-        transition: transform 0.3s ease; /* Added Hover Transition */
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
     }
-
     .glass-card:hover {
-        transform: scale(1.02);
+        transform: translateY(-6px);
+        box-shadow: 0 20px 50px rgba(31, 38, 135, 0.15);
     }
 
     .about-image-container img {
@@ -191,13 +285,19 @@ require BASE_PATH . '/includes/navbar.php';
         height: 350px;
         object-fit: cover;
         border-radius: 20px;
+        transition: transform 0.5s ease;
+    }
+    .glass-card:hover .about-image-container img {
+        transform: scale(1.04);
     }
 
-    /* Read More Button styling */
+    /* ============================================
+       READ MORE BUTTON
+       ============================================ */
     .btn-read-more {
         display: inline-flex;
         align-items: center;
-        background-color: #051937; /* Dark blue matching your footer/nav */
+        background-color: #051937;
         color: #FFFFFF;
         padding: 12px 28px;
         border-radius: 8px;
@@ -205,38 +305,44 @@ require BASE_PATH . '/includes/navbar.php';
         font-family: 'Inter', sans-serif;
         font-weight: 600;
         transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
-
+    .btn-read-more::before {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%;
+        width: 60%; height: 100%;
+        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.2), transparent);
+        transform: skewX(-20deg);
+        transition: left 0.5s ease;
+    }
+    .btn-read-more:hover::before { left: 160%; }
     .btn-read-more:hover {
         background-color: #00468C;
         transform: translateX(5px);
         color: #FFFFFF;
     }
 
-    .tracking-widest {
-        letter-spacing: 0.15em;
-    }
+    .tracking-widest { letter-spacing: 0.15em; }
 
-
-    /* Google Font Imports */
     @import url('https://fonts.googleapis.com/css2?family=Bilbo+Swash+Caps&display=swap');
 
-.bilbo-title {
-        /* font details as requested */
+    .bilbo-title {
         font-family: 'Bilbo Swash Caps', cursive;
         color: white;
-        text-shadow: 2px 4px 10px rgba(0,0,0,0.5); 
-
-        /* New constraints for placement and size */
+        text-shadow: 2px 4px 10px rgba(0,0,0,0.5);
         position: absolute;
         bottom: 2rem;
         left: 2rem;
-        font-size: 1.5rem; /* much smaller fixed size */
+        font-size: 1.5rem;
         margin: 0;
         z-index: 20;
     }
 
-    /* Wide Heritage Banner */
+    /* ============================================
+       HERITAGE BANNER
+       ============================================ */
     .heritage-banner {
         height: 350px;
         background: url('assets/images/vinzons-heritage-bg.jpg') no-repeat center center;
@@ -244,6 +350,10 @@ require BASE_PATH . '/includes/navbar.php';
         border-radius: 20px;
         position: relative;
         overflow: hidden;
+        transition: transform 0.5s ease;
+    }
+    .heritage-banner:hover {
+        transform: scale(1.01);
     }
 
     .heritage-overlay {
@@ -256,7 +366,9 @@ require BASE_PATH . '/includes/navbar.php';
         text-align: center;
     }
 
-    /* Info Card Glassmorphism */
+    /* ============================================
+       GLASS INFO CARD (WQ Vinzons section)
+       ============================================ */
     .glass-info-card {
         background: rgba(255, 255, 255, 0.6);
         backdrop-filter: blur(10px);
@@ -264,7 +376,11 @@ require BASE_PATH . '/includes/navbar.php';
         border: 1px solid rgba(255, 255, 255, 0.3);
         border-radius: 30px;
         box-shadow: 0 10px 40px rgba(0,0,0,0.05);
-        transition: transform 0.4s ease;
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+    .glass-info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.1);
     }
 
     .info-side-img {
@@ -272,380 +388,363 @@ require BASE_PATH . '/includes/navbar.php';
         min-height: 400px;
         background-size: cover;
         background-position: center;
-        transition: transform 0.5s ease;
+        transition: transform 0.6s ease;
     }
-
     .glass-info-card:hover .info-side-img {
-        transform: scale(1.03);
+        transform: scale(1.04);
     }
 
-    /* Text Adjustments */
+    /* ============================================
+       TEXT UTILITIES
+       ============================================ */
     .text-primary { color: #00468C !important; }
-    .font-abril { font-family: 'Abril Fatface', cursive; }
+    .font-abril  { font-family: 'Abril Fatface', cursive; }
     .font-bungee { font-family: 'Bungee', cursive; letter-spacing: 0.05em; }
 
+    /* ============================================
+       RAGGED HERO
+       ============================================ */
+    .ragged-hero {
+        background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('vinzons-bg.jpg');
+        background-size: cover;
+        background-position: center;
+        height: 400px;
+        position: relative;
+        clip-path: polygon(0 0, 100% 0, 100% 90%, 85% 98%, 70% 92%, 50% 100%, 30% 91%, 15% 99%, 0 90%);
+    }
 
-    /* Hero Section: Ragged Bottom */
-.ragged-hero {
-    background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('vinzons-bg.jpg');
-    background-size: cover;
-    background-position: center;
-    height: 400px;
-    position: relative;
-    /* Ragged bottom shape */
-    clip-path: polygon(0 0, 100% 0, 100% 90%, 85% 98%, 70% 92%, 50% 100%, 30% 91%, 15% 99%, 0 90%);
-}
+    .ragged-white-stroke {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-bottom: 6px solid white;
+        pointer-events: none;
+        clip-path: polygon(0 89%, 15% 98%, 30% 90%, 50% 99%, 70% 91%, 85% 97%, 100% 89%, 100% 91%, 85% 99%, 70% 93%, 50% 100%, 30% 92%, 15% 100%, 0 91%);
+    }
 
-/* White Stroke for the Ragged Edge */
-.ragged-white-stroke {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-bottom: 6px solid white;
-    pointer-events: none;
-    clip-path: polygon(0 89%, 15% 98%, 30% 90%, 50% 99%, 70% 91%, 85% 97%, 100% 89%, 100% 91%, 85% 99%, 70% 93%, 50% 100%, 30% 92%, 15% 100%, 0 91%);
-}
+    .overlap-adjustment {
+        margin-top: -100px;
+        position: relative;
+        z-index: 10;
+    }
 
-/* Overlapping Image */
-.overlap-adjustment {
-    margin-top: -100px; /* Pulls image up */
-    position: relative;
-    z-index: 10;
-}
+    .island-frame {
+        background: white;
+        padding: 10px;
+        border-radius: 20px;
+        max-width: 90%;
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+    .island-frame:hover {
+        transform: translateY(-8px) rotate(0.5deg);
+        box-shadow: 0 24px 50px rgba(0,0,0,0.18) !important;
+    }
 
-.island-frame {
-    background: white;
-    padding: 10px;
-    border-radius: 20px;
-    max-width: 90%; /* Makes the picture smaller as requested */
-}
+    .island-frame img {
+        height: 450px;
+        width: 100%;
+        object-fit: cover;
+        border-radius: 15px;
+        transition: transform 0.5s ease;
+    }
+    .island-frame:hover img { transform: scale(1.04); }
 
-.island-frame img {
-    height: 450px;
-    width: 100%;
-    object-fit: cover;
-    border-radius: 15px;
-}
+    .hero-brand {
+        position: absolute;
+        top: 25%;
+        left: 15px;
+        font-family: 'Abril Fatface', serif;
+        color: #FFC107;
+        font-size: 3.5rem;
+        animation: fadeInLeft 1s ease both;
+    }
 
-/* Hero Text Placement */
-.hero-brand {
-    position: absolute;
-    top: 25%;
-    left: 15px;
-    font-family: 'Abril Fatface', serif;
-    color: #FFC107;
-    font-size: 3.5rem;
-}
+    .hero-quote {
+        position: absolute;
+        bottom: 50px;
+        right: 20px;
+        color: white;
+        max-width: 400px;
+        text-align: right;
+        font-size: 0.9rem;
+        animation: fadeInRight 1s ease 0.3s both;
+    }
 
-.hero-quote {
-    position: absolute;
-    bottom: 50px;
-    right: 20px;
-    color: white;
-    max-width: 400px;
-    text-align: right;
-    font-size: 0.9rem;
-}
+    .island-title { font-family: 'Abril Fatface', serif; color: #053921; }
+    .font-bungee  { font-family: 'Bungee', cursive; text-transform: uppercase; font-size: 0.8rem; }
 
-/* Content Typography */
-.island-title { font-family: 'Abril Fatface', serif; color: #053921; }
-.font-bungee { font-family: 'Bungee', cursive; text-transform: uppercase; font-size: 0.8rem; }
+    /* ============================================
+       HERO SECTION (4-card blur section)
+       ============================================ */
+    .hero-section {
+        position: relative;
+        width: 100%;
+        min-height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 50px 20px;
+        overflow: hidden;
+        background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)), 
+                    url('background-beach.jpg') no-repeat center center;
+        background-size: cover;
+    }
 
+    .hero-section::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        backdrop-filter: blur(8px);
+        z-index: 1;
+    }
 
-/* Container section with the background image */
-.hero-section {
-  position: relative;
-  width: 100%;
-  min-height: 500px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 50px 20px;
-  overflow: hidden;
-  /* Replace with your actual background image */
-  background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)), 
-              url('background-beach.jpg') no-repeat center center;
-  background-size: cover;
-}
+    .cards-container {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        gap: 45px;
+        max-width: 1200px;
+        width: 100%;
+        justify-content: center;
+    }
 
-/* Optional: Adding a slight blur to the background only */
-.hero-section::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  backdrop-filter: blur(8px); /* Adjust blur strength here */
-  z-index: 1;
-}
+    .card {
+        width: 250px;
+        height: 350px;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                    box-shadow 0.4s ease;
+    }
 
-/* The container for the 4 images */
-.cards-container {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  gap: 45px; /* Space between cards */
-  max-width: 1200px;
-  width: 100%;
-  justify-content: center;
-}
+    .card:hover {
+        transform: translateY(-16px) scale(1.04);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+    }
 
-/* Individual Card Styling */
-.card {
-  width: 250px;
-  height: 350px;
-  border-radius: 15px; /* Rounded corners */
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* The floating shadow effect */
-  transition: transform 0.3s ease;
-}
+    .card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.5s ease;
+    }
+    .card:hover img { transform: scale(1.1); }
 
-/* Hover effect to make it feel interactive */
-.card:hover {
-  transform: translateY(-10px);
-}
+    /* Staggered float on the 4 showcase cards */
+    .cards-container .card:nth-child(1) { animation: card-drift 5s ease-in-out infinite; }
+    .cards-container .card:nth-child(2) { animation: card-drift 5s ease-in-out 0.7s infinite; }
+    .cards-container .card:nth-child(3) { animation: card-drift 5s ease-in-out 1.4s infinite; }
+    .cards-container .card:nth-child(4) { animation: card-drift 5s ease-in-out 2.1s infinite; }
 
-/* Image inside the card */
-.card img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* Ensures image fills the card without stretching */
-  display: block;
-}
+    .card:hover { animation: none; }
 
-.top-divider {
-  width: 100%;
-  height: 8px;              /* Thickness of the line */
-  background-color: #5b9bd5; /* The blue color from the image */
-  border-radius: 4px;       /* Makes the ends slightly rounded */
-  margin-bottom: 30px;      /* Space between the line and the title */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Optional: slight depth */
-}
+    /* ============================================
+       AGENCY SECTION
+       ============================================ */
+    .top-divider {
+        width: 100%;
+        height: 8px;
+        background-color: #5b9bd5;
+        border-radius: 4px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transform-origin: left center;
+        transform: scaleX(0);
+        transition: transform 1.2s ease-in-out;
+    }
+    .top-divider.active { transform: scaleX(1); }
 
-.title {
-  color: #003300;           /* Dark green color for the text */
-  font-weight: 900;
-  font-size: 32px;
-  margin-bottom: 30px;
-  letter-spacing: 1px;
-}
+    .title {
+        color: #003300;
+        font-weight: 900;
+        font-size: 28px;
+        margin-bottom: 30px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
 
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(to bottom, #86cfea, #bce7f8);
-  margin: 0;
+    .agency-section {
+        width: 100%;
+        padding-bottom: 80px;
+        margin-top: 50px;
+        position: relative;
+        z-index: 1;
+    }
 
-}
+    .content-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 40px;
+    }
 
+    .agencies-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        align-items: stretch;
+    }
 
-.title {
-  color: var(--text-dark);
-  font-weight: 900;
-  font-size: 28px;
-  margin-bottom: 5px;
-}
+    .agency-card {
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        padding: 25px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+                    background 0.3s ease,
+                    box-shadow 0.4s ease;
+    }
 
-.underline {
-  height: 4px;
-  width: 100%;
-  background-color: var(--accent-blue);
-  margin-bottom: 40px;
-  border-radius: 2px;
-}
+    .agency-card:hover {
+        transform: translateY(-10px);
+        background: rgba(255, 255, 255, 0.65);
+        box-shadow: 0 20px 40px rgba(31, 38, 135, 0.12);
+    }
 
-/* Grid Layout */
-.agencies-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* Two equal columns */
-  gap: 20px;
-}
+    .logo-box {
+        background-color: #D9D9D9;
+        min-width: 100px;
+        height: 100px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: transform 0.4s ease, background-color 0.3s ease;
+    }
+    .agency-card:hover .logo-box {
+        transform: rotate(-6deg) scale(1.08);
+        background-color: #c5d8f0;
+    }
 
-/* Card Styling */
-.agency-card {
-  background-color: var(--card-bg);
-  border: 1px solid rgba(0,0,0,0.05);
-  border-radius: 20px;
-  padding: 20px;
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  transition: all 0.3s ease; /* Added Transition */
-}
+    .agency-info h3 {
+        margin: 0 0 5px 0;
+        color: #1a1a1a;
+        font-size: 1.2rem;
+        font-weight: 700;
+        transition: color 0.3s ease;
+    }
+    .agency-card:hover .agency-info h3 { color: var(--vinzons-blue); }
 
-.agency-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
+    .agency-info p {
+        margin: 0 0 10px 0;
+        font-size: 0.9rem;
+        color: #444;
+        line-height: 1.4;
+    }
 
-/* Logo container */
-.logo-box {
-  background-color: #d1d1d1;
-  min-width: 80px;
-  height: 80px;
-  border-radius: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  transition: transform 0.3s ease;
-}
+    .contact-row {
+        font-family: 'Inter', sans-serif;
+        font-weight: 700;
+        font-size: 1rem;
+        color: #1a1a1a;
+    }
 
-.agency-card:hover .logo-box {
-    transform: rotate(-5deg);
-}
+    .msg-btn {
+        font-weight: 400;
+        font-size: 0.85rem;
+        color: #666;
+        text-decoration: none;
+        margin-left: 8px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        transition: color 0.3s ease, letter-spacing 0.3s ease;
+        padding: 0;
+    }
+    .msg-btn:hover {
+        text-decoration: underline;
+        color: var(--vinzons-blue);
+        letter-spacing: 0.3px;
+    }
 
-.logo-box img {
-  width: 50px;
-  height: auto;
-  opacity: 0.7;
-}
+    /* ============================================
+       HERITAGE CARD (kasaysayan image section)
+       ============================================ */
+    .heritage-card {
+        border-radius: 20px;
+        overflow: hidden;
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+    .heritage-card:hover {
+        transform: scale(1.01);
+        box-shadow: 0 24px 50px rgba(0,0,0,0.15) !important;
+    }
 
-/* Text Content */
-.agency-info h3 {
-  margin: 0 0 8px 0;
-  color: var(--text-dark);
-  font-size: 1.1rem;
-}
+    .heritage-image-container {
+        position: relative;
+        overflow: hidden;
+    }
 
-.agency-info p {
-  margin: 0 0 10px 0;
-  font-size: 0.85rem;
-  color: #333;
-  line-height: 1.4;
-}
+    .heritage-img {
+        width: 100%;
+        display: block;
+        transition: transform 0.6s ease;
+    }
+    .heritage-card:hover .heritage-img { transform: scale(1.04); }
 
+    .heritage-bottom-left-text {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        color: white;
+        font-family: 'Bilbo Swash Caps', cursive;
+        font-size: 2rem;
+        text-shadow: 2px 3px 8px rgba(0,0,0,0.6);
+        margin: 0;
+        animation: fadeInLeft 1s ease both;
+    }
 
-.msg-btn {
-  background: none;
-  border: none;
-  color: #444;
-  font-size: 0.85rem;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: none;
-}
+    /* ============================================
+       TRAVEL DETAIL LINKS
+       ============================================ */
+    .link-box a, .island-text a {
+        transition: color 0.3s ease, letter-spacing 0.3s ease;
+    }
+    .link-box a:hover {
+        color: var(--vinzons-blue) !important;
+        letter-spacing: 0.5px;
+    }
 
-.msg-btn:hover {
-  text-decoration: underline;
-  color: var(--text-dark);
-}
-.agency-section {
-    width: 100%;
-    /* Creates a safety buffer so cards never touch the footer */
-    padding-bottom: 80px; 
-    margin-top: 50px;
-    position: relative;
-    z-index: 1;
-}
+    /* Col-header animated border */
+    .col-header-animated {
+        position: relative;
+        padding-bottom: 10px;
+        margin-bottom: 35px;
+        display: inline-block;
+    }
+    .col-header-animated::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0;
+        height: 4px;
+        width: 0;
+        background: linear-gradient(90deg, var(--vinzons-amber), #ffd966);
+        transition: width 0.8s ease;
+        border-radius: 2px;
+    }
+    .col-header-animated.active::after { width: 100%; }
 
-/* Updated Blue Divider */
-.top-divider {
-    width: 0%; /* Initial state for animation */
-    height: 8px;
-    background-color: #5b9bd5;
-    border-radius: 4px;
-    margin-bottom: 40px;
-    transition: width 1.2s ease-in-out;
-}
-
-.reveal.active .top-divider {
-    width: 100%;
-}
-
-.content-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 40px;
-}
-
-.title {
-    color: #003300;
-    font-weight: 900;
-    font-size: 28px;
-    margin-bottom: 30px;
-    text-transform: uppercase;
-}
-
-/* Fixed Grid: Prevents height collapse */
-.agencies-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    align-items: stretch; /* Ensures cards in the same row have equal height */
-}
-
-/* Agency Card: Matched to your screenshot */
-.agency-card {
-    background: rgba(255, 255, 255, 0.4); /* Glass effect from image */
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 20px;
-    padding: 25px;
-    display: flex;
-    align-items: center; /* Vertically centers content - FIXES OVERLAP LOOK */
-    gap: 20px;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-}
-
-.agency-card:hover {
-    transform: translateY(-8px);
-    background: rgba(255, 255, 255, 0.6);
-}
-
-.logo-box {
-    background-color: #D9D9D9; /* Matching the grey box in your image */
-    min-width: 100px;
-    height: 100px;
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.agency-info h3 {
-    margin: 0 0 5px 0;
-    color: #1a1a1a;
-    font-size: 1.2rem;
-    font-weight: 700;
-}
-
-.agency-info p {
-    margin: 0 0 10px 0;
-    font-size: 0.9rem;
-    color: #444;
-    line-height: 1.4;
-}
-
-/* Contact Row matching your 0912... Message Now style */
-.contact-row {
-    font-family: 'Inter', sans-serif;
-    font-weight: 700;
-    font-size: 1rem;
-    color: #1a1a1a;
-}
-
-.msg-btn {
-    font-weight: 400;
-    font-size: 0.85rem;
-    color: #666;
-    text-decoration: none;
-    margin-left: 8px;
-}
-
-.msg-btn:hover {
-    text-decoration: underline;
-    color: var(--vinzons-blue);
-}
+    /* Page fade-in */
+    body {
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
 
 </style>
 
 
-
-<section class="hero position-relative" 
+<!-- HERO SECTION -->
+<section class="hero position-relative hero-animate-bg" 
     style="min-height: 65vh; 
            background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('<?= asset_url('images/tourismbackground.png') ?>'); 
            background-position: center; 
@@ -653,8 +752,22 @@ body {
            background-repeat: no-repeat;
            display: flex;
            align-items: center;
-           padding-bottom: 100px;"> 
-           <div class="container position-relative h-100 py-5 d-flex flex-column justify-content-center mt-5 hero-text-animate">
+           padding-bottom: 100px;
+           overflow: hidden;"> 
+
+    <!-- Floating particles -->
+    <div class="hero-particles">
+        <span style="left:8%;top:20%;--dur:7s;--delay:0s;width:9px;height:9px;"></span>
+        <span style="left:22%;top:65%;--dur:5s;--delay:1.2s;width:6px;height:6px;"></span>
+        <span style="left:45%;top:30%;--dur:8s;--delay:0.4s;width:11px;height:11px;opacity:0.12;"></span>
+        <span style="left:65%;top:72%;--dur:6s;--delay:2s;width:7px;height:7px;"></span>
+        <span style="left:80%;top:22%;--dur:9s;--delay:1.6s;width:8px;height:8px;"></span>
+        <span style="left:35%;top:82%;--dur:6.5s;--delay:0.9s;width:5px;height:5px;"></span>
+        <span style="left:90%;top:50%;--dur:7.5s;--delay:3s;width:10px;height:10px;opacity:0.1;"></span>
+        <span style="left:15%;top:45%;--dur:5.5s;--delay:0.3s;width:4px;height:4px;"></span>
+    </div>
+
+    <div class="container position-relative h-100 py-5 d-flex flex-column justify-content-center mt-5 hero-text-animate" style="z-index:2;">
         <h1 class="display-3 fw-bold text-white mb-2" style="font-family: Impact, sans-serif; letter-spacing: 2px; text-shadow: 2px 2px 8px rgba(0,0,0,0.4);">
             TUKLAS LAKBAY<br><span style="color: #ffda79;">LOKAL</span>
         </h1>
@@ -664,20 +777,21 @@ body {
     </div>
 </section>
 
-<section class="overlap-section container" style="margin-top: -100px; position: relative; z-index: 10;">
+<!-- OVERLAP IMAGES -->
+<section class="overlap-section container stagger" style="margin-top: -100px; position: relative; z-index: 10;">
     <div class="row g-4 justify-content-center">
-        <div class="col-md-4">
-            <div class="shadow-lg" style="border-radius: 20px; overflow: hidden;">
+        <div class="col-md-4 reveal reveal-scale">
+            <div class="overlap-img-wrapper float-img-1 shadow-lg">
                 <img src="assets/images/St. Peter Church.png" alt="St. Peter Church" style="width: 100%; height: 400px; object-fit: cover;">
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="shadow-lg" style="border-radius: 20px; overflow: hidden;">
+        <div class="col-md-4 reveal reveal-scale">
+            <div class="overlap-img-wrapper float-img-2 shadow-lg">
                 <img src="assets/images/calaguas.png" alt="Calaguas Islands" style="width: 100%; height: 400px; object-fit: cover;">
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="shadow-lg" style="border-radius: 20px; overflow: hidden;">
+        <div class="col-md-4 reveal reveal-scale">
+            <div class="overlap-img-wrapper float-img-3 shadow-lg">
                 <img src="assets/images/vinzonsriver.png" alt="Vinzons River" style="width: 100%; height: 400px; object-fit: cover;">
             </div>
         </div>
@@ -685,22 +799,23 @@ body {
 </section>
 
 <div class="container">
-    <p class="transition-text">
+    <p class="transition-text reveal">
         From heritage trails to pristine islands and farm escapes—discover the beauty of Vinzons, crafted by nature and shaped by culture.
     </p>
 
-    <div class="discover-divider">
+    <div class="discover-divider reveal reveal-fade">
         <div class="divider-line"></div>
         <div class="discover-title-wrap">
             <p class="discover-small">Discover</p>
             <h2 class="more-large">MORE</h2>
         </div>
-        <div class="divider-line"></div>
+        <div class="divider-line line-right"></div>
     </div>
 </div>
 
+<!-- ABOUT GLASS CARD -->
 <div class="container my-5">
-    <div class="glass-card">
+    <div class="glass-card reveal">
         <div class="row align-items-center g-0">
             <div class="col-md-5 p-4">
                 <div class="about-image-container">
@@ -716,7 +831,7 @@ body {
                     <p class="lead text-secondary mb-4" style="font-family: 'Inter', sans-serif; line-height: 1.8;">
                         Vinzons is well known for its historical importance, pristine islands, and eco-tourism. 
                         Formerly called <strong>Indan</strong>, it features a unique blend of history and adventure—from 
-                        the home of the Vinzons’ Marsh and Mangrove Forest to gateways to the famous Calaguas Islands.
+                        the home of the Vinzons' Marsh and Mangrove Forest to gateways to the famous Calaguas Islands.
                     </p>
                     
                     <a href="about.php" class="btn-read-more">
@@ -731,18 +846,19 @@ body {
     </div>
 </div>
 
+<!-- HERITAGE IMAGE CARD -->
 <div class="container my-5">
-    <div class="heritage-card shadow-lg">
+    <div class="heritage-card shadow-lg reveal">
         <div class="heritage-image-container">
-            <img src="assets/images/kasaysayan.png"  class="heritage-img">
-            
+            <img src="assets/images/kasaysayan.png" class="heritage-img">
             <h2 class="heritage-bottom-left-text">Puso ng Kasaysayan, Likha ng Kalikasan</h2>
         </div>
     </div>
 </div>
 
+<!-- VINZONS SHRINE INFO CARD -->
 <div class="container pb-5">
-    <div class="glass-info-card p-0 overflow-hidden">
+    <div class="glass-info-card p-0 overflow-hidden reveal">
         <div class="row g-0">
             <div class="col-lg-7 p-5">
                 <div class="mb-4">
@@ -782,13 +898,11 @@ body {
     </div>
 </div>
 
-
+<!-- RAGGED HERO -->
 <div class="ragged-hero">
     <div class="ragged-bg-container">
-        <img src="assets/images/vinzons2.png"  class="hero-bg-img">
-        
+        <img src="assets/images/vinzons2.png" class="hero-bg-img">
         <div class="ragged-white-stroke"></div>
-
         <div class="container h-100 position-relative d-flex flex-column justify-content-center">
             <h1 class="hero-brand">Vinzons</h1>
             <p class="hero-quote">
@@ -799,15 +913,16 @@ body {
     </div>
 </div>
 
+<!-- CALAGUAS ISLAND -->
 <div class="container overlap-adjustment pb-5">
     <div class="row">
-        <div class="col-lg-5">
+        <div class="col-lg-5 reveal reveal-left">
             <div class="island-frame shadow-lg">
                 <img src="assets/images/calaguasisland.png" alt="Calaguas Island" class="img-fluid">
             </div>
         </div>
 
-        <div class="col-lg-7 pt-lg-5 mt-lg-4">
+        <div class="col-lg-7 pt-lg-5 mt-lg-4 reveal reveal-right">
             <h1 class="island-title">Calaguas Island, Vinzons</h1>
             <p class="island-text">
                 A pristine group of islands, renowned for its stunning natural beauty and unspoiled environment. 
@@ -835,32 +950,32 @@ body {
     </div>
 </div>
 
+<!-- 4-CARD SHOWCASE -->
 <section class="hero-section">
-  <div class="cards-container">
-    <div class="card">
+  <div class="cards-container stagger">
+    <div class="card reveal reveal-scale">
       <img src="assets/images/historical.png" alt="Historical Marker">
     </div>
-    <div class="card">
+    <div class="card reveal reveal-scale">
       <img src="assets/images/vinzonshouse.png" alt="Vinzons House">
     </div>
-    <div class="card">
+    <div class="card reveal reveal-scale">
       <img src="assets/images/boat.png" alt="Beach Boat">
     </div>
-    <div class="card">
+    <div class="card reveal reveal-scale">
       <img src="assets/images/crystalkayak.jpg" alt="Clear Kayak">
     </div>
   </div>
 </section>
 
-
+<!-- TRAVEL AGENCIES -->
 <section class="agency-section">
-  <div class="top-divider"></div>
-  
   <div class="content-container">
-    <h2 class="title">LIST OF TRAVEL AGENCIES</h2>
+    <div class="top-divider"></div>
+    <h2 class="title reveal">LIST OF TRAVEL AGENCIES</h2>
     
-    <div class="agencies-grid">
-      <div class="agency-card">
+    <div class="agencies-grid stagger">
+      <div class="agency-card reveal">
         <div class="logo-box">
           <img src="Baybreeze.png" alt="Logo">
         </div>
@@ -872,7 +987,7 @@ body {
         </div>
       </div>
 
-      <div class="agency-card">
+      <div class="agency-card reveal">
         <div class="logo-box">
           <img src="sunriseshorer.png" alt="Logo">
         </div>
@@ -884,7 +999,7 @@ body {
         </div>
       </div>
 
-      <div class="agency-card">
+      <div class="agency-card reveal">
         <div class="logo-box">
           <img src="buhanginvoyages.png" alt="Logo">
         </div>
@@ -896,7 +1011,7 @@ body {
         </div>
       </div>
 
-      <div class="agency-card">
+      <div class="agency-card reveal">
         <div class="logo-box">
           <img src="trailadventures.png" alt="Logo">
         </div>
@@ -908,7 +1023,7 @@ body {
         </div>
       </div>
 
-      <div class="agency-card">
+      <div class="agency-card reveal">
         <div class="logo-box">
           <img src="islanorte.png" alt="Logo">
         </div>
@@ -920,39 +1035,142 @@ body {
         </div>
       </div>
 
-      <div class="agency-card">
+      <div class="agency-card reveal">
         <div class="logo-box">
           <img src="greencoast.png" alt="Logo">
         </div>
         <div class="agency-info">
           <h3>Green Coast Expeditions</h3>
           <p>Local community tour group providing nature trekking, fishing trips, and waterfall adventures.</p>
-          <span class="phone">09123456879</span>s
+          <span class="phone">09123456879</span>
           <button class="msg-btn">Message now</button>
         </div>
       </div>
-    </div> </div> </section>
+    </div>
+  </div>
+</section>
 
-    <?php require BASE_PATH . '/includes/footer.php'; ?>
+<?php require BASE_PATH . '/includes/footer.php'; ?>
 
-    <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const observerOptions = {
-        threshold: 0.1
-    };
+<!-- ============================================
+     ANIMATION JAVASCRIPT
+     ============================================ -->
+<script>
+(function () {
+    'use strict';
 
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
+    /* ---- Page fade-in ---- */
+    document.body.style.opacity = '0';
+    window.addEventListener('load', function () {
+        document.body.style.opacity = '1';
+    });
+
+    var observerOpts = { threshold: 0.12, rootMargin: '0px 0px -40px 0px' };
+
+    /* ---- Generic .reveal handler ---- */
+    var revealEls = document.querySelectorAll('.reveal');
+    var revealObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
             if (entry.isIntersecting) {
                 entry.target.classList.add('active');
+                revealObserver.unobserve(entry.target);
             }
         });
-    }, observerOptions);
+    }, observerOpts);
+    revealEls.forEach(function (el) { revealObserver.observe(el); });
 
-    // Apply to any element with 'reveal' class
-    document.querySelectorAll('.agency-section, .glass-card, .discover-divider').forEach(el => {
-        el.classList.add('reveal');
-        observer.observe(el);
+    /* ---- Divider line expansion ---- */
+    var dividers = document.querySelectorAll('.discover-divider');
+    var dividerObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+                dividerObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+    dividers.forEach(function (el) { dividerObserver.observe(el); });
+
+    /* ---- Top divider in agency section ---- */
+    var topDividers = document.querySelectorAll('.top-divider');
+    var topDivObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+                topDivObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.4 });
+    topDividers.forEach(function (el) { topDivObserver.observe(el); });
+
+    /* ---- 3D tilt on glass cards ---- */
+    var tiltCards = document.querySelectorAll('.glass-card, .glass-info-card, .agency-card');
+    tiltCards.forEach(function (card) {
+        card.addEventListener('mousemove', function (e) {
+            var rect = card.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            var cx = rect.width / 2;
+            var cy = rect.height / 2;
+            var rx = ((y - cy) / cy) * -4;
+            var ry = ((x - cx) / cx) * 4;
+            card.style.transform = 'perspective(700px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) translateY(-6px)';
+        });
+        card.addEventListener('mouseleave', function () {
+            card.style.transform = '';
+        });
     });
-});
+
+    /* ---- Showcase card tilt (separate, stronger) ---- */
+    var showcaseCards = document.querySelectorAll('.cards-container .card');
+    showcaseCards.forEach(function (card) {
+        card.addEventListener('mouseenter', function () {
+            card.style.animation = 'none';
+        });
+        card.addEventListener('mouseleave', function () {
+            card.style.animation = '';
+            card.style.transform = '';
+        });
+        card.addEventListener('mousemove', function (e) {
+            var rect = card.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            var cx = rect.width / 2;
+            var cy = rect.height / 2;
+            var rx = ((y - cy) / cy) * -8;
+            var ry = ((x - cx) / cx) * 8;
+            card.style.transform = 'translateY(-16px) scale(1.04) perspective(600px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
+        });
+    });
+
+    /* ---- Overlap image tilt ---- */
+    var overlapImgs = document.querySelectorAll('.overlap-img-wrapper');
+    overlapImgs.forEach(function (wrapper) {
+        wrapper.addEventListener('mousemove', function (e) {
+            var rect = wrapper.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            var cx = rect.width / 2;
+            var cy = rect.height / 2;
+            var rx = ((y - cy) / cy) * -5;
+            var ry = ((x - cx) / cx) * 5;
+            wrapper.style.animation = 'none';
+            wrapper.style.transform = 'translateY(-14px) scale(1.03) perspective(600px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
+        });
+        wrapper.addEventListener('mouseleave', function () {
+            wrapper.style.animation = '';
+            wrapper.style.transform = '';
+        });
+    });
+
+    /* ---- Scroll-triggered parallax nudge on hero ---- */
+    var heroSection = document.querySelector('.hero');
+    if (heroSection) {
+        window.addEventListener('scroll', function () {
+            var scrolled = window.pageYOffset;
+            heroSection.style.backgroundPositionY = (scrolled * 0.3) + 'px';
+        }, { passive: true });
+    }
+
+})();
 </script>
