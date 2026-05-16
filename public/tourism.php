@@ -31,6 +31,8 @@ require BASE_PATH . '/includes/navbar.php';
 <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bungee&family=Inter:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
+
+    
     :root {
         --vinzons-blue: #00468C;
         --vinzons-amber: #FFB300;
@@ -42,6 +44,30 @@ require BASE_PATH . '/includes/navbar.php';
         font-family: 'Inter', sans-serif;
     }
 
+    /* --- NEW ANIMATION KEYFRAMES --- */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-15px); }
+        100% { transform: translateY(0px); }
+    }
+
+    /* Scroll Reveal Initial State */
+    .reveal {
+        opacity: 0;
+        transform: translateY(40px);
+        transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
     /* Hero Banner Section */
     .hero-container {
         position: relative;
@@ -51,6 +77,7 @@ require BASE_PATH . '/includes/navbar.php';
         padding-bottom: 250px; /* Space for overlapping images */
         text-align: left;
         color: white;
+        animation: fadeInUp 1s ease-out; /* Added Animation */
     }
 
     .hero-text-wrapper {
@@ -91,7 +118,12 @@ require BASE_PATH . '/includes/navbar.php';
         border-radius: 15px;
         box-shadow: 0 15px 35px rgba(0,0,0,0.2);
         background-color: #eee;
+        animation: float 4s ease-in-out infinite; /* Added Floating Animation */
     }
+
+    /* Staggered float timing */
+    .overlap-img:nth-child(2) { animation-delay: 0.5s; }
+    .overlap-img:nth-child(3) { animation-delay: 1s; }
 
     /* Transition Text */
     .transition-text {
@@ -147,6 +179,11 @@ require BASE_PATH . '/includes/navbar.php';
         border-radius: 25px;
         overflow: hidden;
         box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1); /* Soft shadow */
+        transition: transform 0.3s ease; /* Added Hover Transition */
+    }
+
+    .glass-card:hover {
+        transform: scale(1.02);
     }
 
     .about-image-container img {
@@ -227,6 +264,7 @@ require BASE_PATH . '/includes/navbar.php';
         border: 1px solid rgba(255, 255, 255, 0.3);
         border-radius: 30px;
         box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        transition: transform 0.4s ease;
     }
 
     .info-side-img {
@@ -432,6 +470,12 @@ body {
   align-items: flex-start;
   gap: 20px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  transition: all 0.3s ease; /* Added Transition */
+}
+
+.agency-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
 }
 
 /* Logo container */
@@ -444,6 +488,11 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.agency-card:hover .logo-box {
+    transform: rotate(-5deg);
 }
 
 .logo-box img {
@@ -481,63 +530,120 @@ body {
   text-decoration: underline;
   color: var(--text-dark);
 }
-
-
-/* Container for the whole section */
 .agency-section {
-  width: 100%;
-  padding: 0; /* Remove default padding to let the line span fully */
-  margin-top: 50px;
+    width: 100%;
+    /* Creates a safety buffer so cards never touch the footer */
+    padding-bottom: 80px; 
+    margin-top: 50px;
+    position: relative;
+    z-index: 1;
 }
 
-/* The Blue Line Divider - Positioned at the top */
+/* Updated Blue Divider */
 .top-divider {
-  width: 100%;
-  height: 8px;
-  background-color: #5b9bd5;
-  border-radius: 4px;
-  margin-bottom: 60px; /* Increased space below the line */
+    width: 0%; /* Initial state for animation */
+    height: 8px;
+    background-color: #5b9bd5;
+    border-radius: 4px;
+    margin-bottom: 40px;
+    transition: width 1.2s ease-in-out;
 }
 
-/* This container manages the side margins */
+.reveal.active .top-divider {
+    width: 100%;
+}
+
 .content-container {
-  max-width: 1200px; /* Adjust this to match the width of your 4-picture row */
-  margin: 0 auto;    /* Centers the content */
-  padding: 0 40px;   /* Consistent side margins (adjust as needed) */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
 }
 
 .title {
-  color: #003300;
-  font-weight: 900;
-  font-size: 32px;
-  margin-bottom: 40px; /* Space between title and cards */
-  text-transform: uppercase;
+    color: #003300;
+    font-weight: 900;
+    font-size: 28px;
+    margin-bottom: 30px;
+    text-transform: uppercase;
 }
 
-/* Grid Layout with side margins inherited from container */
+/* Fixed Grid: Prevents height collapse */
 .agencies-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px; /* Space between the cards */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    align-items: stretch; /* Ensures cards in the same row have equal height */
 }
 
+/* Agency Card: Matched to your screenshot */
 .agency-card {
-  background-color: #bde4f7;
-  border-radius: 20px;
-  padding: 25px;
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transition: transform 0.2s ease;
+    background: rgba(255, 255, 255, 0.4); /* Glass effect from image */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 25px;
+    display: flex;
+    align-items: center; /* Vertically centers content - FIXES OVERLAP LOOK */
+    gap: 20px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 .agency-card:hover {
-  transform: translateY(-5px); /* Subtle lift on hover */
+    transform: translateY(-8px);
+    background: rgba(255, 255, 255, 0.6);
 }
 
+.logo-box {
+    background-color: #D9D9D9; /* Matching the grey box in your image */
+    min-width: 100px;
+    height: 100px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.agency-info h3 {
+    margin: 0 0 5px 0;
+    color: #1a1a1a;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.agency-info p {
+    margin: 0 0 10px 0;
+    font-size: 0.9rem;
+    color: #444;
+    line-height: 1.4;
+}
+
+/* Contact Row matching your 0912... Message Now style */
+.contact-row {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1a1a1a;
+}
+
+.msg-btn {
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: #666;
+    text-decoration: none;
+    margin-left: 8px;
+}
+
+.msg-btn:hover {
+    text-decoration: underline;
+    color: var(--vinzons-blue);
+}
 
 </style>
+
+
 
 <section class="hero position-relative" 
     style="min-height: 65vh; 
@@ -828,3 +934,25 @@ body {
     </div> </div> </section>
 
     <?php require BASE_PATH . '/includes/footer.php'; ?>
+
+    <script>
+document.addEventListener("DOMContentLoaded", function() {
+    const observerOptions = {
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+            }
+        });
+    }, observerOptions);
+
+    // Apply to any element with 'reveal' class
+    document.querySelectorAll('.agency-section, .glass-card, .discover-divider').forEach(el => {
+        el.classList.add('reveal');
+        observer.observe(el);
+    });
+});
+</script>

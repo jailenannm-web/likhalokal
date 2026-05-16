@@ -13,11 +13,9 @@ require BASE_PATH . '/includes/header.php';
 require BASE_PATH . '/includes/navbar.php';
 ?>
 
-<!-- Import Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bungee&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Lisu+Bosa:wght@400;500;600&display=swap');
+    
     :root {
         --vinzons-blue: #0077C2;
         --vinzons-dark-blue: #050A30;
@@ -32,64 +30,92 @@ require BASE_PATH . '/includes/navbar.php';
         font-family: var(--body-font) !important;
         font-style: normal !important;
         line-height: 1.6;
-    }
-/* Business Portal Hero Section */
+    }/* Base Container Styles (for alignment) */
+.container-fluid {
+    width: 100%;
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+/* --- Hero Section with Background Banner --- */
 .biz-hero {
-    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
-                url('assets/images/local-workers-bg.jpg'); /* Replace with your image path */
+    position: relative;
+    min-height: 450px; /* Adjust height as needed */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #ffffff;
+    
+    /* Placeholder Background Image Setup */
+    /* REPLACE the placeholder URL with your actual image path later */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), 
+                      url('https://via.placeholder.com/1920x600/2c3e50/ffffff?text=Local+Business+Banner');
     background-size: cover;
     background-position: center;
-    padding: 100px 10%;
-    color: white;
-    text-align: left;
+    background-repeat: no-repeat;
+    background-attachment: scroll; /* Change to 'fixed' for a parallax effect */
+}
+
+.biz-hero-content {
+    z-index: 2; /* Ensures text stays above any backgrounds */
+    padding: 30px;
 }
 
 .biz-hero-title {
-    font-family: 'Bungee', cursive;
-    font-size: 4.5rem;
-    line-height: 1.1;
-    margin-bottom: 20px;
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
     text-transform: uppercase;
 }
 
 .biz-hero-tagline {
-    font-family: 'Bilbo Swash Caps', cursive;
-    font-size: 2.2rem;
-    max-width: 500px;
+    font-size: 1.25rem;
+    font-weight: 400;
+    opacity: 0.95;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
-/* Call to Action Section */
+/* --- CTA / Description Section --- */
 .biz-cta-section {
-    background-color: #051024; /* Dark navy background from image */
-    padding: 80px 15%;
+    padding: 60px 0;
     text-align: center;
-    color: white;
+    background-color: #f9f9f9;
 }
 
 .biz-keywords {
-    font-family: 'Bungee', cursive;
-    color: #FFB300; /* Yellow/Amber color */
-    font-size: 2.5rem;
-    letter-spacing: 2px;
+    font-size: 1rem;
+    color: #007bff; /* Adjust theme color here */
+    letter-spacing: 3px;
     margin-bottom: 10px;
-    text-transform: uppercase;
+    font-weight: 700;
 }
 
 .biz-main-heading {
-    font-family: 'Abril Fatface', serif;
-    font-size: 2.8rem;
-    margin-bottom: 30px;
+    font-size: 2rem;
+    color: #333333;
+    margin-bottom: 20px;
+    font-weight: 600;
 }
 
 .biz-description {
-    font-family: 'serif'; /* Lisu Bosa fallback */
     font-size: 1.1rem;
+    color: #666666;
     line-height: 1.6;
-    max-width: 900px;
+    max-width: 800px;
     margin: 0 auto;
-    opacity: 0.9;
 }
-
 
 /* Business Directory Categories */
 .directory-section {
@@ -98,7 +124,7 @@ require BASE_PATH . '/includes/navbar.php';
 }
 
 .section-title {
-    font-family: 'Bungee', cursive;
+    font-family: 'Bungee';
     color: var(--dark-navy);
     font-size: 2rem;
     margin-bottom: 30px;
@@ -165,7 +191,7 @@ require BASE_PATH . '/includes/navbar.php';
 }
 
 .support-text .large-text {
-    font-family: 'Bungee', cursive;
+    font-family: 'Bungee';
     font-size: 3.5rem;
     color: var(--amber-orange);
     line-height: 0.8;
@@ -213,7 +239,7 @@ require BASE_PATH . '/includes/navbar.php';
 }
 
 .biz-details h4 {
-    font-family: 'Bungee', cursive;
+    font-family: 'Bungee';
     font-size: 0.9rem;
     margin: 0;
     color: var(--dark-navy);
@@ -251,14 +277,14 @@ require BASE_PATH . '/includes/navbar.php';
 }
 
 .biz-hero-title {
-    font-family: 'Bungee', cursive;
+    font-family: 'Bungee';
     font-size: 4rem;
     line-height: 1.1;
     text-transform: uppercase;
 }
 
 .biz-hero-tagline {
-    font-family: 'Bilbo Swash Caps', cursive;
+    font-family: 'Bilbo Swash Caps';
     font-size: 2.2rem;
     margin-top: 15px;
 }
@@ -271,7 +297,7 @@ require BASE_PATH . '/includes/navbar.php';
 }
 
 .biz-keywords {
-    font-family: 'Bungee', cursive;
+    font-family: 'Bungee';
     color: var(--amber-orange);
     font-size: 2.2rem;
     margin-bottom: 10px;
@@ -281,6 +307,7 @@ require BASE_PATH . '/includes/navbar.php';
     font-family: 'Abril Fatface', serif;
     font-size: 2.5rem;
     margin-bottom: 25px;
+    color: White;
 }
 
 .biz-description {
@@ -289,6 +316,7 @@ require BASE_PATH . '/includes/navbar.php';
     line-height: 1.6;
     max-width: 850px;
     margin: 0 auto;
+    color: var(--amber-orange);
 }
 
 /* --- SECTION 2: DIRECTORY & FEATURED --- */
@@ -298,7 +326,7 @@ require BASE_PATH . '/includes/navbar.php';
 }
 
 .section-label {
-    font-family: 'Bungee', cursive;
+    font-family: 'Bungee';
     color: var(--dark-navy);
     font-size: 2rem;
     margin-bottom: 40px;
@@ -318,7 +346,7 @@ require BASE_PATH . '/includes/navbar.php';
     text-align: center;
     color: var(--dark-navy);
     text-decoration: none;
-    font-family: 'Bungee', cursive;
+    font-family: 'Bungee';
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
@@ -339,7 +367,7 @@ require BASE_PATH . '/includes/navbar.php';
 
 .support-title { text-align: center; }
 .support-title .small { font-family: 'Abril Fatface', serif; font-size: 1.8rem; color: var(--dark-navy); margin: 0; }
-.support-title .large { font-family: 'Bungee', cursive; font-size: 3.5rem; color: var(--amber-orange); line-height: 0.8; margin: 0; }
+.support-title .large { font-family: 'Bungee'; font-size: 3.5rem; color: var(--amber-orange); line-height: 0.8; margin: 0; }
 
 /* Featured Business Cards */
 .featured-biz-grid {
@@ -368,7 +396,7 @@ require BASE_PATH . '/includes/navbar.php';
     align-items: center;
 }
 
-.biz-footer h4 { font-family: 'Bungee', cursive; font-size: 0.9rem; margin: 0; }
+.biz-footer h4 { font-family: 'Bungee'; font-size: 0.9rem; margin: 0; }
 .biz-footer p { font-size: 0.75rem; margin: 5px 0 0; line-height: 1.3; }
 
 /* --- SECTION 3: THREE-COLUMN LISTINGS --- */
@@ -384,7 +412,7 @@ require BASE_PATH . '/includes/navbar.php';
 }
 
 .col-header {
-    font-family: 'Bungee', cursive;
+    font-family: 'Bungee';
     font-size: 1.5rem;
     color: var(--dark-navy);
     border-bottom: 4px solid var(--amber-orange);
@@ -436,7 +464,7 @@ require BASE_PATH . '/includes/navbar.php';
     }
 
     .reg-banner h2 {
-        font-family: 'Bungee', cursive;
+        font-family: 'Bungee';
         color: white;
         margin: 0;
         font-size: 1.8rem;
@@ -457,7 +485,7 @@ require BASE_PATH . '/includes/navbar.php';
     }
 
     .reg-title {
-        font-family: 'Bungee', cursive;
+        font-family: 'Bungee';
         color: var(--amber-orange);
         font-size: 2.5rem;
         margin-bottom: 12px;
@@ -521,7 +549,7 @@ require BASE_PATH . '/includes/navbar.php';
     .apply-button {
         background-color: var(--amber-orange);
         color: var(--dark-navy);
-        font-family: 'Bungee', cursive;
+        font-family: 'Bungee';
         padding: 15px 80px;
         border: none;
         border-radius: 12px;
@@ -549,14 +577,28 @@ require BASE_PATH . '/includes/navbar.php';
     }
 </style> 
 
-<section class="biz-hero">
-    <div class="container-fluid">
-        <h1 class="biz-hero-title">
-            LOKAL NA NEGOSYO,<br>
-            LOKAL NA ASENSO
+<section class="hero position-relative" 
+    style="min-height: 65vh; 
+           background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('<?= asset_url('images/tourismbackground.png') ?>'); 
+           background-position: center; 
+           background-size: cover; 
+           background-repeat: no-repeat;
+           display: flex;
+           align-items: flex-end; /* Keeps content at the bottom */
+           padding-bottom: 50px; /* Space from the bottom edge */"> 
+    
+    <!-- Changed margin-left to 0 and added minimal padding-left to push it to the far left safely -->
+    <div class="container position-relative hero-text-animate" 
+         style="text-align: left; margin-left: 0; padding-left: 25px; max-width: 100%;">
+         
+        <!-- Heading using Bungee Font -->
+        <h1 class="display-3 fw-bold text-white mb-3" style="font-family: 'Bungee', sans-serif; letter-spacing: 1px; line-height: 1.1; text-shadow: 3px 3px 10px rgba(0,0,0,0.6);">
+            LOKAL NA NEGOSYO,<br><span style="color: #ffda79;">LOKAL NA ASENSO</span>
         </h1>
-        <p class="biz-hero-tagline">
-            Supporting entrepreneurs, building community livelihoods.
+        
+        <!-- Tagline using Abril Fatface Font -->
+        <p class="text-white mb-0" style="font-family: 'Abril Fatface', serif; font-size: 2.2rem; line-height: 1.2; text-shadow: 2px 2px 6px rgba(0,0,0,0.6); max-width: 750px;">
+            Supporting entrepreneurs, <br>Building community livelihoods.
         </p>
     </div>
 </section>
@@ -662,50 +704,6 @@ require BASE_PATH . '/includes/navbar.php';
         </div>
     </div>
 </section>
-
-<div class="directory-wrapper">
-    <h2 class="section-label">BUSINESS DIRECTORY</h2>
-    <div class="category-grid">
-        <a href="#" class="category-card"><i class="bi bi-egg-fried d-block mb-2 fs-1"></i><span>Food & Restaurants</span></a>
-        <a href="#" class="category-card"><i class="bi bi-house-heart d-block mb-2 fs-1"></i><span>Resorts & Homestays</span></a>
-        <a href="#" class="category-card"><i class="bi bi-bag-check d-block mb-2 fs-1"></i><span>Pasalubongs</span></a>
-        <a href="#" class="category-card"><i class="bi bi-gear-wide-connected d-block mb-2 fs-1"></i><span>Services</span></a>
-    </div>
-
-    <div class="support-local-divider">
-        <div class="divider-line"></div>
-        <div class="support-title">
-            <p class="small">Support</p>
-            <h2 class="large">LOCAL</h2>
-        </div>
-        <div class="divider-line"></div>
-    </div>
-
-    <h2 class="section-label">FEATURED BUSINESS</h2>
-    <div class="featured-biz-grid">
-        <div class="biz-card">
-            <div class="biz-img-box"><img src="assets/images/fruit-stand.png" alt="Fruit Stand"></div>
-            <div class="biz-footer">
-                <div><h4>Vinzons Fruit Stand</h4><p>Fresh tropical fruits from local farms.</p></div>
-                <a href="#" class="text-dark"><i class="bi bi-envelope-fill fs-4"></i></a>
-            </div>
-        </div>
-        <div class="biz-card">
-            <div class="biz-img-box"><img src="assets/images/crafts.png" alt="Crafts"></div>
-            <div class="biz-footer">
-                <div><h4>Coastal Crafts Vinzons</h4><p>Driftwood art and shell ornaments.</p></div>
-                <a href="#" class="text-dark"><i class="bi bi-envelope-fill fs-4"></i></a>
-            </div>
-        </div>
-        <div class="biz-card">
-            <div class="biz-img-box"><img src="assets/images/souvenirs.png" alt="Souvenirs"></div>
-            <div class="biz-footer">
-                <div><h4>Native Touch Souvenirs</h4><p>Coconut shell crafts and decor.</p></div>
-                <a href="#" class="text-dark"><i class="bi bi-envelope-fill fs-4"></i></a>
-            </div>
-        </div>
-    </div>
-</div>
 
 <section class="listings-wrapper">
     <div class="listings-grid">

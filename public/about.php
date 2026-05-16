@@ -148,10 +148,24 @@ require BASE_PATH . '/includes/navbar.php';
     .text-blue { color: var(--vinzons-blue) !important; }
 </style>
 
-<header class="hero-banner">
-    <h1 class="hero-title">Tuklas Lakbay Lokal</h1>
-    <p class="hero-subtitle">WHERE ANCIENT SPIRITS OF INDAN MEET THE PRISTINE WATERS OF THE PACIFIC.</p>
-</header>
+<section class="hero position-relative" 
+    style="min-height: 65vh; 
+           background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('<?= asset_url('images/tourismbackground.png') ?>'); 
+           background-position: center; 
+           background-size: cover; 
+           background-repeat: no-repeat;
+           display: flex;
+           align-items: center;
+           padding-bottom: 100px;"> 
+           <div class="container position-relative h-100 py-5 d-flex flex-column justify-content-center mt-5 hero-text-animate">
+        <h1 class="display-3 fw-bold text-white mb-2" style="font-family: Impact, sans-serif; letter-spacing: 2px; text-shadow: 2px 2px 8px rgba(0,0,0,0.4);">
+            TUKLAS LAKBAY LOKAL </h1>
+    <p class="text-white" style="font-family: 'Bungee', sans-serif; font-size: 1rem; color: #FFBF00 !important; text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7); letter-spacing: 1px; line-height: 1.3;">
+    WHERE ANCIENT SPIRITS OF INDAN
+    MEET THE PRISTINE WATERS OF THE PACIFIC.
+</p>
+    </div>
+</section>
 
 <div class="container py-5">
     <!-- Comprehensive Story Section -->
@@ -167,15 +181,6 @@ require BASE_PATH . '/includes/navbar.php';
         </div>
     </div>
 
-    <!-- Section Divider (Reference: image_93eaae.png) -->
-    <div class="section-divider">
-        <div class="divider-line"></div>
-        <div class="divider-content">
-            <div class="section-h2">Discover</div>
-            <h2 class="section-h2 text-amber mb-0">OUR TOWN</h2>
-        </div>
-        <div class="divider-line"></div>
-    </div>
 
     <!-- Longer Facts Section -->
     <div class="row g-4 mb-5 pb-5 text-center">
@@ -255,10 +260,10 @@ require BASE_PATH . '/includes/navbar.php';
     <div class="unified-card glass-effect p-4 mb-5 shadow-sm border-0">
         <div class="row align-items-center position-relative">
             <div class="col-md-9 px-4">
-                <h2 class="section-h3 text-blue mb-2" style="font-family: 'Abril Fatface', cursive;">Travel with Purpose</h2>
+                <h2 class="section-h3 text-blue mb-2" style="font-family: 'Abril Fatface'">Travel with Purpose</h2>
                 <p class="small mb-4">Vinzons is a fragile paradise. We invite you to discover our beauty responsibly—respect local customs, minimize waste, and support our community initiatives for a sustainable future.</p>
                 
-                <div class="d-flex flex-wrap gap-4 text-uppercase" style="font-size: 0.7rem; font-family: 'Bungee', cursive;">
+                <div class="d-flex flex-wrap gap-4 text-uppercase" style="font-size: 0.7rem; font-family: 'Bungee';">
                     <span><i class="bi bi-gear-fill me-1"></i> Eco-Friendly Tours</span>
                     <span><i class="bi bi-recycle me-1"></i> Zero Waste</span>
                     <span><i class="bi bi-person-fill me-1"></i> Local Empowerment</span>
