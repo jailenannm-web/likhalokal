@@ -178,7 +178,7 @@ require BASE_PATH . '/includes/navbar.php';
             <p class="mb-4">Named after the legendary Wenceslao Q. Vinzons—the "Father of the Resistance" in the Philippines—our town embodies a spirit of bravery. From the intricate stone carvings of the St. Peter the Apostle Parish to the bustling local markets filled with the aroma of <em>Angol</em> and fresh seafood, every corner offers an invitation to slow down and rediscover the soul of Bicolano culture.</p>
         </div>
         <div class="col-lg-6">
-            <img src="heritagechurch.png" alt="Heritage Church" class="img-fluid unified-card shadow-lg border border-5 border-white">
+            <img src="assets/images/vinzonschurch.png" alt="Heritage Church" class="img-fluid unified-card shadow-lg border border-5 border-white">
         </div>
     </div>
 

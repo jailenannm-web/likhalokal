@@ -576,6 +576,71 @@ require BASE_PATH . '/includes/navbar.php';
         .reg-title { font-size: 1.8rem; }
     }
     
+<<<<<<< HEAD
+=======
+    .biz-hero {
+    /* This adds a dark overlay gradient so your white text stays perfectly readable over the image */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('../images/local-business-hero.jpg');
+    
+    /* This forces the image to scale beautifully and stay centered without stretching */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    /* Gives the hero section its spacious height */
+    padding: 100px 0; 
+    min-height: 60vh;
+    
+    /* Flexbox setup to center the text elements vertically and horizontally */
+    display: flex;
+    align-items: center;
+    color: #ffffff; /* Forces text to be crisp white over the background image */
+}
+
+.biz-hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    
+    /* Smooth slide-in-left animation for the main title */
+    animation: slideInLeft 1.2s ease-out forwards;
+    opacity: 0; /* Starts hidden and fades in via keyframes */
+}
+
+.biz-hero-tagline {
+    font-size: 1.5rem;
+    font-weight: 400;
+    opacity: 0.9;
+    
+    /* Clean fade-in that starts slightly after the title moves */
+    animation: fadeIn 1s ease-out 0.5s forwards;
+    opacity: 0;
+}
+
+/* --- Animation Keyframes --- */
+@keyframes slideInLeft {
+    0% {
+        opacity: 0;
+        transform: translateX(-30px); /* Slides rightward into place */
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0); /* Settles at your original left alignment */
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+>>>>>>> 10e0a95d6bad607f7f0e46b40a099e84fbe00752
 </style> 
 
 <section class="hero position-relative" 
@@ -654,7 +719,7 @@ require BASE_PATH . '/includes/navbar.php';
     <div class="featured-grid">
         <div class="business-card">
             <div class="biz-image-area">
-                <img src="assets/images/fruit-logo.png" alt="Fruit Stand">
+                <img src="assets/images/fruitstand.png" alt="Fruit Stand">
             </div>
             <div class="biz-info-bar">
                 <div class="biz-details">
@@ -667,7 +732,7 @@ require BASE_PATH . '/includes/navbar.php';
 
         <div class="business-card">
             <div class="biz-image-area">
-                <img src="assets/images/crafts-logo.png" alt="Coastal Crafts">
+                <img src="assets/images/coastalcraft.png" alt="Coastal Crafts">
             </div>
             <div class="biz-info-bar">
                 <div class="biz-details">
@@ -680,7 +745,7 @@ require BASE_PATH . '/includes/navbar.php';
 
         <div class="business-card">
             <div class="biz-image-area">
-                <img src="assets/images/native-logo.png" alt="Native Touch">
+                <img src="assets/images/nativetouch.png" alt="Native Touch">
             </div>
             <div class="biz-info-bar">
                 <div class="biz-details">
@@ -693,7 +758,7 @@ require BASE_PATH . '/includes/navbar.php';
 
         <div class="business-card">
             <div class="biz-image-area">
-                <img src="assets/images/sweets-logo.png" alt="Sweet Treats">
+                <img src="assets/images/sweettreats.png" alt="Sweet Treats">
             </div>
             <div class="biz-info-bar">
                 <div class="biz-details">
@@ -706,6 +771,10 @@ require BASE_PATH . '/includes/navbar.php';
     </div>
 </section>
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 10e0a95d6bad607f7f0e46b40a099e84fbe00752
 <section class="listings-wrapper">
     <div class="listings-grid">
         
