@@ -558,7 +558,7 @@ body {
                     
                     <!-- Main Image -->
                     <div class="position-relative z-2" style="border-radius: 16px; transition: transform 0.4s ease;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                        <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1000&q=80" class="w-100 shadow-lg" style="height: 420px; object-fit: cover; border-radius: 16px;" alt="Festival Main">
+                        <img src="assets/images/mainimage.png" class="w-100 shadow-lg" style="height: 420px; object-fit: cover; border-radius: 16px;" alt="Festival Main">
                         
                         <!-- Floating Event Date Badge -->
                         <div class="position-absolute bg-white shadow-lg p-3 rounded-4 z-3" style="top: -20px; right: -20px; transform: rotate(8deg); border-left: 6px solid #dc3545; transition: transform 0.3s;" onmouseover="this.style.transform='rotate(0deg) scale(1.1)'" onmouseout="this.style.transform='rotate(8deg) scale(1)'">
@@ -571,12 +571,12 @@ body {
                     
                     <!-- Overlapping Image 1 (Left) -->
                     <div class="position-absolute" style="bottom: -50px; left: -20px; z-index: 3; width: 55%; transition: transform 0.4s ease;" onmouseover="this.style.transform='scale(1.05) rotate(-3deg)'" onmouseout="this.style.transform='scale(1) rotate(0)'">
-                        <img src="https://images.unsplash.com/photo-1543807535-eceef0bc6599?auto=format&fit=crop&w=600&q=80" class="w-100 shadow-lg" style="height: 200px; object-fit: cover; border-radius: 12px; border: 6px solid #fff;" alt="Festival Crowd">
+                        <img src="assets/images/festival2.png" class="w-100 shadow-lg" style="height: 200px; object-fit: cover; border-radius: 12px; border: 6px solid #fff;" alt="Festival Crowd">
                     </div>
 
                     <!-- Overlapping Image 2 (Right) -->
                     <div class="position-absolute" style="bottom: 20px; right: -40px; z-index: 3; width: 45%; transition: transform 0.4s ease;" onmouseover="this.style.transform='scale(1.05) rotate(5deg)'" onmouseout="this.style.transform='scale(1) rotate(0)'">
-                        <img src="https://images.unsplash.com/photo-1533613220915-609f661a6fe1?auto=format&fit=crop&w=600&q=80" class="w-100 shadow-lg" style="height: 180px; object-fit: cover; border-radius: 12px; border: 5px solid #fff;" alt="Festival Mask">
+                        <img src="assets/images/tacboanfes1.png" class="w-100 shadow-lg" style="height: 180px; object-fit: cover; border-radius: 12px; border: 5px solid #fff;" alt="Festival Mask">
                     </div>
                 </div>
             </div>
