@@ -68,7 +68,7 @@ require BASE_PATH . '/includes/navbar.php';
 
     /* Hero Banner */
     .hero-banner {
-        background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('image_94717a.jpg');
+        background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('assets/images/aboutpic.png');
         background-size: cover;
         background-position: center;
         height: 65vh;
@@ -151,7 +151,7 @@ require BASE_PATH . '/includes/navbar.php';
 
 <section class="hero position-relative" 
     style="min-height: 65vh; 
-           background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('<?= asset_url('images/tourismbackground.png') ?>'); 
+           background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('<?= asset_url('images/aboutpic.png') ?>'); 
            background-position: center; 
            background-size: cover; 
            background-repeat: no-repeat;

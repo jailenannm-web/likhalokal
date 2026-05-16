@@ -58,7 +58,7 @@ body, p, span, li, small, a:not(.font-bungee) {
     /* Placeholder Background Image Setup */
     /* REPLACE the placeholder URL with your actual image path later */
     background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), 
-                      url('https://via.placeholder.com/1920x600/2c3e50/ffffff?text=Local+Business+Banner');
+                      url('assets/images/local.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -269,7 +269,7 @@ body, p, span, li, small, a:not(.font-bungee) {
 /* --- SECTION 1: HERO & CTA --- */
 .biz-hero {
     background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
-                url('assets/images/local-workers-bg.jpg'); 
+                url('images/local.png'); 
     background-size: cover;
     background-position: center;
     padding: 120px 10%;
@@ -582,7 +582,7 @@ body, p, span, li, small, a:not(.font-bungee) {
 <section class="hero position-relative" 
 
     style="min-height: 65vh; 
-           background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('<?= asset_url('images/tourismbackground.png') ?>'); 
+           background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('<?= asset_url('images/localbg.png') ?>'); 
            background-position: center; 
            background-size: cover; 
            background-repeat: no-repeat;
