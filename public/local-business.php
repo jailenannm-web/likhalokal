@@ -575,6 +575,7 @@ require BASE_PATH . '/includes/navbar.php';
         }
         .reg-title { font-size: 1.8rem; }
     }
+    
 </style> 
 
 <section class="hero position-relative" 

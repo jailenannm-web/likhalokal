@@ -146,6 +146,7 @@ require BASE_PATH . '/includes/navbar.php';
 
     .text-amber { color: var(--vinzons-amber) !important; }
     .text-blue { color: var(--vinzons-blue) !important; }
+    
 </style>
 
 <section class="hero position-relative" 
