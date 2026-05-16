@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-$pageTitle = 'Marketplace | LikhaLokal';
+$pageTitle = 'Marketplace & Services | LikhaLokal';
 $activeNav = 'products';
 require_once dirname(__DIR__) . '/bootstrap.php';
 
@@ -15,7 +15,7 @@ $stmt = db()->prepare($sql);
 $stmt->execute();
 $products = $stmt->fetchAll();
 
-// Group products by category AND by business
+// Group items by category AND by business
 $groupedByCategory = [];
 $allShops = [];
 $categorySpotlights = [];
@@ -57,22 +57,62 @@ foreach ($products as $p) {
     }
 }
 
-$categoryTitles = [
-    'local_delicacy' => 'LOCAL DELICACIES',
-    'handicraft' => 'HANDICRAFTS',
-    'fresh_produce' => 'FRESH PRODUCE'
-];
-
-$categorySpotlightTitles = [
-    'local_delicacy' => 'VINZONS BEST DELICACY',
-    'handicraft' => 'VINZONS BEST HANDICRAFT',
-    'fresh_produce' => 'FRESH FROM VINZONS'
-];
-
-$categoryIcons = [
-    'local_delicacy' => '<i class="fa-solid fa-bowl-rice"></i>',
-    'handicraft' => '<i class="fa-solid fa-hands-holding-circle"></i>',
-    'fresh_produce' => '<i class="fa-solid fa-seedling"></i>'
+// Global configuration array including multi-purpose business types
+$categoriesConfig = [
+    'local_delicacy' => [
+        'title' => 'LOCAL DELICACIES',
+        'spotlight' => 'VINZONS BEST DELICACY',
+        'icon' => '<i class="fa-solid fa-bowl-rice"></i>',
+        'tagline' => 'Taste the rich heritage of Vinzons. Every delicacy reflects the creativity, tradition, and livelihood of our local makers.',
+        'action_text' => 'Buy Now',
+        'action_icon' => 'fa-basket-shopping',
+        'badge' => 'Fresh Food'
+    ],
+    'handicraft' => [
+        'title' => 'HANDICRAFTS',
+        'spotlight' => 'VINZONS BEST HANDICRAFT',
+        'icon' => '<i class="fa-solid fa-hands-holding-circle"></i>',
+        'tagline' => 'Celebrate the incredible artistry of Vinzons with handcrafted souvenirs woven with skill and passion.',
+        'action_text' => 'Order Handcraft',
+        'action_icon' => 'fa-bag-shopping',
+        'badge' => 'Artisan Handcrafted'
+    ],
+    'fresh_produce' => [
+        'title' => 'FRESH PRODUCE',
+        'spotlight' => 'FRESH FROM VINZONS',
+        'icon' => '<i class="fa-solid fa-seedling"></i>',
+        'tagline' => "From vibrant local farms straight to your table — discover nature's finest harvests.",
+        'action_text' => 'Purchase Direct',
+        'action_icon' => 'fa-carrot',
+        'badge' => 'Organic Certified'
+    ],
+    'avail_service' => [
+        'title' => 'SERVICES TO AVAIL',
+        'spotlight' => 'TRUSTED LOCAL SKILLS',
+        'icon' => '<i class="fa-solid fa-bell-concierge"></i>',
+        'tagline' => 'Hire talented local providers for your custom requirements, installations, artistic gigs, and technical jobs.',
+        'action_text' => 'Avail Service',
+        'action_icon' => 'fa-file-signature',
+        'badge' => 'Verified Vendor'
+    ],
+    'book_experience' => [
+        'title' => 'EXPERIENCES & BOOKINGS',
+        'spotlight' => 'EXPLORE & UNWIND IN VINZONS',
+        'icon' => '<i class="fa-solid fa-map-location-dot"></i>',
+        'tagline' => 'Reserve farm stays, dynamic tour experiences, cultural workshops, and rental services directly managed by locals.',
+        'action_text' => 'Book Spot Now',
+        'action_icon' => 'fa-calendar-check',
+        'badge' => 'Eco Tour / Stay'
+    ],
+    'custom_inquiry' => [
+        'title' => 'INQUIRE & CUSTOM COMMISSIONS',
+        'spotlight' => 'B2B & LARGE SCALE COMMISSIONS',
+        'icon' => '<i class="fa-solid fa-comments-dollar"></i>',
+        'tagline' => 'Looking for wholesale trade assets, unique raw products, or heavy bespoke fabrication? Contact our vendors directly.',
+        'action_text' => 'Request Quote',
+        'action_icon' => 'fa-paper-plane',
+        'badge' => 'Inquiry Only'
+    ]
 ];
 
 require BASE_PATH . '/includes/header.php';
@@ -150,7 +190,7 @@ body {
 }
 .spotlight-img {
     transition: transform 0.5s ease;
-    max-height: 200px;
+    max-height: 220px;
     object-fit: cover;
     border-radius: 12px;
 }
@@ -254,48 +294,76 @@ body {
     <i class="fa-solid fa-basket-shopping float-icon" style="top: 40%; right: 7%; animation-duration: 20s; font-size: 2.8rem; color: rgba(243,146,0,0.03);"></i>
     <i class="fa-solid fa-seedling float-icon" style="top: 75%; left: 6%; animation-duration: 18s; font-size: 2.5rem; color: rgba(27,67,50,0.03);"></i>
     <i class="fa-solid fa-sun float-icon" style="top: 25%; right: 12%; animation-duration: 25s; font-size: 3.5rem; color: rgba(243,146,0,0.02);"></i>
-    <i class="fa-solid fa-bowl-rice float-icon" style="top: 85%; right: 10%; animation-duration: 17s; font-size: 2.2rem; color: rgba(27,67,50,0.03);"></i>
+    <i class="fa-solid fa-map-location-dot float-icon" style="top: 55%; left: 15%; animation-duration: 22s; font-size: 2.4rem; color: rgba(27,67,50,0.02);"></i>
+    <i class="fa-solid fa-bell-concierge float-icon" style="top: 85%; right: 10%; animation-duration: 17s; font-size: 2.2rem; color: rgba(27,67,50,0.03);"></i>
 </div>
 
 <!-- Enhanced Hero Section -->
 <section class="hero position-relative" style="min-height: 60vh; background-image: url('<?= asset_url('images/products-hero2.png') ?>'), url('<?= asset_url('images/products-hero.png') ?>'); background-position: center; background-size: cover, cover; background-repeat: no-repeat, no-repeat;">
     <div class="container position-relative h-100 py-5 d-flex flex-column justify-content-center mt-5 hero-text-animate">
         <h1 class="display-3 fw-bold text-white mb-2" style="font-family: Impact, sans-serif; letter-spacing: 2px; text-shadow: 2px 2px 8px rgba(0,0,0,0.4);">
-            SUPORTA LOKAL,<br><span style="color: #ffda79;">LIKHA LOKAL</span>
+            EXPLORE, BOOK, & BUY<br><span style="color: #ffda79;">LIKHA LOKAL</span>
         </h1>
-        <p class="text-white" style="font-family: 'Dancing Script', cursive; font-size: 2.5rem; text-shadow: 1px 1px 4px rgba(0,0,0,0.5);">Mga produktong tunay, gawa ng sariling komunidad.</p>
+        <p class="text-white" style="font-family: 'Dancing Script', cursive; font-size: 2.5rem; text-shadow: 1px 1px 4px rgba(0,0,0,0.5);">Mga produkto at serbisyong tatak Vinzons.</p>
     </div>
 </section>
 
 <div class="container py-5">
     
-    <!-- Quick Categories Carousel -->
+    <!-- Expanded Quick Categories Carousel -->
     <div class="position-relative mb-4">
         <div class="d-flex overflow-auto gap-4 pb-3 product-carousel px-1" id="quick-cat-scroll">
             
-            <a href="#cat-local_delicacy" class="text-decoration-none flex-shrink-0" style="width: 420px; max-width: 85vw;">
-                <div class="position-relative overflow-hidden shadow-sm quick-cat-card" style="height: 160px;">
-                    <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80" class="w-100 h-100 object-fit-cover quick-cat-img" alt="Local Delicacies">
-                    <div class="position-absolute bottom-0 start-0 w-100 p-3 text-white fw-bold fs-4" style="background: linear-gradient(transparent, rgba(27,67,50,0.9)); font-family: 'Montserrat', sans-serif;">
-                        <i class="fa-solid fa-bowl-rice me-2" style="color: #f39200;"></i>Local Delicacies
+            <a href="#cat-local_delicacy" class="text-decoration-none flex-shrink-0" style="width: 280px; max-width: 75vw;">
+                <div class="position-relative overflow-hidden shadow-sm quick-cat-card" style="height: 140px;">
+                    <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80" class="w-100 h-100 object-fit-cover quick-cat-img" alt="Local Delicacies">
+                    <div class="position-absolute bottom-0 start-0 w-100 p-3 text-white fw-bold fs-5" style="background: linear-gradient(transparent, rgba(27,67,50,0.95)); font-family: 'Montserrat', sans-serif;">
+                        <i class="fa-solid fa-bowl-rice me-2" style="color: #f39200;"></i>Delicacies
                     </div>
                 </div>
             </a>
 
-            <a href="#cat-handicraft" class="text-decoration-none flex-shrink-0" style="width: 420px; max-width: 85vw;">
-                <div class="position-relative overflow-hidden shadow-sm quick-cat-card" style="height: 160px;">
-                    <img src="https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80" class="w-100 h-100 object-fit-cover quick-cat-img" alt="Handicrafts">
-                    <div class="position-absolute bottom-0 start-0 w-100 p-3 text-white fw-bold fs-4" style="background: linear-gradient(transparent, rgba(27,67,50,0.9)); font-family: 'Montserrat', sans-serif;">
+            <a href="#cat-handicraft" class="text-decoration-none flex-shrink-0" style="width: 280px; max-width: 75vw;">
+                <div class="position-relative overflow-hidden shadow-sm quick-cat-card" style="height: 140px;">
+                    <img src="https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=500&q=80" class="w-100 h-100 object-fit-cover quick-cat-img" alt="Handicrafts">
+                    <div class="position-absolute bottom-0 start-0 w-100 p-3 text-white fw-bold fs-5" style="background: linear-gradient(transparent, rgba(27,67,50,0.95)); font-family: 'Montserrat', sans-serif;">
                         <i class="fa-solid fa-hands-holding-circle me-2" style="color: #f39200;"></i>Handicrafts
                     </div>
                 </div>
             </a>
 
-            <a href="#cat-fresh_produce" class="text-decoration-none flex-shrink-0" style="width: 420px; max-width: 85vw;">
-                <div class="position-relative overflow-hidden shadow-sm quick-cat-card" style="height: 160px;">
-                    <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" class="w-100 h-100 object-fit-cover quick-cat-img" alt="Fresh Produce">
-                    <div class="position-absolute bottom-0 start-0 w-100 p-3 text-white fw-bold fs-4" style="background: linear-gradient(transparent, rgba(27,67,50,0.9)); font-family: 'Montserrat', sans-serif;">
+            <a href="#cat-fresh_produce" class="text-decoration-none flex-shrink-0" style="width: 280px; max-width: 75vw;">
+                <div class="position-relative overflow-hidden shadow-sm quick-cat-card" style="height: 140px;">
+                    <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=500&q=80" class="w-100 h-100 object-fit-cover quick-cat-img" alt="Fresh Produce">
+                    <div class="position-absolute bottom-0 start-0 w-100 p-3 text-white fw-bold fs-5" style="background: linear-gradient(transparent, rgba(27,67,50,0.95)); font-family: 'Montserrat', sans-serif;">
                         <i class="fa-solid fa-seedling me-2" style="color: #f39200;"></i>Fresh Produce
+                    </div>
+                </div>
+            </a>
+
+            <a href="#cat-avail_service" class="text-decoration-none flex-shrink-0" style="width: 280px; max-width: 75vw;">
+                <div class="position-relative overflow-hidden shadow-sm quick-cat-card" style="height: 140px;">
+                    <img src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=500&q=80" class="w-100 h-100 object-fit-cover quick-cat-img" alt="Local Services">
+                    <div class="position-absolute bottom-0 start-0 w-100 p-3 text-white fw-bold fs-5" style="background: linear-gradient(transparent, rgba(27,67,50,0.95)); font-family: 'Montserrat', sans-serif;">
+                        <i class="fa-solid fa-bell-concierge me-2" style="color: #f39200;"></i>Avail Services
+                    </div>
+                </div>
+            </a>
+
+            <a href="#cat-book_experience" class="text-decoration-none flex-shrink-0" style="width: 280px; max-width: 75vw;">
+                <div class="position-relative overflow-hidden shadow-sm quick-cat-card" style="height: 140px;">
+                    <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=500&q=80" class="w-100 h-100 object-fit-cover quick-cat-img" alt="Book Experiences">
+                    <div class="position-absolute bottom-0 start-0 w-100 p-3 text-white fw-bold fs-5" style="background: linear-gradient(transparent, rgba(27,67,50,0.95)); font-family: 'Montserrat', sans-serif;">
+                        <i class="fa-solid fa-map-location-dot me-2" style="color: #f39200;"></i>Bookings & Tours
+                    </div>
+                </div>
+            </a>
+
+            <a href="#cat-custom_inquiry" class="text-decoration-none flex-shrink-0" style="width: 280px; max-width: 75vw;">
+                <div class="position-relative overflow-hidden shadow-sm quick-cat-card" style="height: 140px;">
+                    <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=500&q=80" class="w-100 h-100 object-fit-cover quick-cat-img" alt="Inquiries">
+                    <div class="position-absolute bottom-0 start-0 w-100 p-3 text-white fw-bold fs-5" style="background: linear-gradient(transparent, rgba(27,67,50,0.95)); font-family: 'Montserrat', sans-serif;">
+                        <i class="fa-solid fa-comments-dollar me-2" style="color: #f39200;"></i>Inquire / Wholesale
                     </div>
                 </div>
             </a>
@@ -305,9 +373,9 @@ body {
         </div>
     </div>
 
-    <!-- Tourism Slogan Text -->
+    <!-- Multi-purpose Tourism Slogan Text -->
     <p class="text-center px-md-5 mb-5 mx-auto fw-medium" style="max-width: 900px; font-family: 'Montserrat', sans-serif; font-size: 1.15rem; line-height: 1.8; color: #1b4332; font-style: italic;">
-        "From handcrafted souvenirs to fresh harvests and local delicacies, discover products made with skill, tradition, and the flavors of Vinzons—crafted by nature, perfected by the community."
+        "From organic harvests and masterfully handcrafted items to unique community eco-tours and skilled local services—discover options crafted with precision, managed with care, and powered by the families of Vinzons."
     </p>
     
     <!-- See DEALS Divider -->
@@ -315,66 +383,67 @@ body {
         <div style="flex:1; border-top: 2px dashed rgba(27,67,50,0.4);"></div>
         <div class="mx-4 text-center d-flex align-items-center flex-column position-relative">
             <i class="fa-solid fa-sun position-absolute" style="color: rgba(243, 146, 0, 0.15); font-size: 5rem; z-index: -1; top: -15px;"></i>
-            <span class="text-dark" style="font-family: 'Dancing Script', cursive; font-size: 2.2rem; color: #1b4332 !important; margin-bottom: -15px;">See</span>
-            <span style="font-family: Impact, sans-serif; font-size: 3.5rem; color: #f39200; letter-spacing: 3px; text-shadow: 2px 2px 0px rgba(243,146,0,0.2);">DEALS</span>
+            <span class="text-dark" style="font-family: 'Dancing Script', cursive; font-size: 2.2rem; color: #1b4332 !important; margin-bottom: -15px;">Explore</span>
+            <span style="font-family: Impact, sans-serif; font-size: 3.5rem; color: #f39200; letter-spacing: 3px; text-shadow: 2px 2px 0px rgba(243,146,0,0.2);">OFFERINGS</span>
         </div>
         <div style="flex:1; border-top: 2px dashed rgba(27,67,50,0.4);"></div>
     </div>
 
-    <?php foreach (['local_delicacy', 'handicraft', 'fresh_produce'] as $cat): ?>
-        <?php if (!empty($groupedByCategory[$cat])): ?>
-            <div id="cat-<?= $cat ?>" class="mb-5 pb-5">
+    <!-- Render Dynamic Loop of All Categories Configured -->
+    <?php foreach ($categoriesConfig as $catKey => $catMeta): ?>
+        <?php if (!empty($groupedByCategory[$catKey])): ?>
+            <div id="cat-<?= $catKey ?>" class="mb-5 pb-5">
                 
                 <!-- Category Partition Header -->
-                <div class="text-center mb-4" style="max-width: 650px; margin: 0 auto;">
+                <div class="text-center mb-4" style="max-width: 750px; margin: 0 auto;">
                     <div class="category-divider d-flex align-items-center mb-3">
                         <div style="flex: 1; height: 1px; background: linear-gradient(to right, transparent, #1b4332);"></div>
                         <div class="category-stamp mx-3 mx-md-4">
                             <h2 class="m-0" style="font-family: 'Montserrat', sans-serif; color: #1b4332; font-size: 1.35rem !important; font-weight: 700; letter-spacing: 1px !important;">
-                                <span style="color: #f39200;" class="me-2"><?= $categoryIcons[$cat] ?></span> 
-                                <?= $categoryTitles[$cat] ?>
+                                <span style="color: #f39200;" class="me-2"><?= $catMeta['icon'] ?></span> 
+                                <?= $catMeta['title'] ?>
                             </h2>
                         </div>
                         <div style="flex: 1; height: 1px; background: linear-gradient(to left, transparent, #1b4332);"></div>
                     </div>
                     <p class="mx-auto text-muted fst-italic px-3 small" style="max-width: 650px; font-family: 'Poppins', sans-serif; font-size: 0.88rem; line-height: 1.5;">
-                        <?php 
-                        if($cat === 'local_delicacy') echo "Taste the rich heritage of Vinzons. Every delicacy reflects the creativity, tradition, and livelihood of our local makers.";
-                        if($cat === 'handicraft') echo "Celebrate the incredible artistry of Vinzons with handcrafted souvenirs woven with skill and passion.";
-                        if($cat === 'fresh_produce') echo "From vibrant local farms straight to your table — discover nature's finest harvests.";
-                        ?>
+                        <?= e($catMeta['tagline']) ?>
                     </p>
                 </div>
 
-                <!-- Spotlight Banner Feature -->
+                <!-- Spotlight Banner Feature Component -->
                 <?php 
-                    $spotlightProduct = $categorySpotlights[$cat]; 
-                    $imgSpot = $spotlightProduct['image'] ? asset_url($spotlightProduct['image']) : 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80';
+                    $spotlightItem = $categorySpotlights[$catKey]; 
+                    $imgSpot = $spotlightItem['image'] ? asset_url($spotlightItem['image']) : 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=600&q=80';
+                    $itemPrice = isset($spotlightItem['price']) ? '₱' . number_format((float)$spotlightItem['price'], 2) : 'Inquire for Price';
                 ?>
                 <div style="max-width: 950px; margin: 0 auto 3rem auto;">
                     <div class="card border-0 shadow-sm spotlight-card">
                         <div class="row g-0 align-items-center">
                             <div class="col-md-5 col-lg-4 p-3">
-                                <div class="shadow-sm overflow-hidden" style="border-radius: 12px;">
+                                <div class="shadow-sm overflow-hidden position-relative" style="border-radius: 12px;">
                                     <img src="<?= e($imgSpot) ?>" class="img-fluid w-100 spotlight-img" alt="">
+                                    <div class="position-absolute top-0 end-0 bg-dark text-white fw-bold px-3 py-1 m-2 rounded-pill small bg-opacity-75">
+                                        <?= $itemPrice ?>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-7 col-lg-8 p-4">
                                 <span class="badge rounded-pill mb-2 bg-warning text-dark shadow-sm" style="font-size: 0.65rem; font-family: 'Montserrat', sans-serif; font-weight: 700;">
-                                    <i class="fa-solid fa-star me-1"></i> Seller's Pick
+                                    <i class="fa-solid fa-star me-1"></i> Featured Spotlight
                                 </span>
                                 <div class="small fw-bold mb-1" style="letter-spacing: 1px; color: #1b4332; font-family: 'Montserrat', sans-serif; font-size: 0.75rem;">
-                                    <?= $categorySpotlightTitles[$cat] ?>
+                                    <?= $catMeta['spotlight'] ?>
                                 </div>
                                 <h3 class="fw-bold text-dark mb-2" style="font-family: 'Montserrat', sans-serif; font-size: 1.6rem;">
-                                    <?= e($spotlightProduct['product_name']) ?>
+                                    <?= e($spotlightItem['product_name']) ?>
                                 </h3>
                                 <p class="text-secondary mb-4 small line-clamp-2" style="max-width: 90%; font-size: 0.85rem; line-height: 1.45;">
-                                    <?= e(str_limit((string)$spotlightProduct['description'], 140)) ?>
+                                    <?= e(str_limit((string)$spotlightItem['description'], 140)) ?>
                                 </p>
                                 <div>
-                                    <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int)$spotlightProduct['business_id'] ?>&product_id=<?= (int)$spotlightProduct['id'] ?>" class="btn text-white fw-bold px-4 py-2 shadow-sm rounded-pill" style="background: #f39200; font-size: 0.8rem;">
-                                        <i class="fa-solid fa-basket-shopping me-2"></i> Order Now
+                                    <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int)$spotlightItem['business_id'] ?>&product_id=<?= (int)$spotlightItem['id'] ?>" class="btn text-white fw-bold px-4 py-2 shadow-sm rounded-pill" style="background: #f39200; font-size: 0.8rem;">
+                                        <i class="fa-solid <?= $catMeta['action_icon'] ?> me-2"></i> <?= $catMeta['action_text'] ?>
                                     </a>
                                 </div>
                             </div>
@@ -382,11 +451,11 @@ body {
                     </div>
                 </div>
 
-                <!-- Shops under this Category -->
-                <?php foreach ($groupedByCategory[$cat] as $shopId => $shopData): ?>
+                <!-- Shops under this Category Group -->
+                <?php foreach ($groupedByCategory[$catKey] as $shopId => $shopData): ?>
                     <div class="shop-section mb-5 position-relative">
                         
-                        <!-- Beautiful Shop Header Banner Row -->
+                        <!-- Shop Header Card -->
                         <div class="shop-header-card p-3 mb-4 d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center">
                                 <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm border border-light" style="width: 44px; height: 44px; flex-shrink: 0;">
@@ -400,41 +469,55 @@ body {
                                     <h3 class="m-0 fw-bold" style="font-family: Impact, sans-serif; color: #1b4332; letter-spacing: 0.5px; font-size: 1.35rem; text-transform: uppercase; line-height: 1.1;">
                                         <?= e($shopData['shop_info']['name']) ?>
                                     </h3>
-                                    <span class="text-muted d-block" style="font-family: 'Dancing Script', cursive; font-size: 1.05rem; color: #f39200 !important; line-height: 1;">Proudly Vinzons</span>
+                                    <span class="text-muted d-block" style="font-family: 'Dancing Script', cursive; font-size: 1.05rem; color: #f39200 !important; line-height: 1;">Proud Partner Seller</span>
                                 </div>
                             </div>
-                            <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= $shopId ?>" class="btn btn-sm text-white fw-bold px-4 py-2 rounded-pill shadow-sm" style="background: #1b4332; font-size: 0.75rem; transition: background 0.2s;" onmouseover="this.style.background='#f39200';" onmouseout="this.style.background='#1b4332';">
-                                <i class="fa-regular fa-comment-dots me-1.5"></i> Inquire Seller
+                            <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= $shopId ?>&intent=<?= $catKey ?>" class="btn btn-sm text-white fw-bold px-4 py-2 rounded-pill shadow-sm" style="background: #1b4332; font-size: 0.75rem; transition: background 0.2s;" onmouseover="this.style.background='#f39200';" onmouseout="this.style.background='#1b4332';">
+                                <i class="fa-regular fa-comment-dots me-1.5"></i> Custom Inquiry
                             </a>
                         </div>
                         
-                        <!-- Horizontal Product Row Slider -->
+                        <!-- Horizontal Slider Container -->
                         <div class="position-relative">
-                            <div class="d-flex overflow-auto gap-3 product-carousel px-1" id="carousel-<?= $cat ?>-<?= $shopId ?>">
+                            <div class="d-flex overflow-auto gap-3 product-carousel px-1" id="carousel-<?= $catKey ?>-<?= $shopId ?>">
                                 <?php foreach ($shopData['products'] as $p): ?>
-                                    <div class="product-card-tourism flex-shrink-0 d-flex flex-column" style="width: 175px;">
-                                        <?php $img = $p['image'] ? asset_url($p['image']) : 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80'; ?>
+                                    <div class="product-card-tourism flex-shrink-0 d-flex flex-column" style="width: 190px;">
+                                        <?php 
+                                            $img = $p['image'] ? asset_url($p['image']) : 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80'; 
+                                            $displayPrice = isset($p['price']) && (float)$p['price'] > 0 ? '₱' . number_format((float)$p['price'], 2) : 'Contact Vendor';
+                                        ?>
                                         <div class="w-100 aspect-ratio-1x1 position-relative overflow-hidden" style="border-radius: 12px 12px 0 0; aspect-ratio: 1/1; background-color: #fcfcfc;">
                                             <img src="<?= e($img) ?>" class="object-fit-cover w-100 h-100" style="transition: transform 0.4s ease;" alt="">
+                                            <span class="position-absolute bottom-0 start-0 bg-success text-white px-2 py-0.5 m-2 rounded fw-bold shadow-sm" style="font-size: 0.65rem; background-color: #1b4332 !important;">
+                                                <?= $displayPrice ?>
+                                            </span>
                                         </div>
-                                        <div class="p-2.5 bg-white d-flex flex-column flex-grow-1" style="border-radius: 0 0 12px 12px;">
+                                        <div class="p-3 bg-white d-flex flex-column flex-grow-1" style="border-radius: 0 0 12px 12px;">
+                                            <span class="text-uppercase text-muted tracking-wider d-block mb-1" style="font-size: 0.58rem; font-weight: 700; letter-spacing: 0.5px;">
+                                                <?= $catMeta['badge'] ?>
+                                            </span>
                                             <h6 class="fw-bold mb-1 text-truncate text-dark" style="font-family: 'Montserrat', sans-serif; font-size: 0.85rem;" title="<?= e($p['product_name']) ?>"><?= e($p['product_name']) ?></h6>
-                                            <p class="text-secondary mb-0 line-clamp-2" style="font-size: 0.7rem; line-height: 1.4; flex-grow: 1;">
+                                            <p class="text-secondary mb-3 line-clamp-2" style="font-size: 0.7rem; line-height: 1.4; flex-grow: 1;">
                                                 <?= e(str_limit((string)$p['description'], 60)) ?>
                                             </p>
+                                            
+                                            <!-- Action Button Layer dependent on Category Context -->
+                                            <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int)$p['business_id'] ?>&product_id=<?= (int)$p['id'] ?>" class="btn btn-outline-success border-1 rounded-pill w-100 py-1 text-center fw-bold mt-auto" style="font-size: 0.68rem; transition: all 0.2s;">
+                                                <i class="fa-solid <?= $catMeta['action_icon'] ?> me-1"></i> <?= $catMeta['action_text'] ?>
+                                            </a>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
                                 
-                                <!-- Spacer for right padding -->
+                                <!-- Spacer for right padding padding layout alignment -->
                                 <?php if(count($shopData['products']) > 3): ?>
                                     <div class="flex-shrink-0" style="width: 15px;"></div>
                                 <?php endif; ?>
                             </div>
                             
-                            <!-- Compact Scroll Arrow Overlay -->
+                            <!-- Compact Scroll Arrow Overlay Controllers -->
                             <?php if(count($shopData['products']) > 4): ?>
-                                <button class="scroll-btn-tourism" onclick="document.getElementById('carousel-<?= $cat ?>-<?= $shopId ?>').scrollBy({left: 190, behavior: 'smooth'})">
+                                <button class="scroll-btn-tourism" onclick="document.getElementById('carousel-<?= $catKey ?>-<?= $shopId ?>').scrollBy({left: 205, behavior: 'smooth'})">
                                     <i class="fa-solid fa-chevron-right" style="font-size: 0.8rem;"></i>
                                 </button>
                             <?php endif; ?>
@@ -447,12 +530,12 @@ body {
         <?php endif; ?>
     <?php endforeach; ?>
 
-    <!-- LIST OF SHOPS (Local Sellers Section) -->
+    <!-- LIST OF SHOPS (Local Sellers Ecosystem Directory Section) -->
     <div class="mt-5 pt-5 border-top border-2" style="border-color: rgba(27,67,50,0.1) !important;">
         <div class="text-center mb-5">
             <div class="category-stamp" style="border-color: #f39200; padding: 0.5rem 2.5rem;">
                 <h2 class="m-0" style="font-family: Impact, sans-serif; color: #1b4332; letter-spacing: 1.5px; font-size: 1.5rem;">
-                    MEET OUR <span style="color: #f39200;">LOCAL SELLERS</span>
+                    MEET OUR <span style="color: #f39200;">COMMUNITY VENDORS</span>
                 </h2>
             </div>
         </div>
@@ -472,7 +555,7 @@ body {
                                 </div>
                                 <div class="text-truncate">
                                     <div class="fw-bold text-dark text-truncate" style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem;"><?= e($shop['name']) ?></div>
-                                    <span class="badge bg-light text-dark border py-1" style="font-size: 0.6rem; font-weight: 600; text-transform: uppercase;"><?= e($shop['type']) ?></span>
+                                    <span class="badge bg-light text-dark border py-1" style="font-size: 0.6rem; font-weight: 600; text-transform: uppercase; color: #1b4332 !important;"><?= e($shop['type'] ?: 'Local Business') ?></span>
                                 </div>
                             </div>
                             <div class="mt-auto pt-2 border-top border-light" style="font-size: 0.75rem; font-family: 'Montserrat', sans-serif;">

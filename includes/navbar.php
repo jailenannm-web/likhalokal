@@ -22,7 +22,7 @@ $role = current_user_role();
             <ul class="navbar-nav mx-auto mb-2 mb-lg-0 text-center text-lg-start">
                 <li class="nav-item"><a class="nav-link <?= $active === 'home' ? 'active text-warning' : '' ?>" href="<?= e(BASE_URL) ?>index.php">Home</a></li>
                 <li class="nav-item"><a class="nav-link <?= $active === 'tourism' ? 'active text-warning' : '' ?>" href="<?= e(BASE_URL) ?>tourism.php">Tourism</a></li>
-                <li class="nav-item"><a class="nav-link <?= $active === 'products' ? 'active text-warning' : '' ?>" href="<?= e(BASE_URL) ?>products.php">Products</a></li>
+                <li class="nav-item"><a class="nav-link <?= $active === 'products' ? 'active text-warning' : '' ?>" href="<?= e(BASE_URL) ?>products.php">Marketplace</a></li>
                 <li class="nav-item"><a class="nav-link <?= $active === 'business' ? 'active text-warning' : '' ?>" href="<?= e(BASE_URL) ?>local-business.php">Local Business</a></li>
                 <li class="nav-item"><a class="nav-link <?= $active === 'about' ? 'active text-warning' : '' ?>" href="<?= e(BASE_URL) ?>about.php">About</a></li>
             </ul>
