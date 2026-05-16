@@ -539,21 +539,44 @@ body {
 
 </style>
 
-
-
-
-<section class="hero-container">
-    <div class="hero-text-wrapper">
-        <h1 class="hero-main-title">TUKLAS LAKBAY<br>LOKAL</h1>
-        <p class="hero-sub-tagline">Biyahe, Kwento, at<br>Karanasan sa Vinzons</p>
+<section class="hero position-relative" 
+    style="min-height: 65vh; 
+           background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('<?= asset_url('images/tourismbackground.png') ?>'); 
+           background-position: center; 
+           background-size: cover; 
+           background-repeat: no-repeat;
+           display: flex;
+           align-items: center;
+           padding-bottom: 100px;"> 
+           <div class="container position-relative h-100 py-5 d-flex flex-column justify-content-center mt-5 hero-text-animate">
+        <h1 class="display-3 fw-bold text-white mb-2" style="font-family: Impact, sans-serif; letter-spacing: 2px; text-shadow: 2px 2px 8px rgba(0,0,0,0.4);">
+            TUKLAS LAKBAY<br><span style="color: #ffda79;">LOKAL</span>
+        </h1>
+        <p class="text-white" style="font-family: 'Dancing Script', cursive; font-size: 2.5rem; text-shadow: 1px 1px 4px rgba(0,0,0,0.5);">
+            Biyahe, Kwento, at Karanasan sa Vinzons
+        </p>
     </div>
 </section>
 
-<div class="image-overlap-grid">
-    <img src="assets/images/St. Peter Church.png" class="overlap-img" alt="St. Peter Church">
-    <img src="assets/images/calaguas.png" class="overlap-img" alt="Calaguas Islands">
-    <img src="assets/images/vinzonsriver.png" class="overlap-img" alt="Vinzons River">
-</div>
+<section class="overlap-section container" style="margin-top: -100px; position: relative; z-index: 10;">
+    <div class="row g-4 justify-content-center">
+        <div class="col-md-4">
+            <div class="shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <img src="assets/images/St. Peter Church.png" alt="St. Peter Church" style="width: 100%; height: 400px; object-fit: cover;">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <img src="assets/images/calaguas.png" alt="Calaguas Islands" style="width: 100%; height: 400px; object-fit: cover;">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <img src="assets/images/vinzonsriver.png" alt="Vinzons River" style="width: 100%; height: 400px; object-fit: cover;">
+            </div>
+        </div>
+    </div>
+</section>
 
 <div class="container">
     <p class="transition-text">
@@ -575,7 +598,7 @@ body {
         <div class="row align-items-center g-0">
             <div class="col-md-5 p-4">
                 <div class="about-image-container">
-                    <img src="assets/images/calaguas.png" alt="Vinzons, Camarines Norte" class="img-fluid rounded-4 shadow-sm">
+                    <img src="assets/images/vinzons.png" alt="Vinzons, Camarines Norte" class="img-fluid rounded-4 shadow-sm">
                 </div>
             </div>
             
@@ -602,10 +625,12 @@ body {
     </div>
 </div>
 
-<div class="container mb-5">
-    <div class="heritage-banner shadow-lg">
-        <div class="heritage-overlay">
-            <h1 class="bilbo-title">Puso ng Kasaysayan, Likha ng Kalikasan</h1>
+<div class="container my-5">
+    <div class="heritage-card shadow-lg">
+        <div class="heritage-image-container">
+            <img src="assets/images/kasaysayan.png"  class="heritage-img">
+            
+            <h2 class="heritage-bottom-left-text">Puso ng Kasaysayan, Likha ng Kalikasan</h2>
         </div>
     </div>
 </div>
@@ -645,7 +670,7 @@ body {
             </div>
 
             <div class="col-lg-5">
-                <div class="info-side-img" style="background-image: url('assets/images/vinzons-museum.jpg');"></div>
+                <div class="info-side-img" style="background-image: url('assets/images/vinzons map.png');"></div>
             </div>
         </div>
     </div>
@@ -653,14 +678,18 @@ body {
 
 
 <div class="ragged-hero">
-    <div class="ragged-white-stroke"></div>
+    <div class="ragged-bg-container">
+        <img src="assets/images/vinzons2.png"  class="hero-bg-img">
+        
+        <div class="ragged-white-stroke"></div>
 
-    <div class="container h-100 position-relative">
-        <h1 class="hero-brand">Vinzons</h1>
-        <p class="hero-quote">
-            Home to historical landmarks, eco-adventures, and gateways to stunning islands, 
-            Vinzons invites you to discover stories carved in nature and history.
-        </p>
+        <div class="container h-100 position-relative d-flex flex-column justify-content-center">
+            <h1 class="hero-brand">Vinzons</h1>
+            <p class="hero-quote">
+                Home to historical landmarks, eco-adventures, and gateways to stunning islands, 
+                Vinzons invites you to discover stories carved in nature and history.
+            </p>
+        </div>
     </div>
 </div>
 
@@ -668,7 +697,7 @@ body {
     <div class="row">
         <div class="col-lg-5">
             <div class="island-frame shadow-lg">
-                <img src="assets/images/calaguas.png" alt="Calaguas Island" class="img-fluid">
+                <img src="assets/images/calaguasisland.png" alt="Calaguas Island" class="img-fluid">
             </div>
         </div>
 
@@ -703,16 +732,16 @@ body {
 <section class="hero-section">
   <div class="cards-container">
     <div class="card">
-      <img src="historicalmaker.jpg" alt="Historical Marker">
+      <img src="assets/images/historical.png" alt="Historical Marker">
     </div>
     <div class="card">
-      <img src="vinzonshouse.jpg" alt="Vinzons House">
+      <img src="assets/images/vinzonshouse.png" alt="Vinzons House">
     </div>
     <div class="card">
-      <img src="beachboat.jpg" alt="Beach Boat">
+      <img src="assets/images/boat.png" alt="Beach Boat">
     </div>
     <div class="card">
-      <img src="clearkayak.jpg" alt="Clear Kayak">
+      <img src="assets/images/crystalkayak.jpg" alt="Clear Kayak">
     </div>
   </div>
 </section>

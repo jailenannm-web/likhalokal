@@ -329,7 +329,7 @@ body {
                             <h2 class="m-0" style="font-family: Impact, sans-serif; color: #1b4332; font-size: 2.2rem; letter-spacing: 2px; text-transform: uppercase;">
                                 <span style="color: #f39200;" class="me-2"><?= $categoryIcons[$cat] ?></span> 
                                 <?= $categoryTitles[$cat] ?>
-                            </h2>
+                            </h2>x
                         </div>
                         <div style="flex: 1; height: 3px; background: linear-gradient(to left, transparent, #1b4332);"></div>
                     </div>
