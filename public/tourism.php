@@ -550,9 +550,9 @@ body {
 </section>
 
 <div class="image-overlap-grid">
-    <img src="assets/images/church-preview.jpg" class="overlap-img" alt="St. Peter Church">
-    <img src="assets/images/island-aerial.jpg" class="overlap-img" alt="Calaguas Islands">
-    <img src="assets/images/river-boat.jpg" class="overlap-img" alt="Vinzons River">
+    <img src="assets/images/St. Peter Church.png" class="overlap-img" alt="St. Peter Church">
+    <img src="assets/images/calaguas.png" class="overlap-img" alt="Calaguas Islands">
+    <img src="assets/images/vinzonsriver.png" class="overlap-img" alt="Vinzons River">
 </div>
 
 <div class="container">
@@ -575,7 +575,7 @@ body {
         <div class="row align-items-center g-0">
             <div class="col-md-5 p-4">
                 <div class="about-image-container">
-                    <img src="assets/images/calaguas-view.jpg" alt="Vinzons, Camarines Norte" class="img-fluid rounded-4 shadow-sm">
+                    <img src="assets/images/calaguas.png" alt="Vinzons, Camarines Norte" class="img-fluid rounded-4 shadow-sm">
                 </div>
             </div>
             
@@ -668,7 +668,7 @@ body {
     <div class="row">
         <div class="col-lg-5">
             <div class="island-frame shadow-lg">
-                <img src="calaguas-beach.jpg" alt="Calaguas Island" class="img-fluid">
+                <img src="assets/images/calaguas.png" alt="Calaguas Island" class="img-fluid">
             </div>
         </div>
 

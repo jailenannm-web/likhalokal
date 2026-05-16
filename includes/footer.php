@@ -2,10 +2,7 @@
 
 declare(strict_types=1);
 ?>
-<footer class="text-white py-4 mt-auto position-relative" style="background: linear-gradient(to right, #1b4332, #0d2119); overflow: hidden;">
-    <!-- Abstract background shape -->
-    <div class="position-absolute rounded-circle" style="background: #f39200; width: 150px; height: 150px; bottom: -50px; right: 5%; opacity: 0.1; filter: blur(20px);"></div>
-
+<footer class="text-white py-4 mt-auto position-relative" style="background: #001F3F; overflow: hidden;">
     <div class="container position-relative z-1">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             
