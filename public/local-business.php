@@ -14,8 +14,7 @@ require BASE_PATH . '/includes/navbar.php';
 ?>
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Lisu+Bosa:wght@400;500;600&display=swap');
-    
+@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bungee&family=Dancing+Script:wght@400..700&display=swap');
     :root {
         --vinzons-blue: #0077C2;
         --vinzons-dark-blue: #050A30;
@@ -25,12 +24,13 @@ require BASE_PATH . '/includes/navbar.php';
         --body-font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* Normal Text Stylings (Matches About Page) */
-    body, p, span, li, small, a:not(.font-bungee) {
-        font-family: var(--body-font) !important;
-        font-style: normal !important;
-        line-height: 1.6;
-    }/* Base Container Styles (for alignment) */
+body, p, span, li, small, a:not(.font-bungee) {
+    font-family: var(--body-font); /* Normal weight, allows overrides */
+}
+
+.font-dancing {
+    font-family: 'Dancing Script', cursive !important;
+}
 .container-fluid {
     width: 100%;
     padding-right: 15px;
@@ -576,99 +576,32 @@ require BASE_PATH . '/includes/navbar.php';
         .reg-title { font-size: 1.8rem; }
     }
     
-<<<<<<< HEAD
-=======
-    .biz-hero {
-    /* This adds a dark overlay gradient so your white text stays perfectly readable over the image */
-    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('../images/local-business-hero.jpg');
-    
-    /* This forces the image to scale beautifully and stay centered without stretching */
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    
-    /* Gives the hero section its spacious height */
-    padding: 100px 0; 
-    min-height: 60vh;
-    
-    /* Flexbox setup to center the text elements vertically and horizontally */
-    display: flex;
-    align-items: center;
-    color: #ffffff; /* Forces text to be crisp white over the background image */
-}
-
-.biz-hero-title {
-    font-size: 3.5rem;
-    font-weight: 800;
-    line-height: 1.2;
-    margin-bottom: 20px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    
-    /* Smooth slide-in-left animation for the main title */
-    animation: slideInLeft 1.2s ease-out forwards;
-    opacity: 0; /* Starts hidden and fades in via keyframes */
-}
-
-.biz-hero-tagline {
-    font-size: 1.5rem;
-    font-weight: 400;
-    opacity: 0.9;
-    
-    /* Clean fade-in that starts slightly after the title moves */
-    animation: fadeIn 1s ease-out 0.5s forwards;
-    opacity: 0;
-}
-
-/* --- Animation Keyframes --- */
-@keyframes slideInLeft {
-    0% {
-        opacity: 0;
-        transform: translateX(-30px); /* Slides rightward into place */
-    }
-    100% {
-        opacity: 1;
-        transform: translateX(0); /* Settles at your original left alignment */
-    }
-}
-
-@keyframes fadeIn {
-    0% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
-}
->>>>>>> 10e0a95d6bad607f7f0e46b40a099e84fbe00752
 </style> 
 
+
 <section class="hero position-relative" 
+
     style="min-height: 65vh; 
            background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('<?= asset_url('images/tourismbackground.png') ?>'); 
            background-position: center; 
            background-size: cover; 
            background-repeat: no-repeat;
            display: flex;
-           align-items: flex-end; /* Keeps content at the bottom */
-           padding-bottom: 50px; /* Space from the bottom edge */"> 
+           align-items: flex-end; 
+           padding-bottom: 50px;"> 
     
-    <!-- Changed margin-left to 0 and added minimal padding-left to push it to the far left safely -->
     <div class="container position-relative hero-text-animate" 
          style="text-align: left; margin-left: 0; padding-left: 25px; max-width: 100%;">
          
-        <!-- Heading using Bungee Font -->
         <h1 class="display-3 fw-bold text-white mb-3" style="font-family: 'Bungee', sans-serif; letter-spacing: 1px; line-height: 1.1; text-shadow: 3px 3px 10px rgba(0,0,0,0.6);">
-            LOKAL NA NEGOSYO,<br><span style="color: #ffda79;">LOKAL NA ASENSO</span>
+            LOKAL NA NEGOSYO,<br><span style="color: #c98220;">LOKAL NA ASENSO</span>
         </h1>
-        
-        <!-- Tagline using Abril Fatface Font -->
-        <p class="text-white mb-0" style="font-family: 'Abril Fatface', serif; font-size: 2.2rem; line-height: 1.2; text-shadow: 2px 2px 6px rgba(0,0,0,0.6); max-width: 750px;">
-            Supporting entrepreneurs, <br>Building community livelihoods.
-        </p>
+<p class="text-white mb-0 font-dancing" style="font-size: 2.5rem; line-height: 1.2; text-shadow: 2px 2px 6px rgba(0,0,0,0.6); max-width: 750px;">
+    Building community livelihoods.
+</p>
+
     </div>
 </section>
-
 <section class="biz-cta-section">
     <div class="container">
         <h2 class="biz-keywords">CONNECT. SHOWCASE. SELL. GROW.</h2>
@@ -771,10 +704,6 @@ require BASE_PATH . '/includes/navbar.php';
     </div>
 </section>
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 10e0a95d6bad607f7f0e46b40a099e84fbe00752
 <section class="listings-wrapper">
     <div class="listings-grid">
         
