@@ -13,7 +13,7 @@ function str_limit(?string $s, int $n = 120): string
     if (strlen($s) <= $n) {
         return $s;
     }
-    return substr($s, 0, $n) . '…';
+    return substr($s, 0, $n) . '...';
 }
 
 function redirect(string $url): void
@@ -35,6 +35,163 @@ function current_user_id(): ?int
 function current_user_role(): ?string
 {
     return $_SESSION['user_role'] ?? null;
+}
+
+function current_user(): ?array
+{
+    if (!is_logged_in()) {
+        return null;
+    }
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+    $stmt = db()->prepare(
+        'SELECT id, full_name, email, role, status, contact_number, profile_image, auth_provider FROM users WHERE id = ? LIMIT 1'
+    );
+    $stmt->execute([current_user_id()]);
+    $cached = $stmt->fetch() ?: null;
+    return $cached;
+}
+
+function media_url(?string $path, ?string $fallback = null): string
+{
+    $placeholder = $fallback ?? asset_url('images/placeholder.png');
+    if ($path === null || trim($path) === '') {
+        return $placeholder;
+    }
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
+    $path = str_replace('\\', '/', trim($path));
+    $path = ltrim($path, '/');
+    if (str_starts_with($path, 'assets/')) {
+        $path = substr($path, strlen('assets/'));
+    }
+    if (!str_starts_with($path, 'images/') && !str_starts_with($path, 'uploads/')) {
+        if (is_file(BASE_PATH . '/assets/images/' . basename($path))) {
+            $path = 'images/' . basename($path);
+        }
+    }
+    $candidates = [
+        BASE_PATH . '/assets/' . $path,
+        BASE_PATH . '/public/assets/' . $path,
+    ];
+    foreach ($candidates as $full) {
+        if (is_file($full)) {
+            if (str_contains($full, DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR)) {
+                return rtrim(BASE_URL, '/') . '/assets/' . preg_replace('#^images/|^uploads/#', '$0', $path);
+            }
+            return asset_url($path);
+        }
+    }
+    return $placeholder;
+}
+
+/** Static design assets under public/assets (tourism hero, etc.) */
+function public_asset_url(string $relativePath): string
+{
+    return rtrim(BASE_URL, '/') . '/' . ltrim(str_replace('\\', '/', $relativePath), '/');
+}
+
+function business_type_label(string $type): string
+{
+    return match ($type) {
+        'food_vendor' => 'Food & Restaurants',
+        'restaurant' => 'Restaurants & Cafes',
+        'craft_business' => 'Handicrafts & Crafts',
+        'travel_agency' => 'Travel Agencies',
+        'resort' => 'Resorts & Stays',
+        'recreation' => 'Recreation & Tours',
+        'service' => 'Local Services',
+        'pasalubong' => 'Pasalubong & Delicacies',
+        'fresh_produce' => 'Fresh Produce',
+        default => ucwords(str_replace('_', ' ', $type)),
+    };
+}
+
+function business_type_icon(string $type): string
+{
+    return match ($type) {
+        'food_vendor', 'restaurant' => 'bi-cup-hot',
+        'resort' => 'bi-building',
+        'travel_agency', 'recreation' => 'bi-tsunami',
+        'craft_business', 'pasalubong' => 'bi-bag-check',
+        'service' => 'bi-gear-wide-connected',
+        'fresh_produce' => 'bi-basket',
+        default => 'bi-shop',
+    };
+}
+
+function db_column_exists(string $table, string $column): bool
+{
+    static $cache = [];
+    if (!preg_match('/^[A-Za-z0-9_]+$/', $table) || !preg_match('/^[A-Za-z0-9_]+$/', $column)) {
+        return false;
+    }
+    $key = $table . '.' . $column;
+    if (array_key_exists($key, $cache)) {
+        return $cache[$key];
+    }
+    try {
+        $stmt = db()->prepare(
+            'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+        );
+        $stmt->execute([$table, $column]);
+        $cache[$key] = ((int) $stmt->fetchColumn()) > 0;
+    } catch (Throwable $e) {
+        $cache[$key] = false;
+    }
+    return $cache[$key];
+}
+
+function product_category_label(?string $category): string
+{
+    $category = (string) $category;
+    return match ($category) {
+        'local_delicacy' => 'Local Delicacy',
+        'handicraft' => 'Handicraft',
+        'fresh_produce' => 'Fresh Produce',
+        'service' => 'Service',
+        'tour_package' => 'Tour Package',
+        'food' => 'Food',
+        'accommodation' => 'Accommodation',
+        'other' => 'Other',
+        default => $category !== '' ? ucwords(str_replace('_', ' ', $category)) : 'Uncategorized',
+    };
+}
+
+function product_type_label(?string $type): string
+{
+    $type = (string) $type;
+    return match ($type) {
+        'product' => 'Product',
+        'service' => 'Service',
+        'tour_package' => 'Tour Package',
+        'accommodation' => 'Accommodation',
+        'food' => 'Food',
+        'other' => 'Other',
+        default => $type !== '' ? ucwords(str_replace('_', ' ', $type)) : 'Product',
+    };
+}
+
+function guest_action_blocked(): bool
+{
+    if (is_logged_in()) {
+        return false;
+    }
+    set_flash('error', 'Please login or register to continue.');
+    return true;
+}
+
+function require_local_user(): void
+{
+    require_login();
+    if (current_user_role() !== 'local_user') {
+        set_flash('error', 'This action is for local user accounts only.');
+        redirect(BASE_URL . 'forbidden.php');
+    }
 }
 
 function require_login_public(): void
@@ -145,4 +302,264 @@ function unread_messages_count(int $userId): int
     $stmt = db()->prepare('SELECT COUNT(*) AS c FROM messages WHERE receiver_id = ? AND is_read = 0');
     $stmt->execute([$userId]);
     return (int) ($stmt->fetch()['c'] ?? 0);
+}
+
+function profile_avatar_url(?string $fullName = null, ?string $profileImage = null): string
+{
+    if ($profileImage !== null && trim($profileImage) !== '') {
+        return media_url($profileImage);
+    }
+    $name = trim((string) ($fullName ?? 'User'));
+    if ($name === '') {
+        $name = 'User';
+    }
+    return 'https://ui-avatars.com/api/?name=' . rawurlencode($name) . '&background=F39200&color=fff&size=128';
+}
+
+function render_star_rating(int $rating, int $max = 5): string
+{
+    $rating = max(0, min($max, $rating));
+    $html = '<span class="lk-stars" aria-label="' . $rating . ' out of ' . $max . '">';
+    for ($i = 1; $i <= $max; $i++) {
+        $html .= $i <= $rating
+            ? '<i class="bi bi-star-fill text-warning"></i>'
+            : '<i class="bi bi-star text-warning opacity-50"></i>';
+    }
+    return $html . '</span>';
+}
+
+function review_status_badge_class(string $status): string
+{
+    return match ($status) {
+        'approved' => 'success',
+        'pending' => 'warning',
+        'rejected' => 'danger',
+        default => 'secondary',
+    };
+}
+
+function format_datetime_short(?string $datetime): string
+{
+    if ($datetime === null || $datetime === '') {
+        return '';
+    }
+    $ts = strtotime($datetime);
+    if ($ts === false) {
+        return $datetime;
+    }
+    $diff = time() - $ts;
+    if ($diff < 60) {
+        return 'Just now';
+    }
+    if ($diff < 3600) {
+        return (int) floor($diff / 60) . 'm ago';
+    }
+    if ($diff < 86400) {
+        return (int) floor($diff / 3600) . 'h ago';
+    }
+    if ($diff < 604800) {
+        return (int) floor($diff / 86400) . 'd ago';
+    }
+    return date('M j, Y g:i A', $ts);
+}
+
+/** @return list<array<string, mixed>> */
+function user_message_conversations(int $userId): array
+{
+    $stmt = db()->prepare(
+        'SELECT m.business_id,
+                b.business_name,
+                MAX(m.created_at) AS last_at,
+                (SELECT m2.message_content FROM messages m2
+                 WHERE m2.business_id = m.business_id
+                   AND (m2.sender_id = ? OR m2.receiver_id = ?)
+                 ORDER BY m2.created_at DESC LIMIT 1) AS last_message,
+                SUM(CASE WHEN m.receiver_id = ? AND m.is_read = 0 THEN 1 ELSE 0 END) AS unread_count
+         FROM messages m
+         INNER JOIN businesses b ON b.id = m.business_id
+         WHERE m.business_id IS NOT NULL
+           AND (m.sender_id = ? OR m.receiver_id = ?)
+         GROUP BY m.business_id, b.business_name
+         ORDER BY last_at DESC'
+    );
+    $stmt->execute([$userId, $userId, $userId, $userId, $userId]);
+    return $stmt->fetchAll();
+}
+
+function profile_completion_percent(array $user): int
+{
+    $fields = 0;
+    $filled = 0;
+    foreach (['full_name', 'contact_number', 'profile_image'] as $key) {
+        $fields++;
+        if (!empty($user[$key])) {
+            $filled++;
+        }
+    }
+    $fields++;
+    if (!empty($user['email'])) {
+        $filled++;
+    }
+    return $fields > 0 ? (int) round(($filled / $fields) * 100) : 0;
+}
+
+/** Safe in-app return URL (public pages + user/seller dashboards). */
+function is_safe_return_url(?string $url): bool
+{
+    if ($url === null || trim($url) === '') {
+        return false;
+    }
+    $url = trim($url);
+    if (str_contains($url, '..')) {
+        return false;
+    }
+
+    $path = $url;
+    if (preg_match('#^https?://#i', $url)) {
+        $parts = parse_url($url);
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        if ($host !== '' && !in_array($host, ['localhost', '127.0.0.1'], true)) {
+            return false;
+        }
+        $path = ($parts['path'] ?? '') . (isset($parts['query']) ? '?' . $parts['query'] : '');
+    }
+
+    $allowed = [
+        'index.php', 'tourism.php', 'products.php', 'local-business.php', 'about.php',
+        'vendor-profile.php', 'attraction-detail.php', 'events.php', 'cultural-info.php',
+        'business-directory.php', 'search.php', 'message.php', 'register-business.php',
+        '/user/', '/seller/', '/admin/', 'user/messages.php', 'user/dashboard.php', 'user/reviews.php',
+        'user/profile.php', 'seller/messages.php',
+    ];
+    foreach ($allowed as $seg) {
+        if (str_contains($path, $seg)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function return_url_path(?string $url): string
+{
+    if ($url === null || trim($url) === '') {
+        return '';
+    }
+    $url = trim($url);
+    $parts = parse_url($url);
+    if ($parts === false) {
+        return '';
+    }
+    $path = (string) ($parts['path'] ?? $url);
+    return '/' . ltrim(str_replace('\\', '/', $path), '/');
+}
+
+function is_internal_return_context(?string $url): bool
+{
+    if (!is_safe_return_url($url)) {
+        return false;
+    }
+    return (bool) preg_match('#/(user|seller|admin)/#', strtolower(return_url_path($url)));
+}
+
+function is_public_return_context(?string $url): bool
+{
+    if (!is_safe_return_url($url)) {
+        return false;
+    }
+    $path = strtolower(return_url_path($url));
+    return str_contains($path, '/public/')
+        || (bool) preg_match('#/(index|tourism|products|local-business|about|events|cultural-info|attraction-detail|vendor-profile)\.php$#', $path);
+}
+
+function resolve_return_url(?string $requested, string $default): string
+{
+    if ($requested !== null && $requested !== '' && is_safe_return_url($requested)) {
+        if (preg_match('#^https?://#i', $requested)) {
+            return $requested;
+        }
+        if (str_starts_with($requested, '/')) {
+            return $requested;
+        }
+        if (str_starts_with($requested, 'user/') || str_starts_with($requested, 'seller/') || str_starts_with($requested, 'admin/')) {
+            $base = preg_replace('#/public/?$#', '', rtrim(BASE_URL, '/'));
+            return $base . '/' . ltrim($requested, '/');
+        }
+        return BASE_URL . ltrim($requested, '/');
+    }
+    return $default;
+}
+
+function vendor_profile_url(int $businessId, ?string $returnTo = null): string
+{
+    $url = BASE_URL . 'vendor-profile.php?id=' . $businessId;
+    if ($returnTo !== null && $returnTo !== '' && is_safe_return_url($returnTo)) {
+        $url .= '&return=' . rawurlencode($returnTo);
+    }
+    return $url;
+}
+
+function business_status_badge_class(string $status): string
+{
+    return match ($status) {
+        'approved' => 'success',
+        'pending' => 'warning',
+        'rejected' => 'danger',
+        'suspended' => 'secondary',
+        default => 'secondary',
+    };
+}
+
+/** @return list<array<string, mixed>> */
+function seller_message_threads(int $sellerUserId, int $businessId): array
+{
+    if ($businessId < 1) {
+        return [];
+    }
+    $stmt = db()->prepare(
+        'SELECT
+            CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END AS customer_id,
+            u.full_name AS customer_name,
+            MAX(m.created_at) AS last_at,
+            (SELECT m2.message_content FROM messages m2
+             WHERE m2.business_id = ?
+               AND (m2.sender_id = u.id OR m2.receiver_id = u.id)
+             ORDER BY m2.created_at DESC LIMIT 1) AS last_message,
+            SUM(CASE WHEN m.receiver_id = ? AND m.is_read = 0 THEN 1 ELSE 0 END) AS unread_count
+         FROM messages m
+         INNER JOIN users u ON u.id = CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END
+         WHERE m.business_id = ?
+           AND (m.sender_id = ? OR m.receiver_id = ?)
+         GROUP BY customer_id, u.full_name
+         HAVING customer_id != ?
+         ORDER BY last_at DESC
+         LIMIT 10'
+    );
+    $stmt->execute([
+        $sellerUserId,
+        $businessId,
+        $sellerUserId,
+        $sellerUserId,
+        $businessId,
+        $sellerUserId,
+        $sellerUserId,
+        $sellerUserId,
+    ]);
+    return $stmt->fetchAll();
+}
+
+function current_request_return_url(): string
+{
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    if ($uri !== '' && is_safe_return_url($uri)) {
+        return $uri;
+    }
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    $qs = $_SERVER['QUERY_STRING'] ?? '';
+    if ($script !== '') {
+        $path = $script . ($qs !== '' ? '?' . $qs : '');
+        if (is_safe_return_url($path)) {
+            return $path;
+        }
+    }
+    return '';
 }

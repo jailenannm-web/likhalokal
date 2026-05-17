@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 ?>
+<?php if (empty($hidePublicFooter)): ?>
 <footer class="text-white py-4 mt-auto position-relative" style="background: #001F3F; overflow: hidden;">
     <div class="container position-relative z-1">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
@@ -35,6 +36,7 @@ declare(strict_types=1);
         </div>
     </div>
 </footer>
+<?php endif; ?>
 <div class="modal fade" id="guestAuthModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -44,7 +46,13 @@ declare(strict_types=1);
       </div>
       <div class="modal-body">Please login or register to continue.</div>
       <div class="modal-footer">
-        <a href="<?= e(BASE_URL) ?>login.php" class="btn btn-primary">Login</a>
+        <?php
+        $guestReturn = $_SERVER['REQUEST_URI'] ?? '';
+        $guestLoginUrl = function_exists('login_url_with_redirect') && is_safe_post_login_redirect($guestReturn)
+            ? login_url_with_redirect($guestReturn)
+            : BASE_URL . 'login.php';
+        ?>
+        <a href="<?= e($guestLoginUrl) ?>" class="btn btn-primary">Login</a>
         <a href="<?= e(BASE_URL) ?>register.php" class="btn btn-outline-secondary">Register</a>
       </div>
     </div>

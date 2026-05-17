@@ -12,7 +12,26 @@ $stmt->execute([$id]);
 $a = $stmt->fetch();
 if (!$a) {
     http_response_code(404);
-    echo 'Attraction not found.';
+    $pageTitle = 'Attraction Not Found';
+    $bodyClass = trim(($bodyClass ?? '') . ' attraction-detail-page lk-internal-workspace');
+    $isDashboardLayout = true;
+    require BASE_PATH . '/includes/header.php';
+    ?>
+    <div class="vendor-profile-subnav">
+        <div class="container">
+            <a href="<?= e(BASE_URL) ?>tourism.php" aria-label="Go back"><i class="fa-solid fa-arrow-left fs-5"></i> Back</a>
+            <span class="fw-bold text-uppercase small" style="letter-spacing: 1px; font-family: 'Montserrat', sans-serif;">Attraction Detail</span>
+        </div>
+    </div>
+    <div class="container py-5">
+        <div class="alert alert-light border shadow-sm text-center rounded-4 p-5">
+            <h1 class="h4 fw-bold text-dark mb-2">Attraction not found</h1>
+            <p class="text-muted mb-4">This attraction may be unpublished or no longer available.</p>
+            <a href="<?= e(BASE_URL) ?>tourism.php" class="btn btn-lk-orange">Back to tourism</a>
+        </div>
+    </div>
+    <?php
+    require BASE_PATH . '/includes/footer.php';
     exit;
 }
 
@@ -47,12 +66,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['review_submit'])) {
 }
 
 $pageTitle = $a['attraction_name'];
+$bodyClass = trim(($bodyClass ?? '') . ' attraction-detail-page lk-internal-workspace');
+$isDashboardLayout = true;
 require BASE_PATH . '/includes/header.php';
-require BASE_PATH . '/includes/navbar.php';
 
-$dir = ($a['latitude'] && $a['longitude'])
+$hasCoords = isset($a['latitude'], $a['longitude'])
+    && $a['latitude'] !== null
+    && $a['longitude'] !== null
+    && $a['latitude'] !== ''
+    && $a['longitude'] !== ''
+    && is_numeric($a['latitude'])
+    && is_numeric($a['longitude']);
+$display = static fn($value, string $placeholder = 'Not provided'): string => trim((string) $value) !== '' ? trim((string) $value) : $placeholder;
+$dir = $hasCoords
     ? 'https://www.google.com/maps/dir/?api=1&destination=' . urlencode($a['latitude'] . ',' . $a['longitude'])
-    : 'https://www.google.com/maps/search/?api=1&query=' . urlencode($a['address'] ?: $a['attraction_name']);
+    : '';
 ?>
 
 <!-- Google Fonts & Animate.css -->
@@ -76,9 +104,8 @@ $dir = ($a['latitude'] && $a['longitude'])
         color: var(--vinzons-black);
     }
 
-    /* Fixed Header Safety Margin */
     .page-main-container {
-        padding-top: 6.5rem !important;
+        padding-top: 2rem !important;
     }
 
     /* Consistent Card Logic & Aesthetics */
@@ -202,54 +229,73 @@ $dir = ($a['latitude'] && $a['longitude'])
     }
 </style>
 
+<div class="vendor-profile-subnav">
+    <div class="container">
+        <a href="<?= e(BASE_URL) ?>tourism.php" aria-label="Go back"><i class="fa-solid fa-arrow-left fs-5"></i> Back</a>
+        <span class="fw-bold text-uppercase small" style="letter-spacing: 1px; font-family: 'Montserrat', sans-serif;">Attraction Detail</span>
+    </div>
+</div>
+
 <div class="container page-main-container py-4">
     <?php if ($m = flash('success')): ?><div class="alert alert-success border-0 shadow-sm animate__animated animate__fadeIn" style="border-radius: 15px;"><?= e($m) ?></div><?php endif; ?>
     <?php if ($m = flash('error')): ?><div class="alert alert-danger border-0 shadow-sm animate__animated animate__fadeIn" style="border-radius: 15px;"><?= e($m) ?></div><?php endif; ?>
     
     <div class="row g-5">
         <div class="col-lg-6 animate__animated animate__fadeInLeft">
-            <?php $im = $a['image'] ? asset_url($a['image']) : 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80'; ?>
+            <?php $im = media_url($a['image'] ?? null, asset_url('images/placeholder.png')); ?>
             <div class="unified-card shadow-lg border border-5 border-white h-100">
-                <img src="<?= e($im) ?>" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="">
+                <img src="<?= e($im) ?>" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="<?= e($a['attraction_name']) ?>">
             </div>
         </div>
         
         <div class="col-lg-6 d-flex flex-column justify-content-between animate__animated animate__fadeInRight">
             <div>
-                <span class="badge-pill-custom mb-3"><?= e($a['category']) ?></span>
+                <span class="badge-pill-custom mb-3"><?= e(ucwords(str_replace('_', ' ', (string) $a['category']))) ?></span>
                 <h1 class="display-5 fw-bold attraction-title mb-4"><?= e($a['attraction_name']) ?></h1>
                 
                 <!-- Organized structured details -->
                 <div class="mb-4">
                     <h2 class="section-heading mb-2">Overview</h2>
-                    <p class="lead mb-0" style="line-height: 1.8; opacity: 0.85; font-size: 1.15rem;"><?= nl2br(e((string) $a['description'])) ?></p>
+                    <p class="lead mb-0" style="line-height: 1.8; opacity: 0.85; font-size: 1.15rem;"><?= nl2br(e($display($a['description'] ?? ''))) ?></p>
                 </div>
                 
                 <div class="mb-4">
                     <h2 class="section-heading mb-2">History & Background</h2>
-                    <p class="small text-muted mb-0" style="line-height: 1.7; font-size: 0.95rem; text-align: justify;"><?= nl2br(e((string) ($a['history'] ?? ''))) ?></p>
+                    <p class="small text-muted mb-0" style="line-height: 1.7; font-size: 0.95rem; text-align: justify;"><?= nl2br(e($display($a['history'] ?? ''))) ?></p>
                 </div>
                 
                 <div class="mb-4">
                     <h2 class="section-heading mb-2">Travel Guide & Quick Tips</h2>
-                    <p class="small mb-0" style="line-height: 1.7; opacity: 0.85; font-size: 0.95rem;"><?= nl2br(e((string) ($a['travel_guide'] ?? ''))) ?></p>
+                    <p class="small mb-0" style="line-height: 1.7; opacity: 0.85; font-size: 0.95rem;"><?= nl2br(e($display($a['travel_guide'] ?? ''))) ?></p>
                 </div>
                 
                 <div class="row g-3 mb-4 py-3 px-2 rounded-3 bg-white bg-opacity-20 backdrop-blur" style="border: 1px solid rgba(255,255,255,0.4);">
-                    <div class="col-sm-6">
+                    <div class="col-sm-4">
                         <p class="mb-0 small text-uppercase font-monospace text-muted fw-bold" style="letter-spacing: 0.5px;">Entrance Fee</p>
-                        <p class="mb-0 fw-bold text-dark" style="font-size: 1.05rem;"><?= e($a['entrance_fee'] ?? 'Free') ?></p>
+                        <p class="mb-0 fw-bold text-dark" style="font-size: 1.05rem;"><?= e($display($a['entrance_fee'] ?? '')) ?></p>
                     </div>
-                    <div class="col-sm-6">
+                    <div class="col-sm-4">
                         <p class="mb-0 small text-uppercase font-monospace text-muted fw-bold" style="letter-spacing: 0.5px;">Best Time to Visit</p>
-                        <p class="mb-0 fw-bold text-dark" style="font-size: 1.05rem;"><?= e($a['best_time_to_visit'] ?? 'Anytime') ?></p>
+                        <p class="mb-0 fw-bold text-dark" style="font-size: 1.05rem;"><?= e($display($a['best_time_to_visit'] ?? '')) ?></p>
+                    </div>
+                    <div class="col-sm-4">
+                        <p class="mb-0 small text-uppercase font-monospace text-muted fw-bold" style="letter-spacing: 0.5px;">Location</p>
+                        <p class="mb-0 fw-bold text-dark" style="font-size: 1.05rem;"><?= e($display($a['address'] ?? '', 'Location unavailable')) ?></p>
                     </div>
                 </div>
             </div>
             
             <div>
-                <a class="btn btn-outline-custom w-100 mb-3 text-center d-block" target="_blank" rel="noopener" href="<?= e($dir) ?>">Get directions</a>
-                <div id="attMap" class="unified-card shadow-sm" style="height:240px;background:#e9ecef;"></div>
+                <?php if ($hasCoords): ?>
+                    <a class="btn btn-outline-custom w-100 mb-3 text-center d-block" target="_blank" rel="noopener" href="<?= e($dir) ?>">Get directions</a>
+                    <div id="attMap" class="unified-card shadow-sm" style="height:240px;background:#e9ecef;"></div>
+                <?php else: ?>
+                    <div class="unified-card shadow-sm vendor-map-placeholder" style="height:220px;background:#e9ecef;">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        <strong>Location unavailable</strong>
+                        <span>Latitude and longitude have not been provided yet.</span>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -303,6 +349,7 @@ $dir = ($a['latitude'] && $a['longitude'])
 </div>
 
 <?php
+if ($hasCoords) {
 $extraScripts = '<script src="' . e(ASSET_URL) . 'js/maps.js"></script><script>
 document.addEventListener("DOMContentLoaded", function () {
   if (typeof likhaInitMap === "function") {
@@ -357,5 +404,6 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 </script>';
+}
 require BASE_PATH . '/includes/footer.php';
 ?>

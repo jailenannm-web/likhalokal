@@ -21,15 +21,28 @@ if ($method === 'GET') {
 
     if ($businessId) {
         $uid = current_user_id();
-        $stmt = db()->prepare(
-            'SELECT m.*, us.full_name AS sender_name, ur.full_name AS receiver_name
-             FROM messages m
-             JOIN users us ON us.id = m.sender_id
-             JOIN users ur ON ur.id = m.receiver_id
-             WHERE m.business_id = ? AND (m.sender_id = ? OR m.receiver_id = ?)
-             ORDER BY m.created_at ASC'
-        );
-        $stmt->execute([$businessId, $uid, $uid]);
+        if ($receiverId) {
+            $stmt = db()->prepare(
+                'SELECT m.*, us.full_name AS sender_name, ur.full_name AS receiver_name
+                 FROM messages m
+                 JOIN users us ON us.id = m.sender_id
+                 JOIN users ur ON ur.id = m.receiver_id
+                 WHERE m.business_id = ?
+                   AND ((m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?))
+                 ORDER BY m.created_at ASC'
+            );
+            $stmt->execute([$businessId, $uid, $receiverId, $receiverId, $uid]);
+        } else {
+            $stmt = db()->prepare(
+                'SELECT m.*, us.full_name AS sender_name, ur.full_name AS receiver_name
+                 FROM messages m
+                 JOIN users us ON us.id = m.sender_id
+                 JOIN users ur ON ur.id = m.receiver_id
+                 WHERE m.business_id = ? AND (m.sender_id = ? OR m.receiver_id = ?)
+                 ORDER BY m.created_at ASC'
+            );
+            $stmt->execute([$businessId, $uid, $uid]);
+        }
         json_response(['success' => true, 'message' => '', 'data' => $stmt->fetchAll()]);
     }
 
@@ -104,10 +117,17 @@ if ($method === 'POST') {
 
     if ($action === 'mark_read') {
         $businessId = (int) ($input['business_id'] ?? 0);
+        $receiverId = (int) ($input['receiver_id'] ?? 0);
         $me = current_user_id();
-        db()->prepare(
-            'UPDATE messages SET is_read = 1 WHERE business_id = ? AND receiver_id = ? AND is_read = 0'
-        )->execute([$businessId, $me]);
+        if ($receiverId > 0) {
+            db()->prepare(
+                'UPDATE messages SET is_read = 1 WHERE business_id = ? AND sender_id = ? AND receiver_id = ? AND is_read = 0'
+            )->execute([$businessId, $receiverId, $me]);
+        } else {
+            db()->prepare(
+                'UPDATE messages SET is_read = 1 WHERE business_id = ? AND receiver_id = ? AND is_read = 0'
+            )->execute([$businessId, $me]);
+        }
         json_response(['success' => true, 'message' => 'Marked read', 'data' => []]);
     }
 }

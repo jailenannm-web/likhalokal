@@ -13,7 +13,7 @@ DROP TABLE IF EXISTS inquiries;
 DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS reviews;
 DROP TABLE IF EXISTS products;
-DROP TABLE IF EXISTS businesses;a
+DROP TABLE IF EXISTS businesses;
 DROP TABLE IF EXISTS cultural_information;
 DROP TABLE IF EXISTS announcements;
 DROP TABLE IF EXISTS events;
@@ -26,7 +26,9 @@ CREATE TABLE users (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   full_name VARCHAR(150) NOT NULL,
   email VARCHAR(190) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,
+  google_id VARCHAR(255) DEFAULT NULL UNIQUE,
+  auth_provider ENUM('local','google') NOT NULL DEFAULT 'local',
+  password_hash VARCHAR(255) DEFAULT NULL,
   contact_number VARCHAR(50) DEFAULT NULL,
   profile_image VARCHAR(255) DEFAULT NULL,
   role ENUM('admin','seller','local_user') NOT NULL DEFAULT 'local_user',
@@ -43,6 +45,7 @@ CREATE TABLE businesses (
   user_id INT UNSIGNED NOT NULL,
   business_name VARCHAR(200) NOT NULL,
   business_type ENUM('food_vendor','craft_business','restaurant','travel_agency','resort','recreation','service','pasalubong','fresh_produce') NOT NULL,
+  business_category VARCHAR(120) DEFAULT NULL,
   description TEXT,
   contact_number VARCHAR(50) DEFAULT NULL,
   email VARCHAR(190) DEFAULT NULL,
@@ -73,6 +76,7 @@ CREATE TABLE products (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   business_id INT UNSIGNED NOT NULL,
   product_name VARCHAR(200) NOT NULL,
+  product_type ENUM('product','service','tour_package','accommodation','food','other') NOT NULL DEFAULT 'product',
   category ENUM('local_delicacy','handicraft','fresh_produce','service','tour_package','food','other') NOT NULL,
   description TEXT,
   price DECIMAL(12,2) NOT NULL DEFAULT 0,

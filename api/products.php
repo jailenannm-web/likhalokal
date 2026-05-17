@@ -5,6 +5,10 @@ declare(strict_types=1);
 require_once __DIR__ . '/_init.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
+$hasProductType = db_column_exists('products', 'product_type');
+$validCategories = ['local_delicacy', 'handicraft', 'fresh_produce', 'service', 'tour_package', 'food', 'other'];
+$validTypes = ['product', 'service', 'tour_package', 'accommodation', 'food', 'other'];
+$validAvailability = ['available', 'unavailable'];
 
 if ($method === 'GET') {
     $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
@@ -63,6 +67,14 @@ function seller_owns_product(int $userId, int $productId): bool
     return (bool) $stmt->fetch();
 }
 
+function seller_product_by_api_id(int $productId): ?array
+{
+    $stmt = db()->prepare('SELECT * FROM products WHERE id = ? LIMIT 1');
+    $stmt->execute([$productId]);
+    $product = $stmt->fetch();
+    return $product ?: null;
+}
+
 function seller_business_id(int $userId): ?int
 {
     $stmt = db()->prepare(
@@ -86,20 +98,35 @@ if ($method === 'POST') {
         if (!$bid) {
             json_response(['success' => false, 'message' => 'You need an approved business first.', 'data' => []], 403);
         }
-        $stmt = db()->prepare(
-            'INSERT INTO products (business_id, product_name, category, description, price, image, availability, is_featured, created_at, updated_at)
-             VALUES (?,?,?,?,?,?,?,?,NOW(),NOW())'
-        );
-        $stmt->execute([
+        $name = trim((string) ($input['product_name'] ?? ''));
+        $category = in_array(($input['category'] ?? ''), $validCategories, true) ? (string) $input['category'] : 'other';
+        $type = in_array(($input['product_type'] ?? ''), $validTypes, true) ? (string) $input['product_type'] : 'product';
+        $availability = in_array(($input['availability'] ?? ''), $validAvailability, true) ? (string) $input['availability'] : 'available';
+        if ($name === '' || (float) ($input['price'] ?? 0) < 0) {
+            json_response(['success' => false, 'message' => 'Valid name and non-negative price are required.', 'data' => []], 422);
+        }
+        $columns = 'business_id, product_name, category, description, price, image, availability, is_featured';
+        $marks = '?,?,?,?,?,?,?,?';
+        $params = [
             $bid,
-            trim((string) ($input['product_name'] ?? '')),
-            (string) ($input['category'] ?? 'other'),
+            $name,
+            $category,
             trim((string) ($input['description'] ?? '')),
             (float) ($input['price'] ?? 0),
             trim((string) ($input['image'] ?? '')),
-            (string) ($input['availability'] ?? 'available'),
+            $availability,
             !empty($input['is_featured']) ? 1 : 0,
-        ]);
+        ];
+        if ($hasProductType) {
+            $columns .= ', product_type';
+            $marks .= ',?';
+            $params[] = $type;
+        }
+        $stmt = db()->prepare(
+            'INSERT INTO products (' . $columns . ', created_at, updated_at)
+             VALUES (' . $marks . ',NOW(),NOW())'
+        );
+        $stmt->execute($params);
         json_response(['success' => true, 'message' => 'Product created', 'data' => ['id' => (int) db()->lastInsertId()]]);
     }
 
@@ -112,19 +139,35 @@ if ($method === 'POST') {
         if (!seller_owns_product(current_user_id(), $pid)) {
             json_response(['success' => false, 'message' => 'Forbidden', 'data' => []], 403);
         }
-        $stmt = db()->prepare(
-            'UPDATE products SET product_name=?, category=?, description=?, price=?, image=?, availability=?, is_featured=?, updated_at=NOW() WHERE id=?'
-        );
-        $stmt->execute([
-            trim((string) ($input['product_name'] ?? '')),
-            (string) ($input['category'] ?? 'other'),
+        $current = seller_product_by_api_id($pid);
+        $name = trim((string) ($input['product_name'] ?? ''));
+        $category = in_array(($input['category'] ?? ''), $validCategories, true) ? (string) $input['category'] : 'other';
+        $type = in_array(($input['product_type'] ?? ''), $validTypes, true) ? (string) $input['product_type'] : 'product';
+        $availability = in_array(($input['availability'] ?? ''), $validAvailability, true) ? (string) $input['availability'] : 'available';
+        $image = array_key_exists('image', $input) && trim((string) $input['image']) !== ''
+            ? trim((string) $input['image'])
+            : (string) ($current['image'] ?? '');
+        if ($name === '' || (float) ($input['price'] ?? 0) < 0) {
+            json_response(['success' => false, 'message' => 'Valid name and non-negative price are required.', 'data' => []], 422);
+        }
+        $sql = 'UPDATE products SET product_name=?, category=?, description=?, price=?, image=?, availability=?, is_featured=?';
+        $params = [
+            $name,
+            $category,
             trim((string) ($input['description'] ?? '')),
             (float) ($input['price'] ?? 0),
-            trim((string) ($input['image'] ?? '')),
-            (string) ($input['availability'] ?? 'available'),
+            $image,
+            $availability,
             !empty($input['is_featured']) ? 1 : 0,
-            $pid,
-        ]);
+        ];
+        if ($hasProductType) {
+            $sql .= ', product_type=?';
+            $params[] = $type;
+        }
+        $sql .= ', updated_at=NOW() WHERE id=?';
+        $params[] = $pid;
+        $stmt = db()->prepare($sql);
+        $stmt->execute($params);
         json_response(['success' => true, 'message' => 'Updated', 'data' => ['id' => $pid]]);
     }
 

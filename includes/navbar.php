@@ -5,6 +5,11 @@ declare(strict_types=1);
 $active = $activeNav ?? '';
 $isLoggedIn = is_logged_in();
 $role = current_user_role();
+$navUser = $isLoggedIn ? current_user() : null;
+$navAvatar = $navUser
+    ? profile_avatar_url($navUser['full_name'] ?? null, $navUser['profile_image'] ?? null)
+    : '';
+$lkSearchApi = preg_replace('#/public/?$#', '/api/', rtrim(BASE_URL, '/')) . 'search.php';
 ?>
 <nav class="navbar navbar-expand-lg navbar-dark lk-navbar fixed-top">
     <div class="container">
@@ -27,19 +32,41 @@ $role = current_user_role();
                 <li class="nav-item"><a class="nav-link <?= $active === 'about' ? 'active text-warning' : '' ?>" href="<?= e(BASE_URL) ?>about.php">About</a></li>
             </ul>
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
-                <li class="nav-item"><a class="nav-link" href="<?= e(BASE_URL) ?>products.php" title="Search products"><i class="bi bi-search"></i></a></li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link btn btn-link border-0 text-white" id="lkSearchToggle" title="Search" aria-expanded="false" aria-controls="lkSearchOverlay">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </li>
                 <?php if ($isLoggedIn): ?>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle"></i> <?= e($_SESSION['user_name'] ?? 'Account') ?>
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="<?= e($navAvatar) ?>" alt="" class="rounded-circle" width="28" height="28" style="object-fit:cover;border:2px solid var(--lk-orange);">
+                            <span class="d-none d-md-inline"><?= e($_SESSION['user_name'] ?? 'Account') ?></span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <?php if ($role === 'admin'): ?>
                                 <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>dashboard.php">Admin Dashboard</a></li>
+                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>business-applications.php">Business Applications</a></li>
+                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>businesses.php">Manage Businesses</a></li>
+                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>attractions.php">Tourist Attractions</a></li>
+                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>events.php">Events</a></li>
+                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>announcements.php">Announcements</a></li>
+                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>cultural-info.php">Cultural Information</a></li>
+                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>reviews.php">Reviews</a></li>
+                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>users.php">Users</a></li>
+                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>reports.php">Reports</a></li>
                             <?php elseif ($role === 'seller'): ?>
                                 <li><a class="dropdown-item" href="<?= e(SELLER_URL) ?>dashboard.php">Seller Dashboard</a></li>
+                                <li><a class="dropdown-item" href="<?= e(SELLER_URL) ?>business-profile.php">Business Profile</a></li>
+                                <li><a class="dropdown-item" href="<?= e(SELLER_URL) ?>products.php">Products / Services</a></li>
+                                <li><a class="dropdown-item" href="<?= e(SELLER_URL) ?>messages.php">Messages</a></li>
+                                <li><a class="dropdown-item" href="<?= e(SELLER_URL) ?>reviews.php">Reviews</a></li>
+                                <li><a class="dropdown-item" href="<?= e(SELLER_URL) ?>promotions.php">Promotions</a></li>
                             <?php else: ?>
                                 <li><a class="dropdown-item" href="<?= e(USER_DASH_URL) ?>dashboard.php">My Dashboard</a></li>
+                                <li><a class="dropdown-item" href="<?= e(USER_DASH_URL) ?>messages.php">My Messages</a></li>
+                                <li><a class="dropdown-item" href="<?= e(USER_DASH_URL) ?>reviews.php">My Reviews</a></li>
+                                <li><a class="dropdown-item" href="<?= e(USER_DASH_URL) ?>profile.php">My Profile</a></li>
                             <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="<?= e(BASE_URL) ?>logout.php">Logout</a></li>
@@ -53,3 +80,16 @@ $role = current_user_role();
         </div>
     </div>
 </nav>
+
+<div class="lk-search-overlay" id="lkSearchOverlay" aria-hidden="true" data-api="<?= e($lkSearchApi) ?>">
+    <div class="lk-search-box">
+        <form id="lkSearchForm" role="search" autocomplete="off" onsubmit="return false;">
+            <div class="input-group">
+                <input type="search" class="form-control" id="lkSearchInput" placeholder="Search businesses, products, attractions…" aria-label="Search">
+                <button type="button" class="btn btn-lk-orange rounded-end-pill px-4" id="lkSearchClose" aria-label="Close search"><i class="bi bi-x-lg"></i></button>
+            </div>
+        </form>
+        <div class="lk-search-results" id="lkSearchResults"></div>
+        <p class="text-center mt-3 mb-0"><a href="<?= e(BASE_URL) ?>search.php" class="text-warning small" id="lkSearchViewAll" style="display:none;">View all results</a></p>
+    </div>
+</div>

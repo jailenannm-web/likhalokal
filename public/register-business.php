@@ -3,6 +3,25 @@ declare(strict_types=1);
 
 $pageTitle = 'Register Your Business';
 require_once dirname(__DIR__) . '/bootstrap.php';
+require_once BASE_PATH . '/middleware/auth.php';
+
+if (!is_logged_in()) {
+    set_flash('error', 'Please login or register to continue.');
+    redirect(login_url_with_redirect(BASE_URL . 'register-business.php'));
+}
+
+$role = current_user_role();
+if ($role === 'admin') {
+    redirect_after_login();
+}
+if ($role === 'local_user') {
+    set_flash('error', 'Business registration requires an entrepreneur account. Register as a seller to apply.');
+    redirect(BASE_URL . 'register.php');
+}
+if ($role === 'seller') {
+    set_flash('success', 'Complete your business profile below.');
+    redirect(SELLER_URL . 'business-profile.php');
+}
 
 require BASE_PATH . '/includes/header.php';
 require BASE_PATH . '/includes/navbar.php';

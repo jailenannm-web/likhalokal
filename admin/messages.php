@@ -12,11 +12,10 @@ $list = db()->query(
      LEFT JOIN businesses b ON b.id = m.business_id ORDER BY m.created_at DESC LIMIT 100'
 )->fetchAll();
 
-require BASE_PATH . '/includes/header.php';
 require __DIR__ . '/partials/layout-start.php';
 ?>
-<h1 class="h4 mb-3">Recent messages</h1>
-<table class="table table-sm"><thead><tr><th>When</th><th>Business</th><th>From</th><th>To</th><th>Message</th></tr></thead><tbody>
+<div class="lk-dash-inner-head"><h1 class="lk-dash-page-title mb-1">Recent messages</h1><p class="lk-dash-page-lead text-muted mb-0">Latest inquiries between users and sellers across the platform.</p></div>
+<div class="lk-panel"><div class="lk-dash-table-wrap"><table class="table table-hover align-middle mb-0"><thead><tr><th>When</th><th>Business</th><th>From</th><th>To</th><th>Message</th></tr></thead><tbody>
 <?php foreach ($list as $m): ?>
 <tr>
 <td class="small"><?= e($m['created_at']) ?></td>
@@ -26,5 +25,6 @@ require __DIR__ . '/partials/layout-start.php';
 <td><?= e(str_limit((string) $m['message_content'], 60)) ?></td>
 </tr>
 <?php endforeach; ?>
-</tbody></table>
+<?php if (empty($list)): ?><tr><td colspan="5" class="text-center text-muted py-4">No messages yet.</td></tr><?php endif; ?>
+</tbody></table></div></div>
 <?php require __DIR__ . '/partials/layout-end.php'; require BASE_PATH . '/includes/footer.php';

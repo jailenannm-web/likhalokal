@@ -8,7 +8,7 @@ require_once dirname(__DIR__) . '/bootstrap.php';
 require_once BASE_PATH . '/middleware/auth.php';
 
 if (is_logged_in()) {
-    redirect(dashboard_url_for_role(current_user_role()));
+    redirect_after_login(consume_login_redirect());
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -32,15 +32,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_SESSION['user_role'] = $user['role'];
     log_activity((int) $user['id'], 'login', 'Web login', $_SERVER['REMOTE_ADDR'] ?? null);
     set_flash('success', 'Welcome back!');
-    redirect(dashboard_url_for_role($user['role']));
+    redirect_after_login(consume_login_redirect());
 }
+
+$loginRedirect = peek_login_redirect();
 
 require_once BASE_PATH . '/middleware/csrf.php';
 require BASE_PATH . '/includes/header.php';
 require BASE_PATH . '/includes/navbar.php';
 ?>
-<div class="container py-5">
-    <div class="row justify-content-center">
+<div class="container py-5" style="min-height: calc(100vh - 200px); display: flex; align-items: center;">
+    <div class="row justify-content-center w-100">
         <div class="col-md-5">
             <div class="card card-lk shadow">
                 <div class="card-body p-4">
@@ -48,6 +50,9 @@ require BASE_PATH . '/includes/navbar.php';
                     <?php if ($m = flash('error')): ?><div class="alert alert-danger"><?= e($m) ?></div><?php endif; ?>
                     <form method="post" novalidate>
                         <?= csrf_field() ?>
+                        <?php if ($loginRedirect !== null && is_safe_post_login_redirect($loginRedirect)): ?>
+                        <input type="hidden" name="redirect" value="<?= e($loginRedirect) ?>">
+                        <?php endif; ?>
                         <div class="mb-3">
                             <label class="form-label">Email</label>
                             <input type="email" name="email" class="form-control" required>
@@ -59,7 +64,13 @@ require BASE_PATH . '/includes/navbar.php';
                         <button class="btn btn-lk-orange w-100 mb-2" type="submit">Login</button>
                     </form>
                     <a href="<?= e(BASE_URL) ?>register.php" class="d-block text-center small">Register now</a>
-                    <button type="button" class="btn btn-outline-secondary w-100 mt-3" disabled title="Configure OAuth to enable">Continue with Google (placeholder)</button>
+                    <?php if (google_oauth_configured()): ?>
+                        <a href="<?= e(BASE_URL) ?>google-auth.php" class="btn btn-outline-secondary w-100 mt-3">
+                            <i class="fa-brands fa-google me-2"></i> Continue with Google
+                        </a>
+                    <?php else: ?>
+                        <button type="button" class="btn btn-outline-secondary w-100 mt-3" disabled title="Set GOOGLE_CLIENT_ID in config/app.php">Continue with Google</button>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

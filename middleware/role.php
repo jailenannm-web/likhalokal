@@ -11,6 +11,6 @@ function require_role(array $roles): void
             json_response(['success' => false, 'message' => 'Forbidden', 'data' => []], 403);
         }
         set_flash('error', 'You do not have access to this page.');
-        redirect(BASE_URL . 'index.php');
+        redirect(BASE_URL . 'forbidden.php');
     }
 }

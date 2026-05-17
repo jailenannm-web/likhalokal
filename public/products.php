@@ -14,6 +14,7 @@ $sql = "SELECT p.*, b.business_name, b.id AS business_id, b.logo, b.address, b.c
 $stmt = db()->prepare($sql);
 $stmt->execute();
 $products = $stmt->fetchAll();
+$pageReturn = current_request_return_url();
 
 // Group items by category AND by business
 $groupedByCategory = [];
@@ -50,6 +51,7 @@ foreach ($products as $p) {
         $allShops[$bId] = [
             'id' => $bId,
             'name' => $p['business_name'],
+            'logo' => $p['logo'] ?? null,
             'address' => $p['address'] ?? 'Vinzons',
             'contact' => $p['contact_number'] ?? 'N/A',
             'type' => $p['business_type']
@@ -86,7 +88,7 @@ $categoriesConfig = [
         'action_icon' => 'fa-carrot',
         'badge' => 'Organic Certified'
     ],
-    'avail_service' => [
+    'service' => [
         'title' => 'SERVICES TO AVAIL',
         'spotlight' => 'TRUSTED LOCAL SKILLS',
         'icon' => '<i class="fa-solid fa-bell-concierge"></i>',
@@ -95,8 +97,8 @@ $categoriesConfig = [
         'action_icon' => 'fa-file-signature',
         'badge' => 'Verified Vendor'
     ],
-    'book_experience' => [
-        'title' => 'EXPERIENCES & BOOKINGS',
+    'tour_package' => [
+        'title' => 'TOURS & PACKAGES',
         'spotlight' => 'EXPLORE & UNWIND IN VINZONS',
         'icon' => '<i class="fa-solid fa-map-location-dot"></i>',
         'tagline' => 'Reserve farm stays, dynamic tour experiences, cultural workshops, and rental services directly managed by locals.',
@@ -104,9 +106,18 @@ $categoriesConfig = [
         'action_icon' => 'fa-calendar-check',
         'badge' => 'Eco Tour / Stay'
     ],
-    'custom_inquiry' => [
-        'title' => 'INQUIRE & CUSTOM COMMISSIONS',
-        'spotlight' => 'B2B & LARGE SCALE COMMISSIONS',
+    'food' => [
+        'title' => 'FOOD',
+        'spotlight' => 'LOCAL FOOD FINDS',
+        'icon' => '<i class="fa-solid fa-utensils"></i>',
+        'tagline' => 'Discover ready-to-eat favorites, food trays, and local flavors from community sellers.',
+        'action_text' => 'Order Food',
+        'action_icon' => 'fa-basket-shopping',
+        'badge' => 'Local Food'
+    ],
+    'other' => [
+        'title' => 'OTHER OFFERINGS',
+        'spotlight' => 'CUSTOM REQUESTS',
         'icon' => '<i class="fa-solid fa-comments-dollar"></i>',
         'tagline' => 'Looking for wholesale trade assets, unique raw products, or heavy bespoke fabrication? Contact our vendors directly.',
         'action_text' => 'Request Quote',
@@ -341,7 +352,7 @@ body {
                 </div>
             </a>
 
-            <a href="#cat-avail_service" class="text-decoration-none flex-shrink-0" style="width: 280px; max-width: 75vw;">
+            <a href="#cat-service" class="text-decoration-none flex-shrink-0" style="width: 280px; max-width: 75vw;">
                 <div class="position-relative overflow-hidden shadow-sm quick-cat-card" style="height: 140px;">
                     <img src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=500&q=80" class="w-100 h-100 object-fit-cover quick-cat-img" alt="Local Services">
                     <div class="position-absolute bottom-0 start-0 w-100 p-3 text-white fw-bold fs-5" style="background: linear-gradient(transparent, rgba(27,67,50,0.95)); font-family: 'Montserrat', sans-serif;">
@@ -350,7 +361,7 @@ body {
                 </div>
             </a>
 
-            <a href="#cat-book_experience" class="text-decoration-none flex-shrink-0" style="width: 280px; max-width: 75vw;">
+            <a href="#cat-tour_package" class="text-decoration-none flex-shrink-0" style="width: 280px; max-width: 75vw;">
                 <div class="position-relative overflow-hidden shadow-sm quick-cat-card" style="height: 140px;">
                     <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=500&q=80" class="w-100 h-100 object-fit-cover quick-cat-img" alt="Book Experiences">
                     <div class="position-absolute bottom-0 start-0 w-100 p-3 text-white fw-bold fs-5" style="background: linear-gradient(transparent, rgba(27,67,50,0.95)); font-family: 'Montserrat', sans-serif;">
@@ -359,7 +370,7 @@ body {
                 </div>
             </a>
 
-            <a href="#cat-custom_inquiry" class="text-decoration-none flex-shrink-0" style="width: 280px; max-width: 75vw;">
+            <a href="#cat-other" class="text-decoration-none flex-shrink-0" style="width: 280px; max-width: 75vw;">
                 <div class="position-relative overflow-hidden shadow-sm quick-cat-card" style="height: 140px;">
                     <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=500&q=80" class="w-100 h-100 object-fit-cover quick-cat-img" alt="Inquiries">
                     <div class="position-absolute bottom-0 start-0 w-100 p-3 text-white fw-bold fs-5" style="background: linear-gradient(transparent, rgba(27,67,50,0.95)); font-family: 'Montserrat', sans-serif;">
@@ -414,7 +425,7 @@ body {
                 <!-- Spotlight Banner Feature Component -->
                 <?php 
                     $spotlightItem = $categorySpotlights[$catKey]; 
-                    $imgSpot = $spotlightItem['image'] ? asset_url($spotlightItem['image']) : 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=600&q=80';
+                    $imgSpot = $spotlightItem['image'] ? media_url($spotlightItem['image'], 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=600&q=80') : 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=600&q=80';
                     $itemPrice = isset($spotlightItem['price']) ? '₱' . number_format((float)$spotlightItem['price'], 2) : 'Inquire for Price';
                 ?>
                 <div style="max-width: 950px; margin: 0 auto 3rem auto;">
@@ -432,6 +443,12 @@ body {
                                 <span class="badge rounded-pill mb-2 bg-warning text-dark shadow-sm" style="font-size: 0.65rem; font-family: 'Montserrat', sans-serif; font-weight: 700;">
                                     <i class="fa-solid fa-star me-1"></i> Featured Spotlight
                                 </span>
+                                <span class="badge rounded-pill mb-2 bg-light text-dark border" style="font-size: 0.65rem; font-family: 'Montserrat', sans-serif; font-weight: 700;">
+                                    <?= e(product_category_label($spotlightItem['category'] ?? $catKey)) ?> / <?= e(product_type_label($spotlightItem['product_type'] ?? null)) ?>
+                                </span>
+                                <span class="badge rounded-pill mb-2 bg-<?= ($spotlightItem['availability'] ?? '') === 'available' ? 'success' : 'secondary' ?>" style="font-size: 0.65rem; font-family: 'Montserrat', sans-serif; font-weight: 700;">
+                                    <?= e(ucfirst((string) ($spotlightItem['availability'] ?? 'available'))) ?>
+                                </span>
                                 <div class="small fw-bold mb-1" style="letter-spacing: 1px; color: #1b4332; font-family: 'Montserrat', sans-serif; font-size: 0.75rem;">
                                     <?= $catMeta['spotlight'] ?>
                                 </div>
@@ -442,7 +459,7 @@ body {
                                     <?= e(str_limit((string)$spotlightItem['description'], 140)) ?>
                                 </p>
                                 <div>
-                                    <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int)$spotlightItem['business_id'] ?>&product_id=<?= (int)$spotlightItem['id'] ?>" class="btn text-white fw-bold px-4 py-2 shadow-sm rounded-pill" style="background: #f39200; font-size: 0.8rem;">
+                                    <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int)$spotlightItem['business_id'] ?>&product_id=<?= (int)$spotlightItem['id'] ?>&return=<?= rawurlencode($pageReturn) ?>" class="btn text-white fw-bold px-4 py-2 shadow-sm rounded-pill" style="background: #f39200; font-size: 0.8rem;">
                                         <i class="fa-solid <?= $catMeta['action_icon'] ?> me-2"></i> <?= $catMeta['action_text'] ?>
                                     </a>
                                 </div>
@@ -460,7 +477,7 @@ body {
                             <div class="d-flex align-items-center">
                                 <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm border border-light" style="width: 44px; height: 44px; flex-shrink: 0;">
                                     <?php if(!empty($shopData['shop_info']['logo'])): ?>
-                                        <img src="<?= asset_url($shopData['shop_info']['logo']) ?>" class="w-100 h-100 rounded-circle object-fit-cover" alt="">
+                                        <img src="<?= e(media_url($shopData['shop_info']['logo'])) ?>" class="w-100 h-100 rounded-circle object-fit-cover" alt="">
                                     <?php else: ?>
                                         <i class="fa-solid fa-store text-secondary" style="font-size: 1rem;"></i>
                                     <?php endif; ?>
@@ -472,7 +489,7 @@ body {
                                     <span class="text-muted d-block" style="font-family: 'Dancing Script', cursive; font-size: 1.05rem; color: #f39200 !important; line-height: 1;">Proud Partner Seller</span>
                                 </div>
                             </div>
-                            <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= $shopId ?>&intent=<?= $catKey ?>" class="btn btn-sm text-white fw-bold px-4 py-2 rounded-pill shadow-sm" style="background: #1b4332; font-size: 0.75rem; transition: background 0.2s;" onmouseover="this.style.background='#f39200';" onmouseout="this.style.background='#1b4332';">
+                            <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= $shopId ?>&intent=<?= e($catKey) ?>&return=<?= rawurlencode($pageReturn) ?>" class="btn btn-sm text-white fw-bold px-4 py-2 rounded-pill shadow-sm" style="background: #1b4332; font-size: 0.75rem; transition: background 0.2s;" onmouseover="this.style.background='#f39200';" onmouseout="this.style.background='#1b4332';">
                                 <i class="fa-regular fa-comment-dots me-1.5"></i> Custom Inquiry
                             </a>
                         </div>
@@ -483,7 +500,7 @@ body {
                                 <?php foreach ($shopData['products'] as $p): ?>
                                     <div class="product-card-tourism flex-shrink-0 d-flex flex-column" style="width: 190px;">
                                         <?php 
-                                            $img = $p['image'] ? asset_url($p['image']) : 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80'; 
+                                            $img = $p['image'] ? media_url($p['image'], 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80') : 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80';
                                             $displayPrice = isset($p['price']) && (float)$p['price'] > 0 ? '₱' . number_format((float)$p['price'], 2) : 'Contact Vendor';
                                         ?>
                                         <div class="w-100 aspect-ratio-1x1 position-relative overflow-hidden" style="border-radius: 12px 12px 0 0; aspect-ratio: 1/1; background-color: #fcfcfc;">
@@ -494,15 +511,18 @@ body {
                                         </div>
                                         <div class="p-3 bg-white d-flex flex-column flex-grow-1" style="border-radius: 0 0 12px 12px;">
                                             <span class="text-uppercase text-muted tracking-wider d-block mb-1" style="font-size: 0.58rem; font-weight: 700; letter-spacing: 0.5px;">
-                                                <?= $catMeta['badge'] ?>
+                                                <?= e(product_category_label($p['category'] ?? $catKey)) ?> / <?= e(product_type_label($p['product_type'] ?? null)) ?>
                                             </span>
                                             <h6 class="fw-bold mb-1 text-truncate text-dark" style="font-family: 'Montserrat', sans-serif; font-size: 0.85rem;" title="<?= e($p['product_name']) ?>"><?= e($p['product_name']) ?></h6>
+                                            <span class="badge align-self-start mb-2 bg-<?= ($p['availability'] ?? '') === 'available' ? 'success' : 'secondary' ?>" style="font-size: 0.62rem;">
+                                                <?= e(ucfirst((string) ($p['availability'] ?? 'available'))) ?>
+                                            </span>
                                             <p class="text-secondary mb-3 line-clamp-2" style="font-size: 0.7rem; line-height: 1.4; flex-grow: 1;">
                                                 <?= e(str_limit((string)$p['description'], 60)) ?>
                                             </p>
                                             
                                             <!-- Action Button Layer dependent on Category Context -->
-                                            <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int)$p['business_id'] ?>&product_id=<?= (int)$p['id'] ?>" class="btn btn-outline-success border-1 rounded-pill w-100 py-1 text-center fw-bold mt-auto" style="font-size: 0.68rem; transition: all 0.2s;">
+                                            <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int)$p['business_id'] ?>&product_id=<?= (int)$p['id'] ?>&return=<?= rawurlencode($pageReturn) ?>" class="btn btn-outline-success border-1 rounded-pill w-100 py-1 text-center fw-bold mt-auto" style="font-size: 0.68rem; transition: all 0.2s;">
                                                 <i class="fa-solid <?= $catMeta['action_icon'] ?> me-1"></i> <?= $catMeta['action_text'] ?>
                                             </a>
                                         </div>
@@ -543,12 +563,12 @@ body {
         <div class="row g-4">
             <?php foreach ($allShops as $shop): ?>
                 <div class="col-md-6 col-lg-4">
-                    <a href="<?= e(BASE_URL) ?>vendor-profile.php?id=<?= $shop['id'] ?>" class="text-decoration-none">
+                    <a href="<?= e(vendor_profile_url((int) $shop['id'], current_request_return_url())) ?>" class="text-decoration-none">
                         <div class="product-card-tourism p-4 h-100 d-flex flex-column shadow-sm" style="background: #ffffff; width: 100%;">
                             <div class="d-flex align-items-center gap-3 mb-3">
                                 <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm border" style="width: 48px; height: 48px; flex-shrink: 0; border-color: #e8f5e9 !important;">
                                     <?php if(!empty($shop['logo'])): ?>
-                                        <img src="<?= asset_url($shop['logo']) ?>" class="w-100 h-100 rounded-circle object-fit-cover" alt="">
+                                        <img src="<?= e(media_url($shop['logo'])) ?>" class="w-100 h-100 rounded-circle object-fit-cover" alt="">
                                     <?php else: ?>
                                         <i class="fa-solid fa-store text-muted" style="font-size: 0.9rem;"></i>
                                     <?php endif; ?>

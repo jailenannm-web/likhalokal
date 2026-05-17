@@ -1,0 +1,239 @@
+/* Shared LikhaLokal dashboard shell (user, seller, admin) */
+body.lk-dash-page {
+  background: #f4f7f6;
+  min-height: 100vh;
+}
+
+.lk-dash-wrap {
+  background: linear-gradient(160deg, #f4f7fb 0%, #fff8ee 45%, #f4f7f6 100%);
+  min-height: 100vh;
+}
+
+.lk-dash-wrap .container-fluid {
+  min-height: 100vh;
+}
+
+.lk-dash-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  background: linear-gradient(180deg, var(--lk-navy) 0%, #023e8a 100%);
+  border-right: 3px solid var(--lk-orange);
+  padding: 1.25rem 0.75rem;
+}
+
+.lk-dash-brand {
+  padding: 0.5rem 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 0.75rem;
+}
+
+.lk-dash-brand a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.8rem;
+  opacity: 0.9;
+  transition: color 0.25s ease;
+}
+
+.lk-dash-brand a:hover {
+  color: var(--lk-orange);
+}
+
+.lk-dash-nav-label,
+.lk-dash-sidebar .nav-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  padding: 0 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.lk-dash-sidebar a.lk-dash-nav {
+  color: rgba(255, 255, 255, 0.88);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 1rem;
+  margin: 0.15rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  transition: transform 0.2s ease, background 0.25s ease, color 0.25s ease;
+}
+
+.lk-dash-sidebar a.lk-dash-nav i {
+  font-size: 1.1rem;
+  width: 1.25rem;
+  text-align: center;
+  color: var(--lk-orange);
+}
+
+.lk-dash-sidebar a.lk-dash-nav:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transform: translateX(4px);
+}
+
+.lk-dash-sidebar a.lk-dash-nav.active {
+  background: linear-gradient(90deg, rgba(243, 146, 0, 0.25), rgba(255, 255, 255, 0.08));
+  color: #fff;
+  box-shadow: inset 3px 0 0 var(--lk-orange);
+}
+
+.lk-dash-sidebar a.lk-dash-nav.logout {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1rem;
+  color: #ffc9c9;
+}
+
+.lk-dash-main {
+  padding: 1.25rem 1.75rem 2.5rem;
+  min-width: 0;
+}
+
+.lk-dash-hero,
+.lk-user-hero {
+  background: linear-gradient(135deg, var(--lk-navy) 0%, #023e8a 55%, #1b4332 100%);
+  border-radius: var(--radius);
+  color: #fff;
+  padding: 1.75rem 2rem;
+  box-shadow: 0 12px 32px rgba(0, 31, 63, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.lk-dash-hero::after,
+.lk-user-hero::after {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -40px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(243, 146, 0, 0.35) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.lk-dash-hero .avatar-ring,
+.lk-dash-hero .logo-ring,
+.lk-user-hero .avatar-ring,
+.lk-user-hero .logo-ring {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 3px solid var(--lk-orange);
+  padding: 3px;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.lk-dash-hero .avatar-ring img,
+.lk-dash-hero .logo-ring img,
+.lk-user-hero .avatar-ring img,
+.lk-user-hero .logo-ring img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.lk-dash-page-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--lk-navy);
+  margin-bottom: 1rem;
+}
+
+.lk-dash-page-title small {
+  font-weight: 600;
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.lk-dash-page-lead {
+  font-size: 0.95rem;
+  max-width: 42rem;
+}
+
+.lk-dash-inner-head {
+  margin-bottom: 1.25rem;
+}
+
+.lk-dash-flash .alert {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 14px rgba(0, 31, 63, 0.06);
+}
+
+.lk-panel .lk-panel-body,
+.lk-panel-body {
+  padding: 1.25rem;
+}
+
+.lk-panel .table {
+  margin-bottom: 0;
+}
+
+.lk-dash-table-wrap {
+  overflow-x: auto;
+}
+
+.lk-dash-table-wrap .table thead th {
+  background: rgba(0, 31, 63, 0.04);
+  color: var(--lk-navy);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom-width: 1px;
+  white-space: nowrap;
+}
+
+.lk-dash-table-wrap .table tbody tr:hover {
+  background: #fff9f0;
+}
+
+.lk-empty-state {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  color: #6c757d;
+}
+
+.lk-empty-state i {
+  font-size: 2.5rem;
+  opacity: 0.35;
+  display: block;
+  margin-bottom: 0.75rem;
+  color: var(--lk-orange);
+}
+
+.lk-dash-tabs .btn {
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.lk-dash-tabs .btn.active {
+  background: var(--lk-orange);
+  border-color: var(--lk-orange);
+  color: #fff;
+}
+
+.lk-panel .form-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--lk-navy);
+}
+
+.lk-panel .btn-lk-orange,
+.lk-panel .btn-primary {
+  font-weight: 600;
+  border-radius: 50px;
+  padding: 0.45rem 1.25rem;
+}

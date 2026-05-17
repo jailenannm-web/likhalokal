@@ -45,9 +45,12 @@
   }
 
   async function load() {
-    const url =
+    let url =
       "../api/messages.php?business_id=" +
       encodeURIComponent(cfg.businessId);
+    if (cfg.receiverId) {
+      url += "&receiver_id=" + encodeURIComponent(cfg.receiverId);
+    }
     const res = await fetch(url, { credentials: "same-origin" });
     const json = await res.json();
     if (json.success) {
@@ -56,7 +59,12 @@
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "mark_read", business_id: cfg.businessId, csrf_token: csrf }),
+        body: JSON.stringify({
+          action: "mark_read",
+          business_id: cfg.businessId,
+          receiver_id: cfg.receiverId || null,
+          csrf_token: csrf,
+        }),
       });
     }
   }

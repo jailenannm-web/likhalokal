@@ -10,6 +10,7 @@ require_login();
 
 $businessId = (int) ($_GET['business_id'] ?? 0);
 $productId = isset($_GET['product_id']) ? (int) $_GET['product_id'] : 0;
+$customerId = isset($_GET['customer_id']) ? (int) $_GET['customer_id'] : 0;
 if ($businessId < 1) {
     http_response_code(400);
     echo 'Invalid conversation.';
@@ -35,7 +36,12 @@ if (!in_array($role, ['local_user', 'seller'], true)) {
 
 require_once BASE_PATH . '/middleware/csrf.php';
 $csrf = csrf_token();
-$receiverJs = ($role === 'local_user') ? $ownerId : null;
+$receiverJs = null;
+if ($role === 'local_user') {
+    $receiverJs = $ownerId;
+} elseif ($role === 'seller') {
+    $receiverJs = $ownerId === $me ? ($customerId > 0 ? $customerId : null) : $ownerId;
+}
 
 // Product Context
 $productContext = null;
@@ -44,6 +50,15 @@ if ($productId > 0) {
     $pstmt->execute([$productId, $businessId]);
     $productContext = $pstmt->fetch();
 }
+
+$requestedReturn = isset($_GET['return']) ? (string) $_GET['return'] : null;
+$defaultBack = ($role === 'local_user')
+    ? USER_DASH_URL . 'messages.php?business_id=' . $businessId
+    : SELLER_URL . 'messages.php';
+$backUrl = resolve_return_url($requestedReturn, $defaultBack);
+$shopInfoReturn = $defaultBack;
+$bodyClass = trim(($bodyClass ?? '') . ' message-page lk-internal-workspace');
+$isDashboardLayout = true;
 
 require BASE_PATH . '/includes/header.php';
 ?>
@@ -80,13 +95,14 @@ body {
     <i class="fa-solid fa-store float-icon" style="top: 80%; left: 10%; animation-duration: 15s; font-size: 4rem; color: rgba(27,67,50,0.05);"></i>
 </div>
 
-<!-- Custom Topbar for Chat -->
-<div style="background: rgba(27,67,50,0.95); backdrop-filter: blur(10px); height: 60px; display: flex; align-items: center; padding: 0 1rem; color: white; border-bottom: 2px solid #f39200;">
-    <a href="<?= e(BASE_URL) ?>products.php" class="text-white text-decoration-none me-3" style="transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"><i class="fa-solid fa-arrow-left fs-4"></i></a>
-    <span class="m-0 fw-bold" style="font-family: 'Montserrat', sans-serif; font-size: 1.2rem; letter-spacing: 1px;">INQUIRY HUB</span>
+<div class="vendor-profile-subnav message-subnav">
+    <div class="container">
+        <a href="<?= e($backUrl) ?>" aria-label="Go back"><i class="fa-solid fa-arrow-left fs-5"></i> Back</a>
+        <span class="fw-bold text-uppercase small" style="letter-spacing: 1px; font-family: 'Montserrat', sans-serif;">Inquiry Hub</span>
+    </div>
 </div>
 
-<div class="py-5" style="min-height: calc(100vh - 60px); font-family: 'Poppins', sans-serif;">
+<div class="py-4 py-lg-5" style="min-height: calc(100vh - 52px); font-family: 'Poppins', sans-serif;">
     <div class="container d-flex justify-content-center h-100">
         
         <!-- Chat Shell -->
@@ -108,7 +124,7 @@ body {
                         <div class="small fw-bold" style="font-size: 0.8rem; color: #f39200;"><i class="fa-solid fa-circle text-success me-1" style="font-size: 0.6rem;"></i> Responsive Seller</div>
                     </div>
                 </div>
-                <a href="<?= e(BASE_URL) ?>vendor-profile.php?id=<?= $businessId ?>" class="btn rounded-pill shadow-sm fw-bold px-3 py-1 text-white" style="background: #1b4332; font-size: 0.85rem;">
+                <a href="<?= e(vendor_profile_url($businessId, $shopInfoReturn)) ?>" class="btn rounded-pill shadow-sm fw-bold px-3 py-1 text-white" style="background: #1b4332; font-size: 0.85rem;">
                     <i class="fa-regular fa-circle-info me-1"></i> Shop Info
                 </a>
             </div>
@@ -147,6 +163,7 @@ body {
 window.LK_CHAT = {
   businessId: <?= (int) $businessId ?>,
   productId: <?= $productId ?: 'null' ?>,
+  customerId: <?= $customerId ?: 'null' ?>,
   receiverId: <?= $receiverJs !== null ? (int) $receiverJs : 'null' ?>,
   me: <?= (int) $me ?>,
   csrf: <?= json_encode($csrf) ?>

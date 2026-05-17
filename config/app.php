@@ -24,7 +24,14 @@ if (!defined('USER_DASH_URL')) {
 }
 
 define('APP_NAME', 'Vinzons LikhaLokal: Tuklas, Kultura, Kabuhayan');
+
+/** Google Maps — https://console.cloud.google.com/apis/credentials */
 define('GOOGLE_MAPS_API_KEY', 'YOUR_GOOGLE_MAPS_API_KEY_HERE');
+
+/** Google OAuth — https://console.cloud.google.com/apis/credentials */
+define('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID');
+define('GOOGLE_CLIENT_SECRET', 'YOUR_GOOGLE_CLIENT_SECRET');
+define('GOOGLE_REDIRECT_URI', 'http://localhost/likhalokal/public/google-callback.php');
 
 define('UPLOAD_MAX_BYTES', 5 * 1024 * 1024);
 define('UPLOAD_ALLOWED_MIME', ['image/jpeg', 'image/png', 'image/webp']);

@@ -31,7 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['user_role'] = $user['role'];
         log_activity((int) $user['id'], 'login', 'API login', $_SERVER['REMOTE_ADDR'] ?? null);
-        $redirect = dashboard_url_for_role($user['role']);
+        $requested = $merge['redirect'] ?? null;
+        $redirect = post_login_redirect_url(is_string($requested) ? $requested : null);
         json_response(['success' => true, 'message' => 'Logged in', 'data' => ['user' => ['id' => $user['id'], 'name' => $user['full_name'], 'role' => $user['role']], 'redirect' => $redirect]]);
     }
 
@@ -72,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_email'] = $email;
         $_SESSION['user_role'] = $role;
         log_activity($id, 'register', 'New account via API', $_SERVER['REMOTE_ADDR'] ?? null);
-        $redirect = $role === 'seller' ? SELLER_URL . 'business-profile.php' : USER_DASH_URL . 'dashboard.php';
+        $redirect = public_home_url();
         json_response(['success' => true, 'message' => 'Registered', 'data' => ['redirect' => $redirect]]);
     }
 

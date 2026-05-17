@@ -54,7 +54,7 @@ require BASE_PATH . '/includes/navbar.php';
                             <p class="small text-muted mb-1"><?= e(str_limit((string) $b['description'], 90)) ?></p>
                             <p class="small mb-1"><i class="bi bi-star-fill text-warning"></i> <?= e((string) $avg) ?></p>
                             <p class="small mb-2"><i class="bi bi-telephone"></i> <?= e($b['contact_number'] ?? '') ?></p>
-                            <a class="btn btn-sm btn-outline-primary" href="<?= e(BASE_URL) ?>vendor-profile.php?id=<?= (int) $b['id'] ?>">View profile</a>
+                            <a class="btn btn-sm btn-outline-primary" href="<?= e(vendor_profile_url((int) $b['id'], current_request_return_url())) ?>">View profile</a>
                         </div>
                     </div>
                 </div>

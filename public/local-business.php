@@ -6,8 +6,26 @@ $activeNav = 'business';
 require_once dirname(__DIR__) . '/bootstrap.php';
 
 $featured = db()->query(
-    "SELECT * FROM businesses WHERE status='approved' ORDER BY id ASC LIMIT 4"
+    "SELECT * FROM businesses WHERE status='approved' AND id IN (10,11,12,13) ORDER BY FIELD(id,10,11,12,13)"
 )->fetchAll();
+if (count($featured) < 4) {
+    $need = 4 - count($featured);
+    $stmt = db()->prepare(
+        "SELECT * FROM businesses WHERE status='approved' AND id NOT IN (10,11,12,13) ORDER BY id ASC LIMIT " . (int) $need
+    );
+    $stmt->execute();
+    $featured = array_merge($featured, $stmt->fetchAll());
+}
+
+$allApproved = db()->query(
+    "SELECT * FROM businesses WHERE status='approved' ORDER BY business_type, business_name"
+)->fetchAll();
+
+$listingColumns = [
+    ['title' => 'Restaurants & Cafes', 'icon' => 'bi-cup-hot', 'types' => ['restaurant', 'food_vendor'], 'reveal' => 'reveal-left'],
+    ['title' => 'Resorts & Stays', 'icon' => 'bi-building', 'types' => ['resort'], 'reveal' => ''],
+    ['title' => 'Local Services', 'icon' => 'bi-tsunami', 'types' => ['travel_agency', 'recreation', 'service', 'craft_business'], 'reveal' => 'reveal-right'],
+];
 
 require BASE_PATH . '/includes/header.php';
 require BASE_PATH . '/includes/navbar.php';
@@ -1048,169 +1066,10 @@ body, p, span, li, small, a:not(.font-bungee) {
 
     <h2 class="section-title reveal">FEATURED BUSINESS</h2>
 
-    <div class="featured-grid stagger-children">
-        <div class="business-card reveal reveal-scale">
-            <div class="biz-image-area">
-                <img src="assets/images/fruitstand.png" alt="Fruit Stand">
-            </div>
-            <div class="biz-info-bar">
-                <div class="biz-details">
-                    <h4>Vinzons Fruit Stand</h4>
-                    <p>Fresh tropical fruits like pineapple, mangoes, and bananas from local farms.</p>
-                </div>
-                <a href="#" class="mail-btn"><i class="bi bi-envelope"></i></a>
-            </div>
-        </div>
-
-        <div class="business-card reveal reveal-scale">
-            <div class="biz-image-area">
-                <img src="assets/images/coastalcraft.png" alt="Coastal Crafts">
-            </div>
-            <div class="biz-info-bar">
-                <div class="biz-details">
-                    <h4>Coastal Crafts Vinzons</h4>
-                    <p>Driftwood art, shell ornaments, and miniature boats handcrafted locally.</p>
-                </div>
-                <a href="#" class="mail-btn"><i class="bi bi-envelope"></i></a>
-            </div>
-        </div>
-
-        <div class="business-card reveal reveal-scale">
-            <div class="biz-image-area">
-                <img src="assets/images/nativetouch.png" alt="Native Touch">
-            </div>
-            <div class="biz-info-bar">
-                <div class="biz-details">
-                    <h4>Native Touch Souvenirs</h4>
-                    <p>Coconut shell crafts, miniature bahay kubo, and decorative ornaments.</p>
-                </div>
-                <a href="#" class="mail-btn"><i class="bi bi-envelope"></i></a>
-            </div>
-        </div>
-
-        <div class="business-card reveal reveal-scale">
-            <div class="biz-image-area">
-                <img src="assets/images/sweettreats.png" alt="Sweet Treats">
-            </div>
-            <div class="biz-info-bar">
-                <div class="biz-details">
-                    <h4>Sweet Treats Vinzons</h4>
-                    <p>Pandecillos, pili tart, angko, sapin-sapin, and local delicacies.</p>
-                </div>
-                <a href="#" class="mail-btn"><i class="bi bi-envelope"></i></a>
-            </div>
-        </div>
-    </div>
+    <?php require BASE_PATH . '/includes/partials/featured-businesses.php'; ?>
 </section>
 
-<!-- LISTINGS SECTION -->
-<section class="listings-wrapper">
-    <div class="listings-grid">
-        
-        <div class="listing-col">
-            <h3 class="col-header reveal">Restaurants & Cafes</h3>
-            
-            <div class="list-item reveal reveal-left">
-                <div class="list-icon"><i class="bi bi-cup-hot"></i></div>
-                <div class="list-info">
-                    <h5>Liham Cafe</h5>
-                    <p>Barangay Poblacion</p>
-                    <p>09123456879</p>
-                    <a href="#" class="contact-btn">Message now</a>
-                </div>
-            </div>
-
-            <div class="list-item reveal reveal-left" style="transition-delay:0.1s;">
-                <div class="list-icon"><i class="bi bi-cake2"></i></div>
-                <div class="list-info">
-                    <h5>Cakefrost Vinzons</h5>
-                    <p>Near Town Plaza</p>
-                    <p>09123456879</p>
-                    <a href="#" class="contact-btn">Message now</a>
-                </div>
-            </div>
-
-            <div class="list-item reveal reveal-left" style="transition-delay:0.2s;">
-                <div class="list-icon"><i class="bi bi-cup-straw"></i></div>
-                <div class="list-info">
-                    <h5>Maxicup Vinzons</h5>
-                    <p>Barangay San Isidro</p>
-                    <p>09123456879</p>
-                    <a href="#" class="contact-btn">Message now</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="listing-col">
-            <h3 class="col-header reveal">Resorts & Stays</h3>
-            
-            <div class="list-item reveal">
-                <div class="list-icon"><i class="bi bi-building"></i></div>
-                <div class="list-info">
-                    <h5>Erica Resort</h5>
-                    <p>Coastal Area, Vinzons</p>
-                    <p>09123456879</p>
-                    <a href="#" class="contact-btn">Message now</a>
-                </div>
-            </div>
-
-            <div class="list-item reveal" style="transition-delay:0.1s;">
-                <div class="list-icon"><i class="bi bi-house-door"></i></div>
-                <div class="list-info">
-                    <h5>Casa Indan Resort</h5>
-                    <p>Barangay Sabang</p>
-                    <p>09123456879</p>
-                    <a href="#" class="contact-btn">Message now</a>
-                </div>
-            </div>
-
-            <div class="list-item reveal" style="transition-delay:0.2s;">
-                <div class="list-icon"><i class="bi bi-sun"></i></div>
-                <div class="list-info">
-                    <h5>Calaguas Paradise Resort</h5>
-                    <p>Mahabang Buhangin</p>
-                    <p>09123456879</p>
-                    <a href="#" class="contact-btn">Message now</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="listing-col">
-            <h3 class="col-header reveal">Local Services</h3>
-            
-            <div class="list-item reveal reveal-right">
-                <div class="list-icon"><i class="bi bi-tsunami"></i></div>
-                <div class="list-info">
-                    <h5>Calaguas Island Trips</h5>
-                    <p>Vinzons Port</p>
-                    <p>09123456879</p>
-                    <a href="#" class="contact-btn">Message now</a>
-                </div>
-            </div>
-
-            <div class="list-item reveal reveal-right" style="transition-delay:0.1s;">
-                <div class="list-icon"><i class="bi bi-bank"></i></div>
-                <div class="list-info">
-                    <h5>Museum Tour</h5>
-                    <p>W. Vinzons Shrine</p>
-                    <p>09123456879</p>
-                    <a href="#" class="contact-btn">Message now</a>
-                </div>
-            </div>
-
-            <div class="list-item reveal reveal-right" style="transition-delay:0.2s;">
-                <div class="list-icon"><i class="bi bi-tools"></i></div>
-                <div class="list-info">
-                    <h5>Pili Artisan Workshop</h5>
-                    <p>Barangay Minaogan</p>
-                    <p>09123456879</p>
-                    <a href="#" class="contact-btn">Message now</a>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</section>
+<?php require BASE_PATH . '/includes/partials/business-listings.php'; ?>
 
 <!-- REGISTRATION SECTION -->
 <section class="reg-container">

@@ -17,11 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf($_POST['csrf_token'] ??
 }
 
 $list = db()->query('SELECT id, full_name, email, role, status FROM users ORDER BY id ASC')->fetchAll();
-require BASE_PATH . '/includes/header.php';
 require __DIR__ . '/partials/layout-start.php';
+require BASE_PATH . '/includes/partials/dash-flash.php';
 ?>
-<h1 class="h4 mb-3">Users</h1>
-<table class="table table-sm"><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>
+<div class="lk-dash-inner-head"><h1 class="lk-dash-page-title mb-1">Users</h1><p class="lk-dash-page-lead text-muted mb-0">Manage local users, sellers, and account status.</p></div>
+<div class="lk-panel"><div class="lk-dash-table-wrap"><table class="table table-hover align-middle mb-0"><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>
 <?php foreach ($list as $u): ?>
 <tr>
 <td><?= (int) $u['id'] ?></td>
@@ -42,5 +42,5 @@ require __DIR__ . '/partials/layout-start.php';
 </td>
 </tr>
 <?php endforeach; ?>
-</tbody></table>
+</tbody></table></div></div>
 <?php require __DIR__ . '/partials/layout-end.php'; require BASE_PATH . '/includes/footer.php';

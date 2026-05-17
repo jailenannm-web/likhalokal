@@ -22,6 +22,41 @@ $sql .= ' ORDER BY attraction_name ASC';
 $stmt = db()->prepare($sql);
 $stmt->execute($params);
 $list = $stmt->fetchAll();
+$featuredAttraction = $list[0] ?? null;
+$heritageAttraction = null;
+$islandAttraction = null;
+foreach ($list as $row) {
+    if ($heritageAttraction === null && in_array($row['category'], ['heritage_site', 'church', 'landmark', 'museum', 'cultural_site'], true)) {
+        $heritageAttraction = $row;
+    }
+    if ($islandAttraction === null && in_array($row['category'], ['island', 'beach', 'eco_tourism'], true)) {
+        $islandAttraction = $row;
+    }
+}
+$heritageAttraction ??= $featuredAttraction;
+$islandAttraction ??= ($list[1] ?? $featuredAttraction);
+
+$agencies = db()->query(
+    "SELECT * FROM businesses WHERE status = 'approved' AND business_type = 'travel_agency' ORDER BY business_name ASC"
+)->fetchAll();
+
+$spotlight = db()->query(
+    "SELECT * FROM tourist_attractions WHERE status = 'published' AND image IS NOT NULL AND image != '' ORDER BY FIELD(id, 1, 3, 7), id ASC LIMIT 3"
+)->fetchAll();
+if (count($spotlight) < 3) {
+    $have = array_column($spotlight, 'id');
+    $placeholders = $have ? implode(',', array_fill(0, count($have), '?')) : '0';
+    $extra = db()->prepare(
+        "SELECT * FROM tourist_attractions WHERE status = 'published' AND id NOT IN ($placeholders) ORDER BY id ASC LIMIT " . (3 - count($spotlight))
+    );
+    $extra->execute($have ?: []);
+    $spotlight = array_merge($spotlight, $extra->fetchAll());
+}
+
+$heritageRow = db()->query(
+    "SELECT * FROM cultural_information WHERE status = 'published' AND category = 'heritage' ORDER BY id ASC LIMIT 1"
+)->fetch();
+$heritageImage = media_url($heritageRow['image'] ?? null, asset_url('images/kasaysayan.png'));
 
 require BASE_PATH . '/includes/header.php';
 require BASE_PATH . '/includes/navbar.php';
@@ -509,7 +544,8 @@ require BASE_PATH . '/includes/navbar.php';
         position: relative;
         z-index: 2;
         display: flex;
-        gap: 45px;
+        flex-wrap: wrap;
+        gap: 28px;
         max-width: 1200px;
         width: 100%;
         justify-content: center;
@@ -521,6 +557,8 @@ require BASE_PATH . '/includes/navbar.php';
         border-radius: 15px;
         overflow: hidden;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        position: relative;
+        border: 0;
         transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
                     box-shadow 0.4s ease;
     }
@@ -538,6 +576,22 @@ require BASE_PATH . '/includes/navbar.php';
         transition: transform 0.5s ease;
     }
     .card:hover img { transform: scale(1.1); }
+
+    .attraction-card-title {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2;
+        color: #fff;
+        padding: 2.75rem 1rem 1rem;
+        background: linear-gradient(transparent, rgba(0, 31, 63, 0.92));
+        font-family: 'Inter', sans-serif;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: 0.9rem;
+    }
 
     /* Staggered float on the 4 showcase cards */
     .cards-container .card:nth-child(1) { animation: card-drift 5s ease-in-out infinite; }
@@ -797,21 +851,19 @@ require BASE_PATH . '/includes/navbar.php';
 <!-- OVERLAP IMAGES -->
 <section class="overlap-section container stagger" style="margin-top: -100px; position: relative; z-index: 10; padding-left: 15px; padding-right: 15px;">
     <div class="row g-4 justify-content-center">
-        <div class="col-md-4 reveal reveal-scale">
-            <div class="overlap-img-wrapper float-img-1 shadow-lg">
-                <img src="assets/images/St. Peter Church.png" alt="St. Peter Church" style="width: 100%; height: 400px; object-fit: cover;">
+        <?php foreach (array_slice($spotlight, 0, 3) as $idx => $spot): ?>
+            <div class="col-md-4 reveal reveal-scale">
+                <a href="<?= e(BASE_URL) ?>attraction-detail.php?id=<?= (int) $spot['id'] ?>" class="overlap-img-wrapper float-img-<?= $idx + 1 ?> shadow-lg d-block position-relative text-decoration-none">
+                    <img src="<?= e(media_url($spot['image'] ?? null, asset_url('images/placeholder.png'))) ?>" alt="<?= e($spot['attraction_name']) ?>" style="width: 100%; height: 400px; object-fit: cover;">
+                    <span class="attraction-card-title"><?= e($spot['attraction_name']) ?></span>
+                </a>
             </div>
-        </div>
-        <div class="col-md-4 reveal reveal-scale">
-            <div class="overlap-img-wrapper float-img-2 shadow-lg">
-                <img src="assets/images/calaguas.png" alt="Calaguas Islands" style="width: 100%; height: 400px; object-fit: cover;">
+        <?php endforeach; ?>
+        <?php if (empty($spotlight)): ?>
+            <div class="col-12">
+                <div class="alert alert-light border text-center shadow-sm">No published attractions yet.</div>
             </div>
-        </div>
-        <div class="col-md-4 reveal reveal-scale">
-            <div class="overlap-img-wrapper float-img-3 shadow-lg">
-                <img src="assets/images/vinzonsriver.png" alt="Vinzons River" style="width: 100%; height: 400px; object-fit: cover;">
-            </div>
-        </div>
+        <?php endif; ?>
     </div>
 </section>
 
@@ -867,53 +919,51 @@ require BASE_PATH . '/includes/navbar.php';
 <div class="container my-5 jubilee-fixed">
     <div class="heritage-card shadow-lg reveal">
         <div class="heritage-image-container">
-            <img src="assets/images/kasaysayan.png" class="heritage-img">
+            <img src="<?= e($heritageImage) ?>" class="heritage-img" alt="<?= e($heritageRow['title'] ?? 'Heritage') ?>">
             <h2 class="heritage-bottom-left-text">Puso ng Kasaysayan, Likha ng Kalikasan</h2>
         </div>
     </div>
 </div>
 
-<!-- VINZONS SHRINE INFO CARD -->
+<?php if ($heritageAttraction): ?>
+<!-- FEATURED ATTRACTION INFO CARD -->
 <div class="container pb-5 jubilee-fixed">
-    <div class="glass-info-card p-0 overflow-hidden reveal">
+    <a href="<?= e(BASE_URL) ?>attraction-detail.php?id=<?= (int) $heritageAttraction['id'] ?>" class="glass-info-card p-0 overflow-hidden reveal d-block text-decoration-none">
         <div class="row g-0">
             <div class="col-lg-7 p-5">
                 <div class="mb-4">
-                    <span class="font-bungee text-warning small">HISTORICAL LANDMARK</span>
-                    <h2 class="font-abril display-6 mt-2">Wenceslao Q. Vinzons</h2>
+                    <span class="font-bungee text-warning small"><?= e(ucwords(str_replace('_', ' ', (string) $heritageAttraction['category']))) ?></span>
+                    <h2 class="font-abril display-6 mt-2 text-dark"><?= e($heritageAttraction['attraction_name']) ?></h2>
                     <p class="text-muted mt-3" style="font-family: 'Inter', sans-serif;">
-                        A declared National Historical Landmark, functions as a public shrine, museum, and library showcasing the life and memorabilia of the World War II hero.
+                        <?= e(str_limit((string) ($heritageAttraction['description'] ?? 'Not provided'), 220)) ?>
                     </p>
-                    <p class="fw-bold text-dark">Entrance Fee: <span class="text-success">Php 00.00</span></p>
-                    <a href="https://maps.google.com/?q=Wenceslao+Vinzons+Shrine" target="_blank" class="text-primary fw-bold text-decoration-none font-bungee small">
-                        SEE DIRECTION <i class="bi bi-geo-alt-fill"></i>
-                    </a>
+                    <p class="fw-bold text-dark">Entrance Fee: <span class="text-success"><?= e($heritageAttraction['entrance_fee'] ?: 'Not provided') ?></span></p>
+                    <span class="text-primary fw-bold text-decoration-none font-bungee small">
+                        VIEW DETAILS <i class="bi bi-arrow-right-short"></i>
+                    </span>
                 </div>
 
                 <hr class="my-4 opacity-10">
 
                 <div class="row">
                     <div class="col-md-6 mb-4 mb-md-0">
-                        <h4 class="font-bungee h6 text-primary">How to get there?</h4>
-                        <p class="small text-secondary mb-0">
-                            Take a public jeepney or tricycle to the town of Vinzons, a trip of approximately 20-30 minutes. The landmark is easily recognizable once you are in the town proper.
-                        </p>
+                        <h4 class="font-bungee h6 text-primary">Location</h4>
+                        <p class="small text-secondary mb-0"><?= e($heritageAttraction['address'] ?: 'Location unavailable') ?></p>
                     </div>
                     <div class="col-md-6">
                         <h4 class="font-bungee h6 text-primary">Best time to visit?</h4>
-                        <p class="small text-secondary mb-0">
-                            The shrine is open year-round, so the best time to visit is during the dry season, from December to June, for more predictable weather conditions.
-                        </p>
+                        <p class="small text-secondary mb-0"><?= e($heritageAttraction['best_time_to_visit'] ?: 'Not provided') ?></p>
                     </div>
                 </div>
             </div>
 
             <div class="col-lg-5">
-                <div class="info-side-img" style="background-image: url('assets/images/vinzons map.png');"></div>
+                <div class="info-side-img" style="background-image: url('<?= e(media_url($heritageAttraction['image'] ?? null, asset_url('images/placeholder.png'))) ?>');"></div>
             </div>
         </div>
-    </div>
+    </a>
 </div>
+<?php endif; ?>
 
 <!-- RAGGED HERO -->
 <div class="ragged-hero">
@@ -930,58 +980,51 @@ require BASE_PATH . '/includes/navbar.php';
     </div>
 </div>
 
-<!-- CALAGUAS ISLAND -->
+<?php if ($islandAttraction): ?>
+<!-- FEATURED PLACE -->
 <div class="container overlap-adjustment pb-5 jubilee-fixed">
     <div class="row">
         <div class="col-lg-5 reveal reveal-left">
-            <div class="island-frame shadow-lg">
-                <img src="assets/images/calaguasisland.png" alt="Calaguas Island" class="img-fluid">
-            </div>
+            <a href="<?= e(BASE_URL) ?>attraction-detail.php?id=<?= (int) $islandAttraction['id'] ?>" class="island-frame shadow-lg d-block">
+                <img src="<?= e(media_url($islandAttraction['image'] ?? null, asset_url('images/placeholder.png'))) ?>" alt="<?= e($islandAttraction['attraction_name']) ?>" class="img-fluid">
+            </a>
         </div>
 
         <div class="col-lg-7 pt-lg-5 mt-lg-4 reveal reveal-right">
-            <h1 class="island-title">Calaguas Island, Vinzons</h1>
-            <p class="island-text">
-                A pristine group of islands, renowned for its stunning natural beauty and unspoiled environment. 
-                The primary attraction is <strong>Mahabang Buhangin Beach</strong>, which features a long stretch 
-                of powdery white sand and crystal-clear turquoise waters.
-            </p>
+            <h1 class="island-title"><?= e($islandAttraction['attraction_name']) ?></h1>
+            <p class="island-text"><?= nl2br(e($islandAttraction['description'] ?: 'Not provided')) ?></p>
             
             <div class="link-box mb-4">
-                <p class="mb-1 fw-bold small"><i class="bi bi-tag-fill"></i> Entrance Fee</p>
-                <a href="#" class="text-dark small fw-bold text-decoration-underline"><i class="bi bi-geo-alt-fill"></i> See Directions</a>
+                <p class="mb-1 fw-bold small"><i class="bi bi-tag-fill"></i> Entrance Fee: <?= e($islandAttraction['entrance_fee'] ?: 'Not provided') ?></p>
+                <a href="<?= e(BASE_URL) ?>attraction-detail.php?id=<?= (int) $islandAttraction['id'] ?>" class="text-dark small fw-bold text-decoration-underline"><i class="bi bi-geo-alt-fill"></i> View details</a>
             </div>
 
             <div class="travel-details">
-                <h4 class="font-bungee h6">How to get there?</h4>
-                <p class="small text-muted">
-                    Travel overland to ports in Camarines Norte (Vinzons or Paracale), then take a 2-3 hour boat ride.
-                </p>
+                <h4 class="font-bungee h6">Travel guide</h4>
+                <p class="small text-muted"><?= nl2br(e($islandAttraction['travel_guide'] ?: 'Not provided')) ?></p>
 
                 <h4 class="font-bungee h6 mt-3">Best time to Visit</h4>
-                <p class="small text-muted">
-                    Visit during the dry season (March–June) for calm seas, ideal for activities like stargazing and trekking.
-                </p>
+                <p class="small text-muted"><?= e($islandAttraction['best_time_to_visit'] ?: 'Not provided') ?></p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 4-CARD SHOWCASE -->
+<?php endif; ?>
+
+<!-- ATTRACTION CARDS -->
 <section class="hero-section">
   <div class="cards-container stagger">
-    <div class="card reveal reveal-scale">
-      <img src="assets/images/historical.png" alt="Historical Marker">
-    </div>
-    <div class="card reveal reveal-scale">
-      <img src="assets/images/vinzonshouse.png" alt="Vinzons House">
-    </div>
-    <div class="card reveal reveal-scale">
-      <img src="assets/images/boat.png" alt="Beach Boat">
-    </div>
-    <div class="card reveal reveal-scale">
-      <img src="assets/images/crystalkayak.jpg" alt="Clear Kayak">
-    </div>
+    <?php foreach ($list as $attr): ?>
+    <?php $img = media_url($attr['image'] ?? null, asset_url('images/placeholder.png')); ?>
+    <a href="<?= e(BASE_URL) ?>attraction-detail.php?id=<?= (int) $attr['id'] ?>" class="card reveal reveal-scale text-decoration-none">
+      <img src="<?= e($img) ?>" alt="<?= e($attr['attraction_name']) ?>">
+      <span class="attraction-card-title"><?= e($attr['attraction_name']) ?></span>
+    </a>
+    <?php endforeach; ?>
+    <?php if (empty($list)): ?>
+        <div class="alert alert-light border shadow-sm text-center w-100">No published attractions yet.</div>
+    <?php endif; ?>
   </div>
 </section>
 
@@ -992,77 +1035,31 @@ require BASE_PATH . '/includes/navbar.php';
     <h2 class="title reveal">LIST OF TRAVEL AGENCIES</h2>
     
     <div class="agencies-grid stagger">
+      <?php if (empty($agencies)): ?>
+        <p class="text-center text-muted w-100 py-4">No travel agencies listed yet. Run <code>database/restore_static_content.sql</code> in phpMyAdmin.</p>
+      <?php else: ?>
+      <?php foreach ($agencies as $agency): ?>
+      <?php
+      $logo = media_url($agency['logo'], asset_url('images/likhalokal-logo.png'));
+      $profileUrl = vendor_profile_url((int) $agency['id'], current_request_return_url());
+      ?>
       <div class="agency-card reveal">
         <div class="logo-box">
-          <img src="Baybreeze.png" alt="Logo">
+          <img src="<?= e($logo) ?>" alt="<?= e($agency['business_name']) ?>">
         </div>
         <div class="agency-info">
-          <h3>Baybreeze Escapes</h3>
-          <p>Island-hopping specialists offering budget and premium tours to Calaguas and nearby beaches.</p>
-          <span class="phone">09123456879</span>
-          <button class="msg-btn">Message now</button>
+          <h3><?= e($agency['business_name']) ?></h3>
+          <p><?= e(str_limit((string) ($agency['description'] ?? ''), 160)) ?></p>
+          <span class="phone"><?= e($agency['contact_number'] ?? '') ?></span>
+          <?php if (is_logged_in()): ?>
+          <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int) $agency['id'] ?>&return=<?= rawurlencode(current_request_return_url()) ?>" class="msg-btn text-decoration-none d-inline-block text-center">Message now</a>
+          <?php else: ?>
+          <button type="button" class="msg-btn" data-require-auth>Message now</button>
+          <?php endif; ?>
         </div>
       </div>
-
-      <div class="agency-card reveal">
-        <div class="logo-box">
-          <img src="sunriseshorer.png" alt="Logo">
-        </div>
-        <div class="agency-info">
-          <h3>Sunrise Shores Travel Co.</h3>
-          <p>Specializes in sunrise beach photography tours, snorkeling, and coastal sightseeing.</p>
-          <span class="phone">09123456879</span>
-          <button class="msg-btn">Message now</button>
-        </div>
-      </div>
-
-      <div class="agency-card reveal">
-        <div class="logo-box">
-          <img src="buhanginvoyages.png" alt="Logo">
-        </div>
-        <div class="agency-info">
-          <h3>Mahabang Buhangin Voyages</h3>
-          <p>Offers kayak tours, boat rides, and eco-trips around the San Nicolas Mangrove Forest.</p>
-          <span class="phone">09123456879</span>
-          <button class="msg-btn">Message now</button>
-        </div>
-      </div>
-
-      <div class="agency-card reveal">
-        <div class="logo-box">
-          <img src="trailadventures.png" alt="Logo">
-        </div>
-        <div class="agency-info">
-          <h3>Mangrove Trail Adventures</h3>
-          <p>Offers kayak tours, boat rides, and eco-trips around the San Nicolas Mangrove Forest.</p>
-          <span class="phone">09123456879</span>
-          <button class="msg-btn">Message now</button>
-        </div>
-      </div>
-
-      <div class="agency-card reveal">
-        <div class="logo-box">
-          <img src="islanorte.png" alt="Logo">
-        </div>
-        <div class="agency-info">
-          <h3>Isla Norte Backpacking Tours</h3>
-          <p>Affordable student and backpacker packages to Calaguas, Quinamanukan, and lesser-known beaches.</p>
-          <span class="phone">09123456879</span>
-          <button class="msg-btn">Message now</button>
-        </div>
-      </div>
-
-      <div class="agency-card reveal">
-        <div class="logo-box">
-          <img src="greencoast.png" alt="Logo">
-        </div>
-        <div class="agency-info">
-          <h3>Green Coast Expeditions</h3>
-          <p>Local community tour group providing nature trekking, fishing trips, and waterfall adventures.</p>
-          <span class="phone">09123456879</span>
-          <button class="msg-btn">Message now</button>
-        </div>
-      </div>
+      <?php endforeach; ?>
+      <?php endif; ?>
     </div>
   </div>
 </section>

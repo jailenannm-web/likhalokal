@@ -8,7 +8,7 @@ require_once dirname(__DIR__) . '/bootstrap.php';
 require_once BASE_PATH . '/middleware/auth.php';
 
 if (is_logged_in()) {
-    redirect(dashboard_url_for_role(current_user_role()));
+    redirect_after_login();
 }
 
 require_once BASE_PATH . '/middleware/csrf.php';
@@ -26,6 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $accountType = (string) ($_POST['account_type'] ?? 'local_user');
     if ($fullName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 8 || $password !== $confirm) {
         set_flash('error', 'Please check all fields. Password must be at least 8 characters and match.');
+        redirect(BASE_URL . 'register.php');
+    }
+    if ($accountType === 'admin') {
+        set_flash('error', 'Admin accounts cannot be registered publicly.');
         redirect(BASE_URL . 'register.php');
     }
     $role = $accountType === 'seller' ? 'seller' : 'local_user';
@@ -46,19 +50,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_SESSION['user_email'] = $email;
     $_SESSION['user_role'] = $role;
     log_activity($id, 'register', 'New registration', $_SERVER['REMOTE_ADDR'] ?? null);
-    if ($role === 'seller') {
-        set_flash('success', 'Account created. Complete your business application.');
-        redirect(SELLER_URL . 'business-profile.php');
-    }
-    set_flash('success', 'Welcome to LikhaLokal!');
-    redirect(USER_DASH_URL . 'dashboard.php');
+    set_flash('success', $role === 'seller'
+        ? 'Account created. Use your profile menu to set up your business.'
+        : 'Welcome to LikhaLokal!');
+    redirect_after_login();
 }
 
 require BASE_PATH . '/includes/header.php';
 require BASE_PATH . '/includes/navbar.php';
 ?>
-<div class="container py-5">
-    <div class="row justify-content-center">
+<div class="container py-5" style="min-height: calc(100vh - 200px); display: flex; align-items: center;">
+    <div class="row justify-content-center w-100">
         <div class="col-lg-6">
             <div class="card card-lk shadow">
                 <div class="card-body p-4">
@@ -93,9 +95,16 @@ require BASE_PATH . '/includes/navbar.php';
                             <label class="form-label">Confirm password</label>
                             <input type="password" name="confirm_password" class="form-control" required minlength="8">
                         </div>
-                        <button class="btn btn-lk-orange w-100" type="submit">Register</button>
+                        <button class="btn btn-lk-orange w-100 mb-2" type="submit">Register</button>
                     </form>
                     <p class="small text-center mt-3 mb-0"><a href="<?= e(BASE_URL) ?>login.php">Already have an account?</a></p>
+                    <?php if (google_oauth_configured()): ?>
+                        <a href="<?= e(BASE_URL) ?>google-auth.php" class="btn btn-outline-secondary w-100 mt-3">
+                            <i class="fa-brands fa-google me-2"></i> Continue with Google
+                        </a>
+                    <?php else: ?>
+                        <button type="button" class="btn btn-outline-secondary w-100 mt-3" disabled title="Set GOOGLE_CLIENT_ID in config/app.php">Continue with Google</button>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

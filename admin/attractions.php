@@ -7,65 +7,410 @@ $activeAdmin = 'att';
 require_once __DIR__ . '/_init.php';
 require_once BASE_PATH . '/middleware/csrf.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf($_POST['csrf_token'] ?? null)) {
-    $stmt = db()->prepare(
-        'INSERT INTO tourist_attractions (admin_id, attraction_name, category, description, history, travel_guide, entrance_fee, best_time_to_visit, address, latitude, longitude, status, created_at, updated_at)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW())'
-    );
-    $stmt->execute([
-        current_user_id(),
-        trim($_POST['attraction_name'] ?? ''),
-        $_POST['category'] ?? 'other',
-        trim($_POST['description'] ?? ''),
-        trim($_POST['history'] ?? ''),
-        trim($_POST['travel_guide'] ?? ''),
-        trim($_POST['entrance_fee'] ?? ''),
-        trim($_POST['best_time_to_visit'] ?? ''),
-        trim($_POST['address'] ?? ''),
-        $_POST['latitude'] !== '' ? (float) $_POST['latitude'] : null,
-        $_POST['longitude'] !== '' ? (float) $_POST['longitude'] : null,
-        $_POST['status'] ?? 'published',
-    ]);
-    set_flash('success', 'Attraction created');
+$validCategories = ['heritage_site', 'beach', 'island', 'church', 'landmark', 'eco_tourism', 'cultural_site', 'museum', 'other'];
+$validStatuses = ['published', 'draft'];
+$emptyAttraction = [
+    'id' => 0,
+    'attraction_name' => '',
+    'category' => 'other',
+    'description' => '',
+    'history' => '',
+    'travel_guide' => '',
+    'entrance_fee' => '',
+    'best_time_to_visit' => '',
+    'address' => '',
+    'latitude' => '',
+    'longitude' => '',
+    'image' => '',
+    'status' => 'published',
+];
+
+function admin_attraction_by_id(int $id): ?array
+{
+    $stmt = db()->prepare('SELECT * FROM tourist_attractions WHERE id = ? LIMIT 1');
+    $stmt->execute([$id]);
+    $attraction = $stmt->fetch();
+    return $attraction ?: null;
+}
+
+function admin_valid_coord(string $value, float $min, float $max): bool
+{
+    if ($value === '') {
+        return true;
+    }
+    if (!is_numeric($value)) {
+        return false;
+    }
+    $number = (float) $value;
+    return $number >= $min && $number <= $max;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verify_csrf($_POST['csrf_token'] ?? null)) {
+        set_flash('error', 'Invalid token. Please try again.');
+        redirect(ADMIN_URL . 'attractions.php');
+    }
+
+    $action = (string) ($_POST['action'] ?? 'create');
+    $attractionId = (int) ($_POST['attraction_id'] ?? 0);
+
+    if ($action === 'delete') {
+        db()->prepare('DELETE FROM tourist_attractions WHERE id = ?')->execute([$attractionId]);
+        set_flash('success', 'Attraction deleted.');
+        redirect(ADMIN_URL . 'attractions.php');
+    }
+
+    if ($action === 'toggle') {
+        $attraction = admin_attraction_by_id($attractionId);
+        if ($attraction) {
+            $next = ($attraction['status'] ?? '') === 'published' ? 'draft' : 'published';
+            db()->prepare('UPDATE tourist_attractions SET status = ?, updated_at = NOW() WHERE id = ?')->execute([$next, $attractionId]);
+            set_flash('success', $next === 'published' ? 'Attraction published.' : 'Attraction unpublished.');
+        }
+        redirect(ADMIN_URL . 'attractions.php');
+    }
+
+    $name = trim((string) ($_POST['attraction_name'] ?? ''));
+    $category = in_array(($_POST['category'] ?? ''), $validCategories, true) ? (string) $_POST['category'] : 'other';
+    $description = trim((string) ($_POST['description'] ?? ''));
+    $history = trim((string) ($_POST['history'] ?? ''));
+    $travelGuide = trim((string) ($_POST['travel_guide'] ?? ''));
+    $entranceFee = trim((string) ($_POST['entrance_fee'] ?? ''));
+    $bestTime = trim((string) ($_POST['best_time_to_visit'] ?? ''));
+    $address = trim((string) ($_POST['address'] ?? ''));
+    $latitude = trim((string) ($_POST['latitude'] ?? ''));
+    $longitude = trim((string) ($_POST['longitude'] ?? ''));
+    $status = in_array(($_POST['status'] ?? ''), $validStatuses, true) ? (string) $_POST['status'] : 'draft';
+    $errors = [];
+
+    if ($name === '' || strlen($name) > 200) {
+        $errors[] = 'Attraction name is required and must be 200 characters or fewer.';
+    }
+    if (strlen($entranceFee) > 120) {
+        $errors[] = 'Entrance fee must be 120 characters or fewer.';
+    }
+    if (strlen($bestTime) > 255) {
+        $errors[] = 'Best time to visit must be 255 characters or fewer.';
+    }
+    if (strlen($address) > 255) {
+        $errors[] = 'Location must be 255 characters or fewer.';
+    }
+    if (!admin_valid_coord($latitude, -90, 90)) {
+        $errors[] = 'Latitude must be between -90 and 90.';
+    }
+    if (!admin_valid_coord($longitude, -180, 180)) {
+        $errors[] = 'Longitude must be between -180 and 180.';
+    }
+
+    $existing = $attractionId > 0 ? admin_attraction_by_id($attractionId) : null;
+    $image = $existing['image'] ?? null;
+    if (!empty($_FILES['image']['tmp_name'])) {
+        $upload = save_upload($_FILES['image'], 'attractions');
+        if ($upload) {
+            $image = $upload;
+        } else {
+            $errors[] = 'Attraction image must be a JPG, PNG, or WEBP file under the upload limit.';
+        }
+    } elseif (isset($_FILES['image']) && (int) ($_FILES['image']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+        $errors[] = 'Attraction image upload failed.';
+    }
+
+    if (!empty($errors)) {
+        set_flash('error', implode(' ', $errors));
+        $target = $attractionId > 0 ? ADMIN_URL . 'attractions.php?edit=' . $attractionId : ADMIN_URL . 'attractions.php';
+        redirect($target);
+    }
+
+    $latValue = $latitude !== '' ? (float) $latitude : null;
+    $lngValue = $longitude !== '' ? (float) $longitude : null;
+
+    if ($action === 'update' && $existing) {
+        $stmt = db()->prepare(
+            'UPDATE tourist_attractions
+             SET attraction_name = ?, category = ?, description = ?, history = ?, travel_guide = ?,
+                 entrance_fee = ?, best_time_to_visit = ?, address = ?, latitude = ?, longitude = ?,
+                 image = ?, status = ?, updated_at = NOW()
+             WHERE id = ?'
+        );
+        $stmt->execute([
+            $name,
+            $category,
+            $description,
+            $history,
+            $travelGuide,
+            $entranceFee,
+            $bestTime,
+            $address,
+            $latValue,
+            $lngValue,
+            $image,
+            $status,
+            $attractionId,
+        ]);
+        set_flash('success', 'Attraction updated.');
+    } else {
+        $stmt = db()->prepare(
+            'INSERT INTO tourist_attractions
+             (admin_id, attraction_name, category, description, history, travel_guide, entrance_fee,
+              best_time_to_visit, address, latitude, longitude, image, status, created_at, updated_at)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW())'
+        );
+        $stmt->execute([
+            current_user_id(),
+            $name,
+            $category,
+            $description,
+            $history,
+            $travelGuide,
+            $entranceFee,
+            $bestTime,
+            $address,
+            $latValue,
+            $lngValue,
+            $image,
+            $status,
+        ]);
+        set_flash('success', 'Attraction created.');
+    }
     redirect(ADMIN_URL . 'attractions.php');
 }
 
+$editId = (int) ($_GET['edit'] ?? 0);
+$editingAttraction = $editId > 0 ? admin_attraction_by_id($editId) : null;
+$formAttraction = $editingAttraction ?: $emptyAttraction;
 $list = db()->query('SELECT * FROM tourist_attractions ORDER BY id DESC')->fetchAll();
 
-require BASE_PATH . '/includes/header.php';
 require __DIR__ . '/partials/layout-start.php';
+require BASE_PATH . '/includes/partials/dash-flash.php';
 ?>
-<h1 class="h4 mb-3">Tourist attractions</h1>
-<?php if ($m = flash('success')): ?><div class="alert alert-success"><?= e($m) ?></div><?php endif; ?>
-<div class="card card-lk mb-4">
-    <div class="card-body">
-        <h2 class="h6">Add attraction</h2>
-        <form method="post" class="row g-2">
+<div class="lk-dash-inner-head d-flex flex-wrap justify-content-between align-items-start gap-2">
+    <div>
+        <h1 class="lk-dash-page-title mb-1">Tourist attractions</h1>
+        <p class="lk-dash-page-lead text-muted mb-0">Create, edit, publish, and maintain public tourism attraction records.</p>
+    </div>
+    <?php if ($editingAttraction): ?>
+        <a href="<?= e(ADMIN_URL) ?>attractions.php" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg me-1"></i> Cancel edit</a>
+    <?php endif; ?>
+</div>
+
+<div class="lk-panel mb-4">
+    <div class="lk-panel-header">
+        <h2><i class="bi <?= $editingAttraction ? 'bi-pencil-square' : 'bi-plus-circle' ?> me-2 text-warning"></i><?= $editingAttraction ? 'Edit attraction' : 'Add attraction' ?></h2>
+    </div>
+    <div class="lk-panel-body">
+        <form method="post" enctype="multipart/form-data" class="row g-3">
             <?= csrf_field() ?>
-            <div class="col-md-4"><input class="form-control" name="attraction_name" placeholder="Name" required></div>
+            <input type="hidden" name="action" value="<?= $editingAttraction ? 'update' : 'create' ?>">
+            <input type="hidden" name="attraction_id" value="<?= (int) ($formAttraction['id'] ?? 0) ?>">
+            <div class="col-md-6">
+                <label class="form-label">Attraction name</label>
+                <input class="form-control" name="attraction_name" required maxlength="200" value="<?= e((string) $formAttraction['attraction_name']) ?>">
+            </div>
             <div class="col-md-3">
-                <select class="form-select" name="category"><?php foreach (['heritage_site','beach','island','church','landmark','eco_tourism','cultural_site','museum','other'] as $c): ?><option value="<?= e($c) ?>"><?= e($c) ?></option><?php endforeach; ?></select>
+                <label class="form-label">Category</label>
+                <select class="form-select" name="category">
+                    <?php foreach ($validCategories as $category): ?>
+                        <option value="<?= e($category) ?>" <?= ($formAttraction['category'] ?? '') === $category ? 'selected' : '' ?>><?= e(ucwords(str_replace('_', ' ', $category))) ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
-            <div class="col-md-2"><input class="form-control" name="entrance_fee" placeholder="Fee"></div>
-            <div class="col-md-2"><input class="form-control" name="best_time_to_visit" placeholder="Best time"></div>
-            <div class="col-md-12"><textarea class="form-control" name="description" rows="2" placeholder="Description"></textarea></div>
-            <div class="col-md-12"><textarea class="form-control" name="history" rows="2" placeholder="History"></textarea></div>
-            <div class="col-md-12"><textarea class="form-control" name="travel_guide" rows="2" placeholder="Travel guide"></textarea></div>
-            <div class="col-md-6"><input class="form-control" name="address" placeholder="Address"></div>
-            <div class="col-md-2"><input class="form-control" name="latitude" placeholder="Lat"></div>
-            <div class="col-md-2"><input class="form-control" name="longitude" placeholder="Lng"></div>
-            <div class="col-md-2">
-                <select class="form-select" name="status"><option value="published">Published</option><option value="draft">Draft</option></select>
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" name="status">
+                    <?php foreach ($validStatuses as $status): ?>
+                        <option value="<?= e($status) ?>" <?= ($formAttraction['status'] ?? '') === $status ? 'selected' : '' ?>><?= e(ucfirst($status)) ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
-            <div class="col-12"><button class="btn btn-primary btn-sm" type="submit">Save</button></div>
+            <div class="col-12">
+                <label class="form-label">Overview / description</label>
+                <textarea class="form-control" name="description" rows="3"><?= e((string) $formAttraction['description']) ?></textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">History / background</label>
+                <textarea class="form-control" name="history" rows="4"><?= e((string) $formAttraction['history']) ?></textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Travel guide / quick tips</label>
+                <textarea class="form-control" name="travel_guide" rows="4"><?= e((string) $formAttraction['travel_guide']) ?></textarea>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Entrance fee</label>
+                <input class="form-control" name="entrance_fee" maxlength="120" value="<?= e((string) $formAttraction['entrance_fee']) ?>">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Best time to visit</label>
+                <input class="form-control" name="best_time_to_visit" maxlength="255" value="<?= e((string) $formAttraction['best_time_to_visit']) ?>">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Location / address</label>
+                <input class="form-control" name="address" maxlength="255" value="<?= e((string) $formAttraction['address']) ?>">
+            </div>
+            <div class="col-12">
+                <label class="form-label">Attraction Location</label>
+                <p class="small text-muted mb-2">Tap the map to set the tourist attraction location.</p>
+                <div id="attractionLocationPicker" class="lk-map-picker" style="height: 280px; background: #e9ecef; border-radius: 12px; overflow: hidden;"></div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Latitude</label>
+                <input class="form-control" name="latitude" id="attractionLatitudeInput" value="<?= e((string) ($formAttraction['latitude'] ?? '')) ?>" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Longitude</label>
+                <input class="form-control" name="longitude" id="attractionLongitudeInput" value="<?= e((string) ($formAttraction['longitude'] ?? '')) ?>" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Attraction image</label>
+                <input class="form-control" type="file" name="image" accept="image/jpeg,image/png,image/webp">
+                <?php if (!empty($formAttraction['image'])): ?>
+                    <div class="form-text">Current image will be kept if no new image is uploaded.</div>
+                <?php endif; ?>
+            </div>
+            <?php if (!empty($formAttraction['image'])): ?>
+                <div class="col-md-2">
+                    <img src="<?= e(media_url($formAttraction['image'])) ?>" alt="" class="rounded shadow-sm w-100" style="height:94px;object-fit:cover;">
+                </div>
+            <?php endif; ?>
+            <div class="col-12">
+                <button class="btn btn-lk-orange" type="submit"><i class="bi bi-save me-1"></i><?= $editingAttraction ? ' Save changes' : ' Add attraction' ?></button>
+            </div>
         </form>
     </div>
 </div>
-<table class="table table-sm"><thead><tr><th>ID</th><th>Name</th><th>Status</th></tr></thead><tbody>
-<?php foreach ($list as $r): ?>
-<tr><td><?= (int) $r['id'] ?></td><td><?= e($r['attraction_name']) ?></td><td><?= e($r['status']) ?></td></tr>
-<?php endforeach; ?>
-</tbody></table>
+
+<div class="lk-panel">
+    <div class="lk-panel-header">
+        <h2>All attractions</h2>
+        <span class="badge bg-light text-dark"><?= count($list) ?> attraction(s)</span>
+    </div>
+    <div class="lk-dash-table-wrap">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Attraction</th>
+                    <th>Category</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($list as $attraction): ?>
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="<?= e(media_url($attraction['image'] ?? null, asset_url('images/placeholder.png'))) ?>" alt="" class="rounded" style="width:70px;height:54px;object-fit:cover;">
+                            <div>
+                                <strong class="d-block"><?= e($attraction['attraction_name']) ?></strong>
+                                <span class="small text-muted"><?= e(str_limit((string) ($attraction['description'] ?? ''), 80)) ?></span>
+                            </div>
+                        </div>
+                    </td>
+                    <td><?= e(ucwords(str_replace('_', ' ', (string) $attraction['category']))) ?></td>
+                    <td><?= e($attraction['address'] ?: 'Location not provided') ?></td>
+                    <td><span class="badge bg-<?= ($attraction['status'] ?? '') === 'published' ? 'success' : 'secondary' ?>"><?= e(ucfirst((string) $attraction['status'])) ?></span></td>
+                    <td class="text-end">
+                        <?php if (($attraction['status'] ?? '') === 'published'): ?>
+                            <a href="<?= e(BASE_URL) ?>attraction-detail.php?id=<?= (int) $attraction['id'] ?>" class="btn btn-sm btn-outline-success" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i></a>
+                        <?php endif; ?>
+                        <a href="<?= e(ADMIN_URL) ?>attractions.php?edit=<?= (int) $attraction['id'] ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                        <form method="post" class="d-inline">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="action" value="toggle">
+                            <input type="hidden" name="attraction_id" value="<?= (int) $attraction['id'] ?>">
+                            <button class="btn btn-sm btn-outline-primary" type="submit">
+                                <i class="bi <?= ($attraction['status'] ?? '') === 'published' ? 'bi-eye-slash' : 'bi-eye' ?>"></i>
+                            </button>
+                        </form>
+                        <form method="post" class="d-inline" onsubmit="return confirm('Delete this attraction?');">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="attraction_id" value="<?= (int) $attraction['id'] ?>">
+                            <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            <?php if (empty($list)): ?>
+                <tr><td colspan="5" class="text-center text-muted py-4">No attractions yet.</td></tr>
+            <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
 <?php
+$extraScripts = '<script src="' . e(asset_url('js/maps.js')) . '"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const mapEl = document.getElementById("attractionLocationPicker");
+    const latInput = document.getElementById("attractionLatitudeInput");
+    const lngInput = document.getElementById("attractionLongitudeInput");
+    
+    if (!mapEl || !latInput || !lngInput) return;
+    
+    // Default to Vinzons, Camarines Norte
+    const defaultLat = 14.12;
+    const defaultLng = 122.87;
+    
+    // Get current values or use defaults
+    let currentLat = latInput.value ? parseFloat(latInput.value) : defaultLat;
+    let currentLng = lngInput.value ? parseFloat(lngInput.value) : defaultLng;
+    
+    // Check if we have valid coordinates
+    const hasValidCoords = !isNaN(currentLat) && !isNaN(currentLng);
+    if (!hasValidCoords) {
+        currentLat = defaultLat;
+        currentLng = defaultLng;
+    }
+    
+    // Initialize the map
+    likhaMapsLoadScript(function(ok) {
+        if (!ok) {
+            // Fallback: show manual entry message
+            mapEl.innerHTML = \'<div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted"><i class="bi bi-map fs-1 mb-2"></i><p class="mb-0 text-center px-3">Map picker unavailable. You may enter coordinates manually.</p></div>\';
+            latInput.readOnly = false;
+            lngInput.readOnly = false;
+            return;
+        }
+        
+        try {
+            const map = new google.maps.Map(mapEl, {
+                zoom: 14,
+                center: { lat: currentLat, lng: currentLng },
+                mapTypeControl: false,
+                streetViewControl: false,
+            });
+            
+            let marker = new google.maps.Marker({
+                position: { lat: currentLat, lng: currentLng },
+                map: map,
+                draggable: true
+            });
+            
+            // Update inputs when marker is dragged
+            marker.addListener("dragend", function() {
+                const position = marker.getPosition();
+                latInput.value = position.lat();
+                lngInput.value = position.lng();
+            });
+            
+            // Update marker and inputs when map is clicked
+            map.addListener("click", function(e) {
+                const position = e.latLng;
+                marker.setPosition(position);
+                latInput.value = position.lat();
+                lngInput.value = position.lng();
+            });
+            
+        } catch (err) {
+            console.warn("Map picker failed", err);
+            mapEl.innerHTML = \'<div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted"><i class="bi bi-map fs-1 mb-2"></i><p class="mb-0 text-center px-3">Map picker unavailable. You may enter coordinates manually.</p></div>\';
+            latInput.readOnly = false;
+            lngInput.readOnly = false;
+        }
+    });
+});
+</script>';
 require __DIR__ . '/partials/layout-end.php';
 require BASE_PATH . '/includes/footer.php';
+?>
