@@ -10,13 +10,14 @@ if (!defined('LK_DASH_HEADER')) {
 $activeAdmin = $activeAdmin ?? '';
 $navItems = [
     'dash' => ['label' => 'Dashboard', 'icon' => 'bi-grid-fill', 'href' => ADMIN_URL . 'dashboard.php'],
-    'apps' => ['label' => 'Business Applications', 'icon' => 'bi-file-earmark-check-fill', 'href' => ADMIN_URL . 'business-applications.php?tab=pending'],
+    'apps' => ['label' => 'Business Applications', 'icon' => 'bi-file-earmark-check-fill', 'href' => ADMIN_URL . 'business-applications.php'],
     'biz' => ['label' => 'Manage Businesses', 'icon' => 'bi-building', 'href' => ADMIN_URL . 'businesses.php'],
     'att' => ['label' => 'Tourist Attractions', 'icon' => 'bi-geo-alt-fill', 'href' => ADMIN_URL . 'attractions.php'],
     'evt' => ['label' => 'Events', 'icon' => 'bi-calendar-event-fill', 'href' => ADMIN_URL . 'events.php'],
     'ann' => ['label' => 'Announcements', 'icon' => 'bi-megaphone-fill', 'href' => ADMIN_URL . 'announcements.php'],
     'cul' => ['label' => 'Cultural Information', 'icon' => 'bi-book-fill', 'href' => ADMIN_URL . 'cultural-info.php'],
     'rev' => ['label' => 'Reviews', 'icon' => 'bi-star-fill', 'href' => ADMIN_URL . 'reviews.php'],
+    'msg' => ['label' => 'Messages', 'icon' => 'bi-chat-dots-fill', 'href' => ADMIN_URL . 'messages.php'],
     'usr' => ['label' => 'Users', 'icon' => 'bi-people-fill', 'href' => ADMIN_URL . 'users.php'],
     'rep' => ['label' => 'Reports', 'icon' => 'bi-bar-chart-fill', 'href' => ADMIN_URL . 'reports.php'],
 ];

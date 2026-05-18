@@ -73,9 +73,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $payments = json_encode(array_values($_POST['pay'] ?? []));
     $latValue = $latitude !== '' ? (float) $latitude : null;
     $lngValue = $longitude !== '' ? (float) $longitude : null;
+    $autoEnabled = !empty($_POST['auto_reply_enabled']) ? 1 : 0;
+    $autoMsg = trim((string) ($_POST['auto_reply_message'] ?? ''));
+    $faqPrice = trim((string) ($_POST['faq_price'] ?? ''));
+    $faqAvail = trim((string) ($_POST['faq_availability'] ?? ''));
+    $faqLoc = trim((string) ($_POST['faq_location'] ?? ''));
+    $faqPay = trim((string) ($_POST['faq_payment'] ?? ''));
+    $faqDel = trim((string) ($_POST['faq_delivery'] ?? ''));
+    $faqHours = trim((string) ($_POST['faq_hours'] ?? ''));
+    $faqCustom = trim((string) ($_POST['faq_custom'] ?? ''));
+
     if ($b) {
-        $sql = 'UPDATE businesses SET business_name=?, business_type=?, description=?, contact_number=?, email=?, address=?, barangay=?, latitude=?, longitude=?, operating_hours=?, accepted_payments=?, logo=?, cover_image=?';
-        $params = [$businessName, $businessType, $description, $contact, $email, $address, $barangay, $latValue, $lngValue, $hours, $payments, $logo, $cover];
+        $sql = 'UPDATE businesses SET business_name=?, business_type=?, description=?, contact_number=?, email=?, address=?, barangay=?, latitude=?, longitude=?, operating_hours=?, accepted_payments=?, logo=?, cover_image=?, auto_reply_enabled=?, auto_reply_message=?, faq_price=?, faq_availability=?, faq_location=?, faq_payment=?, faq_delivery=?, faq_hours=?, faq_custom=?';
+        $params = [$businessName, $businessType, $description, $contact, $email, $address, $barangay, $latValue, $lngValue, $hours, $payments, $logo, $cover, $autoEnabled, $autoMsg, $faqPrice, $faqAvail, $faqLoc, $faqPay, $faqDel, $faqHours, $faqCustom];
         if ($hasBusinessCategory) {
             $sql .= ', business_category=?';
             $params[] = $businessCategory;
@@ -142,10 +152,10 @@ require __DIR__ . '/partials/layout-start.php';
 <div class="col-12">
     <label class="form-label">Business Location</label>
     <p class="small text-muted mb-2">Tap the map to set your business location.</p>
-    <div id="businessLocationPicker" class="lk-map-picker" style="height: 280px; background: #e9ecef; border-radius: 12px; overflow: hidden;"></div>
+    <div id="businessMapPicker" class="lk-map-picker"></div>
 </div>
-<div class="col-md-6"><label class="form-label">Latitude</label><input class="form-control" name="latitude" id="latitudeInput" value="<?= e((string) ($b['latitude'] ?? '')) ?>" readonly></div>
-<div class="col-md-6"><label class="form-label">Longitude</label><input class="form-control" name="longitude" id="longitudeInput" value="<?= e((string) ($b['longitude'] ?? '')) ?>" readonly></div>
+<div class="col-md-6"><label class="form-label">Latitude</label><input class="form-control" name="latitude" id="businessLatitude" value="<?= e((string) ($b['latitude'] ?? '')) ?>"></div>
+<div class="col-md-6"><label class="form-label">Longitude</label><input class="form-control" name="longitude" id="businessLongitude" value="<?= e((string) ($b['longitude'] ?? '')) ?>"></div>
 <div class="col-md-6">
 <label class="form-label">Logo</label><input class="form-control" type="file" name="logo" accept="image/jpeg,image/png,image/webp">
 <?php if (!empty($b['logo'])): ?><img src="<?= e(media_url($b['logo'])) ?>" alt="" class="rounded-circle mt-2 shadow-sm" style="width:76px;height:76px;object-fit:cover;"><?php endif; ?>
@@ -159,78 +169,23 @@ require __DIR__ . '/partials/layout-start.php';
 <label class="me-3"><input type="checkbox" name="pay[]" value="<?= e($o) ?>" <?= in_array($o, $pay, true) ? 'checked' : '' ?>> <?= e($o) ?></label>
 <?php endforeach; ?>
 </div>
+<div class="col-12"><h2 class="h6 mt-2">Automatic replies</h2></div>
+<div class="col-12 form-check">
+    <input class="form-check-input" type="checkbox" name="auto_reply_enabled" id="autoReplyEnabled" value="1" <?= !empty($b['auto_reply_enabled']) ? 'checked' : '' ?>>
+    <label class="form-check-label" for="autoReplyEnabled">Enable automatic replies</label>
+</div>
+<div class="col-12"><label class="form-label">Default auto-reply message</label><textarea class="form-control" name="auto_reply_message" rows="2"><?= e((string) ($b['auto_reply_message'] ?? '')) ?></textarea></div>
+<div class="col-md-6"><label class="form-label">FAQ — Price</label><textarea class="form-control" name="faq_price" rows="2"><?= e((string) ($b['faq_price'] ?? '')) ?></textarea></div>
+<div class="col-md-6"><label class="form-label">FAQ — Availability</label><textarea class="form-control" name="faq_availability" rows="2"><?= e((string) ($b['faq_availability'] ?? '')) ?></textarea></div>
+<div class="col-md-6"><label class="form-label">FAQ — Location</label><textarea class="form-control" name="faq_location" rows="2"><?= e((string) ($b['faq_location'] ?? '')) ?></textarea></div>
+<div class="col-md-6"><label class="form-label">FAQ — Payment</label><textarea class="form-control" name="faq_payment" rows="2"><?= e((string) ($b['faq_payment'] ?? '')) ?></textarea></div>
+<div class="col-md-6"><label class="form-label">FAQ — Pickup / delivery</label><textarea class="form-control" name="faq_delivery" rows="2"><?= e((string) ($b['faq_delivery'] ?? '')) ?></textarea></div>
+<div class="col-md-6"><label class="form-label">FAQ — Hours</label><textarea class="form-control" name="faq_hours" rows="2"><?= e((string) ($b['faq_hours'] ?? '')) ?></textarea></div>
+<div class="col-12"><label class="form-label">FAQ — Custom</label><textarea class="form-control" name="faq_custom" rows="2"><?= e((string) ($b['faq_custom'] ?? '')) ?></textarea></div>
 <div class="col-12"><button class="btn btn-lk-orange" type="submit"><i class="bi bi-save me-1"></i> Save profile</button></div>
 </form></div></div>
 <?php
 $extraScripts = '<script src="' . e(asset_url('js/maps.js')) . '"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const mapEl = document.getElementById("businessLocationPicker");
-    const latInput = document.getElementById("latitudeInput");
-    const lngInput = document.getElementById("longitudeInput");
-    
-    // Default to Vinzons, Camarines Norte
-    const defaultLat = 14.12;
-    const defaultLng = 122.87;
-    
-    // Get current values or use defaults
-    let currentLat = latInput.value ? parseFloat(latInput.value) : defaultLat;
-    let currentLng = lngInput.value ? parseFloat(lngInput.value) : defaultLng;
-    
-    // Check if we have valid coordinates
-    const hasValidCoords = !isNaN(currentLat) && !isNaN(currentLng);
-    if (!hasValidCoords) {
-        currentLat = defaultLat;
-        currentLng = defaultLng;
-    }
-    
-    // Initialize the map
-    likhaMapsLoadScript(function(ok) {
-        if (!ok) {
-            // Fallback: show manual entry message
-            mapEl.innerHTML = \'<div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted"><i class="bi bi-map fs-1 mb-2"></i><p class="mb-0 text-center px-3">Map picker unavailable. You may enter coordinates manually.</p></div>\';
-            latInput.readOnly = false;
-            lngInput.readOnly = false;
-            return;
-        }
-        
-        try {
-            const map = new google.maps.Map(mapEl, {
-                zoom: 14,
-                center: { lat: currentLat, lng: currentLng },
-                mapTypeControl: false,
-                streetViewControl: false,
-            });
-            
-            let marker = new google.maps.Marker({
-                position: { lat: currentLat, lng: currentLng },
-                map: map,
-                draggable: true
-            });
-            
-            // Update inputs when marker is dragged
-            marker.addListener("dragend", function() {
-                const position = marker.getPosition();
-                latInput.value = position.lat();
-                lngInput.value = position.lng();
-            });
-            
-            // Update marker and inputs when map is clicked
-            map.addListener("click", function(e) {
-                const position = e.latLng;
-                marker.setPosition(position);
-                latInput.value = position.lat();
-                lngInput.value = position.lng();
-            });
-            
-        } catch (err) {
-            console.warn("Map picker failed", err);
-            mapEl.innerHTML = \'<div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted"><i class="bi bi-map fs-1 mb-2"></i><p class="mb-0 text-center px-3">Map picker unavailable. You may enter coordinates manually.</p></div>\';
-            latInput.readOnly = false;
-            lngInput.readOnly = false;
-        }
-    });
-});
-</script>';
+<script>document.addEventListener("DOMContentLoaded", function () { if (window.initMapPickers) window.initMapPickers(); });</script>';
 require __DIR__ . '/partials/layout-end.php';
 require BASE_PATH . '/includes/footer.php';

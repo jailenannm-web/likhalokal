@@ -68,10 +68,7 @@ if ($user) {
         db()->prepare('UPDATE users SET google_id = ?, auth_provider = \'google\', updated_at = NOW() WHERE id = ?')
             ->execute([$googleId, (int) $user['id']]);
     }
-    $_SESSION['user_id'] = (int) $user['id'];
-    $_SESSION['user_name'] = $user['full_name'];
-    $_SESSION['user_email'] = $user['email'];
-    $_SESSION['user_role'] = $user['role'];
+    login_user($user, false);
     log_activity((int) $user['id'], 'login', 'Google OAuth login', $_SERVER['REMOTE_ADDR'] ?? null);
     if ($user['status'] === 'pending' && $user['role'] !== 'admin') {
         redirect(BASE_URL . 'complete-account.php');
@@ -80,18 +77,19 @@ if ($user) {
     redirect_by_role();
 }
 
-$hash = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
 $stmt = db()->prepare(
     'INSERT INTO users (full_name, email, google_id, auth_provider, password_hash, role, status, created_at, updated_at)
-     VALUES (?,?,?,?,?,?,\'pending\',NOW(),NOW())'
+     VALUES (?,?,?,?,NULL,?,\'active\',NOW(),NOW())'
 );
-$stmt->execute([$fullName, $email, $googleId, 'google', $hash, 'local_user']);
+$stmt->execute([$fullName, $email, $googleId, 'google', 'local_user']);
 $id = (int) db()->lastInsertId();
 
-$_SESSION['user_id'] = $id;
-$_SESSION['user_name'] = $fullName;
-$_SESSION['user_email'] = $email;
-$_SESSION['user_role'] = 'local_user';
+login_user([
+    'id' => $id,
+    'full_name' => $fullName,
+    'email' => $email,
+    'role' => 'local_user',
+], false);
 $_SESSION['needs_role_completion'] = true;
 
 log_activity($id, 'register', 'Google OAuth signup', $_SERVER['REMOTE_ADDR'] ?? null);

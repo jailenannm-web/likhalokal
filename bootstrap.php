@@ -9,9 +9,12 @@ if (!defined('BASE_PATH')) {
 require_once BASE_PATH . '/config/app.php';
 require_once BASE_PATH . '/config/database.php';
 require_once BASE_PATH . '/includes/functions.php';
+require_once BASE_PATH . '/includes/auth_helpers.php';
 require_once BASE_PATH . '/middleware/auth.php';
 require_once BASE_PATH . '/middleware/csrf.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+init_secure_session();
+try_remember_login();
+if (is_logged_in()) {
+    update_last_seen();
 }

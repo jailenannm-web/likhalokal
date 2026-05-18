@@ -83,9 +83,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect(ADMIN_URL . 'businesses.php');
         }
         
+        $existingBiz = null;
+        if ($act === 'edit' && $id > 0) {
+            $stmt = db()->prepare('SELECT * FROM businesses WHERE id = ? LIMIT 1');
+            $stmt->execute([$id]);
+            $existingBiz = $stmt->fetch() ?: null;
+        }
+
         // Handle file uploads
-        $logoPath = $biz['logo'] ?? null;
-        $coverPath = $biz['cover_image'] ?? null;
+        $logoPath = $existingBiz['logo'] ?? null;
+        $coverPath = $existingBiz['cover_image'] ?? null;
         
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
             $logoPath = save_upload($_FILES['logo'], 'businesses');
@@ -119,6 +126,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             db()->prepare("INSERT INTO businesses ($columns) VALUES ($values)")->execute($params);
+            $newId = (int) db()->lastInsertId();
+            if ($status === 'approved' && $newId > 0) {
+                db()->prepare('UPDATE businesses SET approved_by = ?, approved_at = NOW() WHERE id = ?')->execute([current_user_id(), $newId]);
+            }
             log_activity(current_user_id(), 'admin_business', 'add business', $_SERVER['REMOTE_ADDR'] ?? null);
             set_flash('success', 'Business added successfully.');
         } elseif ($act === 'edit') {
@@ -244,13 +255,18 @@ if ($editBusiness):
         <label class="form-label">Barangay</label>
         <input class="form-control" name="barangay" value="<?= e((string) ($editBusiness['barangay'] ?? '')) ?>">
     </div>
+    <div class="col-12">
+        <label class="form-label">Location on map</label>
+        <p class="small text-muted mb-2">Tap the map to set the business location.</p>
+        <div id="businessMapPicker" class="lk-map-picker"></div>
+    </div>
     <div class="col-md-6">
         <label class="form-label">Latitude</label>
-        <input class="form-control" name="latitude" value="<?= e((string) ($editBusiness['latitude'] ?? '')) ?>">
+        <input class="form-control" name="latitude" id="businessLatitude" value="<?= e((string) ($editBusiness['latitude'] ?? '')) ?>">
     </div>
     <div class="col-md-6">
         <label class="form-label">Longitude</label>
-        <input class="form-control" name="longitude" value="<?= e((string) ($editBusiness['longitude'] ?? '')) ?>">
+        <input class="form-control" name="longitude" id="businessLongitude" value="<?= e((string) ($editBusiness['longitude'] ?? '')) ?>">
     </div>
     <div class="col-md-6">
         <label class="form-label">Logo</label>
@@ -346,13 +362,18 @@ if ($editBusiness):
         <label class="form-label">Barangay</label>
         <input class="form-control" name="barangay">
     </div>
+    <div class="col-12">
+        <label class="form-label">Location on map</label>
+        <p class="small text-muted mb-2">Tap the map to set the business location.</p>
+        <div id="businessMapPicker" class="lk-map-picker"></div>
+    </div>
     <div class="col-md-6">
         <label class="form-label">Latitude</label>
-        <input class="form-control" name="latitude">
+        <input class="form-control" name="latitude" id="businessLatitude">
     </div>
     <div class="col-md-6">
         <label class="form-label">Longitude</label>
-        <input class="form-control" name="longitude">
+        <input class="form-control" name="longitude" id="businessLongitude">
     </div>
     <div class="col-md-6">
         <label class="form-label">Logo</label>
@@ -384,37 +405,59 @@ if ($editBusiness):
     </div>
 </form></div></div>
 <?php else: ?>
-<div class="lk-dash-inner-head d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+<div class="lk-dash-inner-head lk-admin-manage-head d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
     <div>
+        <span class="badge bg-success mb-2">Business directory</span>
         <h1 class="lk-dash-page-title mb-1">Manage Businesses</h1>
-        <p class="lk-dash-page-lead text-muted mb-0">Maintain approved and existing business listings.</p>
+        <p class="lk-dash-page-lead text-muted mb-0">
+            Monitor and maintain <strong>existing businesses</strong> on the platform. Use filters for status.
+            New seller registrations are reviewed on <a href="<?= e(ADMIN_URL) ?>business-applications.php">Business Applications</a>.
+        </p>
     </div>
     <a href="?add=1" class="btn btn-lk-orange"><i class="bi bi-plus-lg me-1"></i> Add Business</a>
 </div>
-<div class="lk-dash-tabs btn-group mb-3" role="group">
+<?php if ($tab === 'pending'): ?>
+<div class="alert alert-warning border-0 shadow-sm small">
+    <i class="bi bi-info-circle me-1"></i>
+    Pending registrations are reviewed on <a href="<?= e(ADMIN_URL) ?>business-applications.php" class="alert-link">Business Applications</a>.
+    This tab shows pending records already in the database.
+</div>
+<?php endif; ?>
+<div class="lk-dash-tabs btn-group mb-3 flex-wrap" role="group">
     <a class="btn btn-sm btn-outline-secondary <?= $tab === 'approved' ? 'active' : '' ?>" href="?tab=approved">Approved</a>
     <a class="btn btn-sm btn-outline-secondary <?= $tab === 'pending' ? 'active' : '' ?>" href="?tab=pending">Pending</a>
     <a class="btn btn-sm btn-outline-secondary <?= $tab === 'rejected' ? 'active' : '' ?>" href="?tab=rejected">Rejected</a>
     <a class="btn btn-sm btn-outline-secondary <?= $tab === 'suspended' ? 'active' : '' ?>" href="?tab=suspended">Suspended</a>
     <a class="btn btn-sm btn-outline-secondary <?= $tab === 'all' ? 'active' : '' ?>" href="?tab=all">All</a>
 </div>
-<div class="lk-panel">
+<div class="lk-panel lk-admin-manage-panel">
+<div class="lk-panel-header d-flex justify-content-between align-items-center">
+    <h2 class="mb-0"><i class="bi bi-building me-2 text-warning"></i> Business listings</h2>
+    <span class="badge bg-light text-dark"><?= count($list) ?> shown</span>
+</div>
 <div class="lk-dash-table-wrap">
-    <table class="table table-hover align-middle mb-0">
-        <thead><tr><th>ID</th><th>Name</th><th>Owner</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
+    <table class="table table-hover align-middle mb-0 lk-admin-manage-table">
+        <thead><tr><th>Business</th><th>Owner</th><th>Type / Category</th><th>Contact</th><th>Location</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
         <tbody>
         <?php foreach ($list as $b): ?>
             <tr>
-                <td><?= (int) $b['id'] ?></td>
-                <td><?= e($b['business_name']) ?></td>
+                <td>
+                    <strong class="d-block"><?= e($b['business_name']) ?></strong>
+                    <span class="small text-muted">#<?= (int) $b['id'] ?></span>
+                </td>
                 <td class="small">
                     <div><?= e($b['owner_name']) ?></div>
                     <div class="text-muted"><?= e($b['owner_email']) ?></div>
                 </td>
-                <td><?= e(business_type_label((string) $b['business_type'])) ?></td>
+                <td class="small">
+                    <div><?= e(business_type_label((string) $b['business_type'])) ?></div>
+                    <div class="text-muted"><?= e($b['business_category'] ?: '—') ?></div>
+                </td>
+                <td class="small"><?= e($b['contact_number'] ?: '—') ?></td>
+                <td class="small"><?= e(trim(($b['address'] ?? '') . ($b['barangay'] ? ', ' . $b['barangay'] : '')) ?: '—') ?></td>
                 <td><span class="badge bg-<?= business_status_badge_class((string) $b['status']) ?>"><?= e($b['status']) ?></span></td>
-                <td>
-                    <a class="btn btn-sm btn-outline-primary" href="<?= e(vendor_profile_url((int) $b['id'], current_request_return_url())) ?>">View</a>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" href="<?= e(vendor_profile_url((int) $b['id'], current_request_return_url())) ?>" target="_blank" rel="noopener">View Profile</a>
                     <a class="btn btn-sm btn-outline-secondary" href="?edit=<?= (int) $b['id'] ?>">Edit</a>
                     <?php if ($b['status'] === 'approved'): ?>
                         <form method="post" class="d-inline" onsubmit="return confirm('Suspend this business?');">
@@ -442,7 +485,7 @@ if ($editBusiness):
             </tr>
         <?php endforeach; ?>
         <?php if (empty($list)): ?>
-        <tr><td colspan="6" class="text-center text-muted py-4">No businesses in this list.</td></tr>
+        <tr><td colspan="7" class="text-center text-muted py-4">No businesses in this list.</td></tr>
         <?php endif; ?>
         </tbody>
     </table>
@@ -451,5 +494,10 @@ if ($editBusiness):
 <?php endif; ?>
 <?php endif; ?>
 <?php
+$needsMap = $editBusiness || isset($_GET['add']);
+if ($needsMap) {
+    $extraScripts = ($extraScripts ?? '') . '<script src="' . e(asset_url('js/maps.js')) . '"></script>
+<script>document.addEventListener("DOMContentLoaded", function () { if (window.initMapPickers) window.initMapPickers(); });</script>';
+}
 require __DIR__ . '/partials/layout-end.php';
 require BASE_PATH . '/includes/footer.php';

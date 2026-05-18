@@ -249,15 +249,15 @@ require BASE_PATH . '/includes/partials/dash-flash.php';
             <div class="col-12">
                 <label class="form-label">Attraction Location</label>
                 <p class="small text-muted mb-2">Tap the map to set the tourist attraction location.</p>
-                <div id="attractionLocationPicker" class="lk-map-picker" style="height: 280px; background: #e9ecef; border-radius: 12px; overflow: hidden;"></div>
+                <div id="attractionMapPicker" class="lk-map-picker"></div>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Latitude</label>
-                <input class="form-control" name="latitude" id="attractionLatitudeInput" value="<?= e((string) ($formAttraction['latitude'] ?? '')) ?>" readonly>
+                <input class="form-control" name="latitude" id="attractionLatitude" value="<?= e((string) ($formAttraction['latitude'] ?? '')) ?>">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Longitude</label>
-                <input class="form-control" name="longitude" id="attractionLongitudeInput" value="<?= e((string) ($formAttraction['longitude'] ?? '')) ?>" readonly>
+                <input class="form-control" name="longitude" id="attractionLongitude" value="<?= e((string) ($formAttraction['longitude'] ?? '')) ?>">
             </div>
             <div class="col-md-4">
                 <label class="form-label">Attraction image</label>
@@ -340,77 +340,7 @@ require BASE_PATH . '/includes/partials/dash-flash.php';
 </div>
 <?php
 $extraScripts = '<script src="' . e(asset_url('js/maps.js')) . '"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const mapEl = document.getElementById("attractionLocationPicker");
-    const latInput = document.getElementById("attractionLatitudeInput");
-    const lngInput = document.getElementById("attractionLongitudeInput");
-    
-    if (!mapEl || !latInput || !lngInput) return;
-    
-    // Default to Vinzons, Camarines Norte
-    const defaultLat = 14.12;
-    const defaultLng = 122.87;
-    
-    // Get current values or use defaults
-    let currentLat = latInput.value ? parseFloat(latInput.value) : defaultLat;
-    let currentLng = lngInput.value ? parseFloat(lngInput.value) : defaultLng;
-    
-    // Check if we have valid coordinates
-    const hasValidCoords = !isNaN(currentLat) && !isNaN(currentLng);
-    if (!hasValidCoords) {
-        currentLat = defaultLat;
-        currentLng = defaultLng;
-    }
-    
-    // Initialize the map
-    likhaMapsLoadScript(function(ok) {
-        if (!ok) {
-            // Fallback: show manual entry message
-            mapEl.innerHTML = \'<div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted"><i class="bi bi-map fs-1 mb-2"></i><p class="mb-0 text-center px-3">Map picker unavailable. You may enter coordinates manually.</p></div>\';
-            latInput.readOnly = false;
-            lngInput.readOnly = false;
-            return;
-        }
-        
-        try {
-            const map = new google.maps.Map(mapEl, {
-                zoom: 14,
-                center: { lat: currentLat, lng: currentLng },
-                mapTypeControl: false,
-                streetViewControl: false,
-            });
-            
-            let marker = new google.maps.Marker({
-                position: { lat: currentLat, lng: currentLng },
-                map: map,
-                draggable: true
-            });
-            
-            // Update inputs when marker is dragged
-            marker.addListener("dragend", function() {
-                const position = marker.getPosition();
-                latInput.value = position.lat();
-                lngInput.value = position.lng();
-            });
-            
-            // Update marker and inputs when map is clicked
-            map.addListener("click", function(e) {
-                const position = e.latLng;
-                marker.setPosition(position);
-                latInput.value = position.lat();
-                lngInput.value = position.lng();
-            });
-            
-        } catch (err) {
-            console.warn("Map picker failed", err);
-            mapEl.innerHTML = \'<div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted"><i class="bi bi-map fs-1 mb-2"></i><p class="mb-0 text-center px-3">Map picker unavailable. You may enter coordinates manually.</p></div>\';
-            latInput.readOnly = false;
-            lngInput.readOnly = false;
-        }
-    });
-});
-</script>';
+<script>document.addEventListener("DOMContentLoaded", function () { if (window.initMapPickers) window.initMapPickers(); });</script>';
 require __DIR__ . '/partials/layout-end.php';
 require BASE_PATH . '/includes/footer.php';
 ?>

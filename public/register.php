@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 $pageTitle = 'Register';
 $activeNav = '';
+$bodyClass = 'lk-auth-page';
 require_once dirname(__DIR__) . '/bootstrap.php';
 require_once BASE_PATH . '/middleware/auth.php';
 
@@ -45,10 +46,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     );
     $stmt->execute([$fullName, $email, $hash, $contact, $role]);
     $id = (int) db()->lastInsertId();
-    $_SESSION['user_id'] = $id;
-    $_SESSION['user_name'] = $fullName;
-    $_SESSION['user_email'] = $email;
-    $_SESSION['user_role'] = $role;
+    login_user([
+        'id' => $id,
+        'full_name' => $fullName,
+        'email' => $email,
+        'role' => $role,
+    ], false);
     log_activity($id, 'register', 'New registration', $_SERVER['REMOTE_ADDR'] ?? null);
     set_flash('success', $role === 'seller'
         ? 'Account created. Use your profile menu to set up your business.'
@@ -59,10 +62,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require BASE_PATH . '/includes/header.php';
 require BASE_PATH . '/includes/navbar.php';
 ?>
-<div class="container py-5" style="min-height: calc(100vh - 200px); display: flex; align-items: center;">
+<div class="lk-auth-wrap">
     <div class="row justify-content-center w-100">
         <div class="col-lg-6">
-            <div class="card card-lk shadow">
+            <div class="card card-lk shadow lk-auth-card">
                 <div class="card-body p-4">
                     <h1 class="h4 mb-3">Create account</h1>
                     <?php if ($m = flash('error')): ?><div class="alert alert-danger"><?= e($m) ?></div><?php endif; ?>
@@ -95,16 +98,17 @@ require BASE_PATH . '/includes/navbar.php';
                             <label class="form-label">Confirm password</label>
                             <input type="password" name="confirm_password" class="form-control" required minlength="8">
                         </div>
-                        <button class="btn btn-lk-orange w-100 mb-2" type="submit">Register</button>
+                        <button class="btn btn-lk-orange w-100 mb-3" type="submit">Register</button>
                     </form>
-                    <p class="small text-center mt-3 mb-0"><a href="<?= e(BASE_URL) ?>login.php">Already have an account?</a></p>
+                    <div class="lk-auth-divider"><span>or</span></div>
                     <?php if (google_oauth_configured()): ?>
-                        <a href="<?= e(BASE_URL) ?>google-auth.php" class="btn btn-outline-secondary w-100 mt-3">
-                            <i class="fa-brands fa-google me-2"></i> Continue with Google
+                        <a href="<?= e(BASE_URL) ?>google-login.php" class="btn btn-lk-google w-100">
+                            <span class="lk-google-g" aria-hidden="true">G</span> Continue with Google
                         </a>
                     <?php else: ?>
-                        <button type="button" class="btn btn-outline-secondary w-100 mt-3" disabled title="Set GOOGLE_CLIENT_ID in config/app.php">Continue with Google</button>
+                        <p class="small text-muted text-center mb-0">Google login is not configured yet. Use email and password, or set GOOGLE_CLIENT_ID in config/app.php.</p>
                     <?php endif; ?>
+                    <p class="text-center small mt-4 mb-0">Already have an account? <a href="<?= e(BASE_URL) ?>login.php">Sign in</a></p>
                 </div>
             </div>
         </div>

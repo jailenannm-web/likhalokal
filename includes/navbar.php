@@ -55,6 +55,7 @@ $lkSearchApi = preg_replace('#/public/?$#', '/api/', rtrim(BASE_URL, '/')) . 'se
                                 <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>reviews.php">Reviews</a></li>
                                 <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>users.php">Users</a></li>
                                 <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>reports.php">Reports</a></li>
+                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>messages.php">Messages</a></li>
                             <?php elseif ($role === 'seller'): ?>
                                 <li><a class="dropdown-item" href="<?= e(SELLER_URL) ?>dashboard.php">Seller Dashboard</a></li>
                                 <li><a class="dropdown-item" href="<?= e(SELLER_URL) ?>business-profile.php">Business Profile</a></li>

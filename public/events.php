@@ -44,7 +44,7 @@ require BASE_PATH . '/includes/header.php';
 <div class="vendor-profile-subnav">
     <div class="container">
         <a href="<?= e(BASE_URL) ?>index.php" aria-label="Go back"><i class="fa-solid fa-arrow-left fs-5"></i> Back</a>
-        <span class="fw-bold text-uppercase small" style="letter-spacing: 1px; font-family: 'Montserrat', sans-serif;">EVENTS</span>
+        <span class="fw-bold text-uppercase small" style="letter-spacing: 1px; font-family: 'Montserrat', sans-serif;">UPCOMING EVENTS</span>
     </div>
 </div>
 <section class="lk-events-hero">

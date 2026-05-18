@@ -180,17 +180,10 @@ $isInternalProfile = is_internal_return_context($requestedReturn);
 
 $backUrl = resolve_return_url($requestedReturn, BASE_URL . 'local-business.php');
 
-$bodyClass = trim(($bodyClass ?? '') . ' vendor-profile-page' . ($isInternalProfile ? ' lk-internal-workspace' : ''));
+$bodyClass = trim(($bodyClass ?? '') . ' vendor-profile-page' . ($isInternalProfile ? ' lk-internal-workspace' : ' vendor-profile-has-nav'));
 
-if ($isInternalProfile) {
-
-    $isDashboardLayout = true;
-
-} else {
-
-    $isDashboardLayout = true;
-
-}
+$showPublicNavbar = !$isInternalProfile;
+$isDashboardLayout = !$showPublicNavbar;
 
 
 
@@ -198,17 +191,11 @@ require BASE_PATH . '/includes/header.php';
 
 
 
-if ($m = flash('success')) {
-
-    echo '<div class="container mt-3"><div class="alert alert-success shadow-sm fw-bold"><i class="fa-solid fa-circle-check me-2"></i>' . e($m) . '</div></div>';
-
+if ($showPublicNavbar) {
+    require BASE_PATH . '/includes/navbar.php';
 }
-
-if ($m = flash('error')) {
-
-    echo '<div class="container mt-3"><div class="alert alert-danger shadow-sm fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>' . e($m) . '</div></div>';
-
-}
+$flashSuccess = flash('success');
+$flashError = flash('error');
 
 
 
@@ -360,7 +347,16 @@ body {
 
 </div>
 
-
+<?php if ($flashSuccess || $flashError): ?>
+<div class="container vendor-profile-flash py-2">
+    <?php if ($flashSuccess): ?>
+        <div class="alert alert-success shadow-sm fw-bold mb-0 py-2"><i class="fa-solid fa-circle-check me-2"></i><?= e($flashSuccess) ?></div>
+    <?php endif; ?>
+    <?php if ($flashError): ?>
+        <div class="alert alert-danger shadow-sm fw-bold mb-0 py-2"><i class="fa-solid fa-triangle-exclamation me-2"></i><?= e($flashError) ?></div>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
 
 <div class="vendor-profile-cover" style="background-image: url('<?= e($cover) ?>');"></div>
 

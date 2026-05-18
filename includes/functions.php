@@ -272,6 +272,12 @@ function save_upload(array $file, string $subfolder = ''): ?string
     return $relative;
 }
 
+function app_root_url(): string
+{
+    $root = rtrim(preg_replace('#/public/?$#', '', rtrim(BASE_URL, '/')), '/');
+    return $root !== '' ? $root : '/likhalokal';
+}
+
 function asset_url(string $path): string
 {
     return rtrim(ASSET_URL, '/') . '/' . ltrim($path, '/');
@@ -372,12 +378,14 @@ function user_message_conversations(int $userId): array
                 MAX(m.created_at) AS last_at,
                 (SELECT m2.message_content FROM messages m2
                  WHERE m2.business_id = m.business_id
+                   AND m2.conversation_type = \'business_inquiry\'
                    AND (m2.sender_id = ? OR m2.receiver_id = ?)
                  ORDER BY m2.created_at DESC LIMIT 1) AS last_message,
                 SUM(CASE WHEN m.receiver_id = ? AND m.is_read = 0 THEN 1 ELSE 0 END) AS unread_count
          FROM messages m
          INNER JOIN businesses b ON b.id = m.business_id
          WHERE m.business_id IS NOT NULL
+           AND m.conversation_type = \'business_inquiry\'
            AND (m.sender_id = ? OR m.receiver_id = ?)
          GROUP BY m.business_id, b.business_name
          ORDER BY last_at DESC'
@@ -522,12 +530,14 @@ function seller_message_threads(int $sellerUserId, int $businessId): array
             MAX(m.created_at) AS last_at,
             (SELECT m2.message_content FROM messages m2
              WHERE m2.business_id = ?
+               AND m2.conversation_type = \'business_inquiry\'
                AND (m2.sender_id = u.id OR m2.receiver_id = u.id)
              ORDER BY m2.created_at DESC LIMIT 1) AS last_message,
             SUM(CASE WHEN m.receiver_id = ? AND m.is_read = 0 THEN 1 ELSE 0 END) AS unread_count
          FROM messages m
          INNER JOIN users u ON u.id = CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END
          WHERE m.business_id = ?
+           AND m.conversation_type = \'business_inquiry\'
            AND (m.sender_id = ? OR m.receiver_id = ?)
          GROUP BY customer_id, u.full_name
          HAVING customer_id != ?
@@ -545,6 +555,45 @@ function seller_message_threads(int $sellerUserId, int $businessId): array
         $sellerUserId,
     ]);
     return $stmt->fetchAll();
+}
+
+/** @return list<array<string, mixed>> */
+function admin_support_threads(int $adminId, ?string $filterRole = null): array
+{
+    $sql = "SELECT u.id AS peer_id, u.full_name, u.role, u.last_seen_at,
+            (SELECT m2.message_content FROM messages m2
+             WHERE m2.conversation_type = 'admin_support'
+               AND ((m2.sender_id = u.id AND m2.receiver_id = ?) OR (m2.sender_id = ? AND m2.receiver_id = u.id))
+             ORDER BY m2.created_at DESC LIMIT 1) AS last_message,
+            (SELECT MAX(created_at) FROM messages m3
+             WHERE m3.conversation_type = 'admin_support'
+               AND ((m3.sender_id = u.id AND m3.receiver_id = ?) OR (m3.sender_id = ? AND m3.receiver_id = u.id))) AS last_at,
+            (SELECT COUNT(*) FROM messages m4
+             WHERE m4.conversation_type = 'admin_support' AND m4.sender_id = u.id AND m4.receiver_id = ? AND m4.is_read = 0) AS unread_count
+            FROM users u
+            WHERE u.role != 'admin' AND u.id IN (
+                SELECT DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END
+                FROM messages WHERE conversation_type = 'admin_support' AND (sender_id = ? OR receiver_id = ?)
+            )";
+    $params = [$adminId, $adminId, $adminId, $adminId, $adminId, $adminId, $adminId, $adminId];
+    if ($filterRole !== null && $filterRole !== '') {
+        $sql .= ' AND u.role = ?';
+        $params[] = $filterRole;
+    }
+    $sql .= ' ORDER BY last_at DESC';
+    $stmt = db()->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+function role_display_label(string $role): string
+{
+    return match ($role) {
+        'local_user' => 'Local User',
+        'seller' => 'Seller',
+        'admin' => 'Tourism Admin',
+        default => ucfirst(str_replace('_', ' ', $role)),
+    };
 }
 
 function current_request_return_url(): string

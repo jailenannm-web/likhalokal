@@ -1171,8 +1171,8 @@ p {
 .vendor-profile-page .vendor-profile-card {
   position: relative;
   max-width: 980px;
-  margin: clamp(1rem, 3vw, 1.75rem) auto 0;
-  padding: clamp(0.9rem, 2vw, 1.4rem);
+  margin: clamp(0.75rem, 2.5vw, 1.35rem) auto 0;
+  padding: clamp(0.75rem, 1.8vw, 1.15rem);
   background: rgba(255, 255, 255, 0.97);
   border-radius: 20px;
   border: 2px solid rgba(27, 67, 50, 0.1);
@@ -1215,6 +1215,14 @@ p {
   padding-top: 1rem;
 }
 
+.vendor-profile-page {
+  padding-top: 0;
+}
+
+body.vendor-profile-page.lk-has-fixed-nav {
+  padding-top: var(--lk-navbar-height);
+}
+
 .vendor-profile-subnav {
   background: rgba(27, 67, 50, 0.92);
   border-bottom: 2px solid var(--lk-orange);
@@ -1222,6 +1230,19 @@ p {
   position: sticky;
   top: var(--lk-navbar-height);
   z-index: 1030;
+}
+
+.vendor-profile-page.lk-internal-workspace .vendor-profile-subnav,
+.vendor-profile-page:not(.vendor-profile-has-nav) .vendor-profile-subnav {
+  top: 0;
+}
+
+.vendor-profile-page.lk-internal-workspace {
+  padding-top: 0 !important;
+}
+
+.vendor-profile-flash {
+  margin-top: 0;
 }
 
 .vendor-profile-subnav .container {
@@ -1246,8 +1267,13 @@ p {
 }
 
 .lk-internal-workspace .vendor-profile-subnav,
-.message-page .vendor-profile-subnav {
+.message-page .vendor-profile-subnav,
+.events-page .vendor-profile-subnav {
   top: 0;
+}
+
+.events-page.lk-internal-workspace {
+  padding-top: 0;
 }
 
 .vendor-profile-grid {
@@ -1317,19 +1343,19 @@ p {
 .vendor-info-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .vendor-info-card {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.45rem;
   align-items: flex-start;
   min-width: 0;
-  min-height: 54px;
+  min-height: 48px;
   background: #f8faf8;
   border-left: 4px solid var(--lk-green);
   border-radius: 10px;
-  padding: 0.55rem 0.7rem;
+  padding: 0.45rem 0.6rem;
   box-shadow: 0 5px 14px rgba(0, 0, 0, 0.04);
 }
 
@@ -1790,4 +1816,126 @@ p {
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
+}
+
+/* Auth pages */
+body.lk-auth-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(160deg, #f4f7f6 0%, #fff8ee 50%, #e8f5e9 100%);
+}
+.lk-auth-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 2rem 0 1rem;
+}
+.lk-auth-card {
+  border-radius: 20px;
+  border: none;
+}
+.lk-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+.lk-auth-divider::before,
+.lk-auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #dee2e6;
+}
+.btn-lk-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid #dadce0;
+  background: #fff;
+  color: #3c4043;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+}
+.btn-lk-google:hover {
+  background: #f8f9fa;
+  color: #202124;
+}
+.lk-google-g {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #dadce0;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  color: #4285f4;
+}
+
+/* Map picker */
+.lk-map-picker {
+  width: 100%;
+  min-height: 320px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #e9eef2;
+  border: 1px solid #dde3ea;
+}
+@media (max-width: 768px) {
+  .lk-map-picker {
+    min-height: 240px;
+  }
+}
+
+/* Event cards uniform images */
+.event-card-image-wrap {
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+  border-radius: 20px 20px 0 0;
+}
+.event-card-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+@media (max-width: 768px) {
+  .event-card-image-wrap {
+    height: 220px;
+  }
+}
+
+.lk-chat-attachment-img {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-bottom: 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.chat-bubble.is-mine .lk-chat-attachment-img,
+.lk-bubble-out.is-mine .lk-chat-attachment-img {
+  margin-left: auto;
+}
+
+.lk-chat-attachment-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.18);
 }

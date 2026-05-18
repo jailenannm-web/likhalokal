@@ -29,8 +29,8 @@ $me = current_user_id();
 $role = current_user_role();
 $ownerId = (int) $b['owner_user_id'];
 
-if (!in_array($role, ['local_user', 'seller'], true)) {
-    set_flash('error', 'Please use a local or seller account for messaging.');
+if (!in_array($role, ['local_user', 'seller', 'admin'], true)) {
+    set_flash('error', 'Please login to use messaging.');
     redirect(BASE_URL . 'index.php');
 }
 
@@ -147,9 +147,11 @@ body {
             
             <!-- Input Area -->
             <div class="p-3 bg-white" style="border-top: 2px solid rgba(27,67,50,0.1);">
-                <form id="chatForm" class="d-flex align-items-center bg-light border rounded-pill px-3 py-2 shadow-sm" style="border-color: rgba(27,67,50,0.2) !important;">
+                <div id="chatAttachmentPreview" class="px-2 small"></div>
+                <form id="chatForm" class="d-flex align-items-center bg-light border rounded-pill px-3 py-2 shadow-sm" style="border-color: rgba(27,67,50,0.2) !important;" enctype="multipart/form-data">
+                    <label class="btn btn-link text-secondary p-0 me-2 mb-0" title="Attach image"><i class="fa-solid fa-image"></i><input type="file" id="chatAttachment" name="attachment" accept="image/*" class="d-none"></label>
                     <input type="text" id="chatInput" class="form-control border-0 shadow-none bg-transparent" placeholder="Type your inquiry here..." autocomplete="off" style="font-family: 'Poppins', sans-serif;">
-                    <button class="btn fs-4 p-0 shadow-none border-0 ms-2" type="submit" style="color: #f39200; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                    <button class="btn fs-4 p-0 shadow-none border-0 ms-2" type="submit" style="color: #f39200;">
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
                 </form>
@@ -161,12 +163,17 @@ body {
 
 <script>
 window.LK_CHAT = {
+  apiUrl: <?= json_encode(preg_replace('#/public/?$#', '/api/', rtrim(BASE_URL, '/')) . 'messages.php') ?>,
+  appBase: <?= json_encode(app_root_url()) ?>,
+  assetBase: <?= json_encode(ASSET_URL) ?>,
   businessId: <?= (int) $businessId ?>,
   productId: <?= $productId ?: 'null' ?>,
   customerId: <?= $customerId ?: 'null' ?>,
   receiverId: <?= $receiverJs !== null ? (int) $receiverJs : 'null' ?>,
   me: <?= (int) $me ?>,
-  csrf: <?= json_encode($csrf) ?>
+  csrf: <?= json_encode($csrf) ?>,
+  fileId: "chatAttachment",
+  previewId: "chatAttachmentPreview"
 };
 
 <?php if($productContext): ?>
@@ -177,5 +184,5 @@ document.addEventListener('DOMContentLoaded', () => {
 <?php endif; ?>
 </script>
 <?php
-$extraScripts = '<script src="' . e(ASSET_URL) . 'js/chat.js"></script>';
+$extraScripts = '<script src="' . e(ASSET_URL) . 'js/lk-chat.js?v=3"></script>';
 require BASE_PATH . '/includes/footer.php';
