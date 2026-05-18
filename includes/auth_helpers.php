@@ -25,6 +25,7 @@ function login_user(array $user, bool $remember = false): void
     $_SESSION['user_name'] = (string) $user['full_name'];
     $_SESSION['user_email'] = (string) $user['email'];
     $_SESSION['user_role'] = (string) $user['role'];
+    $_SESSION['role'] = (string) $user['role'];
     if ($remember) {
         issue_remember_token((int) $user['id']);
     }
@@ -189,7 +190,7 @@ function normalize_message_attachment_path(string $path): string
 
 function smtp_configured(): bool
 {
-    return SMTP_HOST !== '' && SMTP_USER !== '';
+    return MAIL_HOST !== '' && MAIL_USERNAME !== '';
 }
 
 function send_app_mail(string $to, string $subject, string $bodyHtml): bool
@@ -209,13 +210,16 @@ function send_app_mail(string $to, string $subject, string $bodyHtml): bool
     try {
         $mail = new PHPMailer\PHPMailer\PHPMailer(true);
         $mail->isSMTP();
-        $mail->Host = SMTP_HOST;
+        $mail->Host = MAIL_HOST;
         $mail->SMTPAuth = true;
-        $mail->Username = SMTP_USER;
-        $mail->Password = SMTP_PASS;
-        $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = SMTP_PORT;
-        $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
+        $mail->Username = MAIL_USERNAME;
+        $mail->Password = MAIL_PASSWORD;
+        $encryption = strtolower(MAIL_ENCRYPTION);
+        $mail->SMTPSecure = $encryption === 'ssl'
+            ? PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS
+            : ($encryption === 'none' ? '' : PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS);
+        $mail->Port = MAIL_PORT;
+        $mail->setFrom(MAIL_FROM_EMAIL, MAIL_FROM_NAME);
         $mail->addAddress($to);
         $mail->isHTML(true);
         $mail->Subject = $subject;

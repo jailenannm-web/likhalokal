@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(BASE_URL . 'forgot-password.php');
     }
     $hash = password_hash($password, PASSWORD_DEFAULT);
-    db()->prepare('UPDATE users SET password_hash = ?, auth_provider = \'local\', updated_at = NOW() WHERE email = ?')->execute([$hash, $email]);
+    db()->prepare('UPDATE users SET password_hash = ?, updated_at = NOW() WHERE email = ?')->execute([$hash, $email]);
     mark_password_reset_used((int) $row['id']);
     set_flash('success', 'Password updated. You can sign in now.');
     redirect(BASE_URL . 'login.php');

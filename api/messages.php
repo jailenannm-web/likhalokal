@@ -116,48 +116,38 @@ try {
         $conversationType = (string) ($_GET['conversation_type'] ?? '');
         $tab = (string) ($_GET['tab'] ?? '');
 
-        if ($conversationType === 'admin_support' || ($businessId < 1 && $receiverId > 0 && $role === 'admin')) {
-            $peerId = $receiverId > 0 ? $receiverId : 0;
-            if ($role === 'admin' && $peerId < 1) {
-                messages_json(['success' => false, 'message' => 'receiver_id required'], 400);
+        if ($conversationType === 'admin_support') {
+            $adminId = first_admin_user_id();
+            if (!$adminId) {
+                messages_json(['success' => false, 'message' => 'No admin available'], 503);
             }
-            if ($role !== 'admin') {
-                $adminId = first_admin_user_id();
-                if (!$adminId) {
-                    messages_json(['success' => false, 'message' => 'No admin available'], 503);
+            if ($role === 'admin') {
+                if ($receiverId < 1) {
+                    messages_json(['success' => false, 'message' => 'receiver_id required'], 400);
                 }
-                $peerId = $role === 'admin' ? $peerId : $adminId;
-                $stmt = db()->prepare(
-                    'SELECT m.*, us.full_name AS sender_name, ur.full_name AS receiver_name
-                     FROM messages m
-                     JOIN users us ON us.id = m.sender_id
-                     JOIN users ur ON ur.id = m.receiver_id
-                     WHERE m.conversation_type = \'admin_support\'
-                       AND ((m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?))
-                     ORDER BY m.created_at ASC'
-                );
-                $other = $receiverId > 0 && $role === 'admin' ? $receiverId : ($receiverId > 0 ? $receiverId : $adminId);
-                if ($role === 'admin') {
-                    $stmt->execute([$uid, $other, $other, $uid]);
-                } else {
-                    $stmt->execute([$uid, $adminId, $adminId, $uid]);
+                $peerId = $receiverId;
+                $peerCheck = db()->prepare("SELECT id FROM users WHERE id = ? AND role IN ('local_user','seller') LIMIT 1");
+                $peerCheck->execute([$peerId]);
+                if (!$peerCheck->fetch()) {
+                    messages_json(['success' => false, 'message' => 'Invalid peer'], 400);
                 }
             } else {
-                $stmt = db()->prepare(
-                    'SELECT m.*, us.full_name AS sender_name, ur.full_name AS receiver_name
-                     FROM messages m
-                     JOIN users us ON us.id = m.sender_id
-                     JOIN users ur ON ur.id = m.receiver_id
-                     WHERE m.conversation_type = \'admin_support\'
-                       AND ((m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?))
-                     ORDER BY m.created_at ASC'
-                );
-                $stmt->execute([$uid, $peerId, $peerId, $uid]);
+                $peerId = $adminId;
             }
+            $stmt = db()->prepare(
+                'SELECT m.*, us.full_name AS sender_name, ur.full_name AS receiver_name
+                 FROM messages m
+                 JOIN users us ON us.id = m.sender_id
+                 JOIN users ur ON ur.id = m.receiver_id
+                 WHERE m.conversation_type = \'admin_support\'
+                   AND ((m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?))
+                 ORDER BY m.created_at ASC'
+            );
+            $stmt->execute([$uid, $peerId, $peerId, $uid]);
             $rows = $stmt->fetchAll();
             db()->prepare(
                 'UPDATE messages SET is_read = 1 WHERE conversation_type = \'admin_support\' AND receiver_id = ? AND sender_id = ? AND is_read = 0'
-            )->execute([$uid, $peerId > 0 ? $peerId : ($role === 'admin' ? $receiverId : first_admin_user_id())]);
+            )->execute([$uid, $peerId]);
             messages_json(['success' => true, 'message' => '', 'data' => enrich_message_rows($rows)]);
         }
 
@@ -310,7 +300,15 @@ try {
                         messages_json(['success' => false, 'message' => 'receiver_id required'], 422);
                     }
                     $receiver = $receiverId;
+                    $peerCheck = db()->prepare("SELECT id FROM users WHERE id = ? AND role IN ('local_user','seller') LIMIT 1");
+                    $peerCheck->execute([$receiver]);
+                    if (!$peerCheck->fetch()) {
+                        messages_json(['success' => false, 'message' => 'Invalid receiver'], 422);
+                    }
                 } else {
+                    if (!in_array($role, ['local_user', 'seller'], true)) {
+                        messages_json(['success' => false, 'message' => 'Forbidden'], 403);
+                    }
                     $receiver = $adminId;
                 }
                 if ($receiver === $me) {

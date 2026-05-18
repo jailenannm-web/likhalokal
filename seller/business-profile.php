@@ -152,10 +152,17 @@ require __DIR__ . '/partials/layout-start.php';
 <div class="col-12">
     <label class="form-label">Business Location</label>
     <p class="small text-muted mb-2">Tap the map to set your business location.</p>
-    <div id="businessMapPicker" class="lk-map-picker"></div>
+    <div
+      class="lk-map-picker"
+      id="businessMapPicker"
+      data-map-picker
+      data-lat-input="latitude"
+      data-lng-input="longitude"
+      data-default-lat="14.1720000"
+      data-default-lng="122.9450000"></div>
 </div>
-<div class="col-md-6"><label class="form-label">Latitude</label><input class="form-control" name="latitude" id="businessLatitude" value="<?= e((string) ($b['latitude'] ?? '')) ?>"></div>
-<div class="col-md-6"><label class="form-label">Longitude</label><input class="form-control" name="longitude" id="businessLongitude" value="<?= e((string) ($b['longitude'] ?? '')) ?>"></div>
+<div class="col-md-6"><label class="form-label">Latitude</label><input class="form-control" name="latitude" id="latitude" value="<?= e((string) ($b['latitude'] ?? '')) ?>"></div>
+<div class="col-md-6"><label class="form-label">Longitude</label><input class="form-control" name="longitude" id="longitude" value="<?= e((string) ($b['longitude'] ?? '')) ?>"></div>
 <div class="col-md-6">
 <label class="form-label">Logo</label><input class="form-control" type="file" name="logo" accept="image/jpeg,image/png,image/webp">
 <?php if (!empty($b['logo'])): ?><img src="<?= e(media_url($b['logo'])) ?>" alt="" class="rounded-circle mt-2 shadow-sm" style="width:76px;height:76px;object-fit:cover;"><?php endif; ?>
@@ -185,7 +192,6 @@ require __DIR__ . '/partials/layout-start.php';
 <div class="col-12"><button class="btn btn-lk-orange" type="submit"><i class="bi bi-save me-1"></i> Save profile</button></div>
 </form></div></div>
 <?php
-$extraScripts = '<script src="' . e(asset_url('js/maps.js')) . '"></script>
-<script>document.addEventListener("DOMContentLoaded", function () { if (window.initMapPickers) window.initMapPickers(); });</script>';
+$extraScripts = map_picker_footer_scripts();
 require __DIR__ . '/partials/layout-end.php';
 require BASE_PATH . '/includes/footer.php';

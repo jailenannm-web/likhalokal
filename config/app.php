@@ -41,10 +41,19 @@ define('UPLOAD_ALLOWED_EXT', ['jpg', 'jpeg', 'png', 'webp', 'gif']);
 define('REMEMBER_COOKIE_NAME', 'likha_remember');
 define('REMEMBER_DAYS', 30);
 
-/** SMTP (optional — forgot password) */
-define('SMTP_HOST', getenv('SMTP_HOST') ?: '');
-define('SMTP_PORT', (int) (getenv('SMTP_PORT') ?: 587));
-define('SMTP_USER', getenv('SMTP_USER') ?: '');
-define('SMTP_PASS', getenv('SMTP_PASS') ?: '');
-define('SMTP_FROM_EMAIL', getenv('SMTP_FROM_EMAIL') ?: 'noreply@likhalokal.local');
-define('SMTP_FROM_NAME', getenv('SMTP_FROM_NAME') ?: 'LikhaLokal');
+/** SMTP (optional — forgot password). Set via env in production. */
+define('MAIL_HOST', getenv('MAIL_HOST') ?: (getenv('SMTP_HOST') ?: ''));
+define('MAIL_PORT', (int) (getenv('MAIL_PORT') ?: (getenv('SMTP_PORT') ?: 587)));
+define('MAIL_USERNAME', getenv('MAIL_USERNAME') ?: (getenv('SMTP_USER') ?: ''));
+define('MAIL_PASSWORD', getenv('MAIL_PASSWORD') ?: (getenv('SMTP_PASS') ?: ''));
+define('MAIL_FROM_EMAIL', getenv('MAIL_FROM_EMAIL') ?: (getenv('SMTP_FROM_EMAIL') ?: 'noreply@likhalokal.local'));
+define('MAIL_FROM_NAME', getenv('MAIL_FROM_NAME') ?: (getenv('SMTP_FROM_NAME') ?: 'LikhaLokal'));
+define('MAIL_ENCRYPTION', getenv('MAIL_ENCRYPTION') ?: 'tls');
+
+/** @deprecated Use MAIL_* constants */
+define('SMTP_HOST', MAIL_HOST);
+define('SMTP_PORT', MAIL_PORT);
+define('SMTP_USER', MAIL_USERNAME);
+define('SMTP_PASS', MAIL_PASSWORD);
+define('SMTP_FROM_EMAIL', MAIL_FROM_EMAIL);
+define('SMTP_FROM_NAME', MAIL_FROM_NAME);

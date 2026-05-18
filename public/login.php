@@ -9,7 +9,7 @@ require_once dirname(__DIR__) . '/bootstrap.php';
 require_once BASE_PATH . '/middleware/auth.php';
 
 if (is_logged_in()) {
-    redirect_after_login(consume_login_redirect());
+    redirect_by_role();
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -24,8 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = db()->prepare('SELECT id, full_name, email, password_hash, role, status FROM users WHERE email = ? LIMIT 1');
     $stmt->execute([$email]);
     $user = $stmt->fetch();
-    if (!$user || $user['status'] === 'suspended') {
-        set_flash('error', 'Invalid credentials or suspended account.');
+    if (!$user || !user_status_allows_login((string) $user['status'], (string) ($user['role'] ?? ''))) {
+        set_flash('error', 'Invalid credentials or inactive account.');
         redirect(BASE_URL . 'login.php');
     }
     if (empty($user['password_hash'])) {
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     login_user($user, $remember);
     log_activity((int) $user['id'], 'login', 'Web login', $_SERVER['REMOTE_ADDR'] ?? null);
     set_flash('success', 'Welcome back!');
-    redirect_after_login(consume_login_redirect());
+    redirect_by_role();
 }
 
 $loginRedirect = peek_login_redirect();
@@ -77,15 +77,18 @@ require BASE_PATH . '/includes/navbar.php';
                         </div>
                         <button class="btn btn-lk-orange w-100 mb-3" type="submit">Login</button>
                     </form>
-                    <div class="lk-auth-divider"><span>or</span></div>
+                    <div class="lk-auth-divider auth-divider"><span>or</span></div>
                     <?php if (google_oauth_configured()): ?>
-                        <a href="<?= e(BASE_URL) ?>google-login.php" class="btn btn-lk-google w-100">
+                        <a href="<?= e(BASE_URL) ?>google-auth.php" class="btn btn-lk-google google-auth-btn w-100">
                             <span class="lk-google-g" aria-hidden="true">G</span> Continue with Google
                         </a>
                     <?php else: ?>
-                        <p class="small text-muted text-center mb-0">Google login is not configured yet. Use email and password, or set GOOGLE_CLIENT_ID in config/app.php.</p>
+                        <button type="button" class="btn btn-lk-google google-auth-btn w-100" disabled>
+                            <span class="lk-google-g" aria-hidden="true">G</span> Continue with Google
+                        </button>
+                        <p class="small text-muted text-center mt-2 mb-0">Google login requires OAuth setup.</p>
                     <?php endif; ?>
-                    <p class="text-center small mt-4 mb-0">Don&rsquo;t have an account? <a href="<?= e(BASE_URL) ?>register.php">Create an account</a></p>
+                    <p class="auth-switch-text">Don&rsquo;t have an account? <a href="<?= e(BASE_URL) ?>register.php">Create an account</a></p>
                 </div>
             </div>
         </div>

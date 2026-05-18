@@ -283,6 +283,24 @@ function asset_url(string $path): string
     return rtrim(ASSET_URL, '/') . '/' . ltrim($path, '/');
 }
 
+function google_maps_api_configured(): bool
+{
+    return GOOGLE_MAPS_API_KEY !== ''
+        && GOOGLE_MAPS_API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE'
+        && GOOGLE_MAPS_API_KEY !== 'PASTE_REAL_GOOGLE_MAPS_API_KEY_HERE';
+}
+
+function map_picker_footer_scripts(): string
+{
+    $html = '<script src="' . e(asset_url('js/map-picker.js')) . '?v=1"></script>';
+    if (google_maps_api_configured()) {
+        $html .= '<script async defer src="https://maps.googleapis.com/maps/api/js?key='
+            . urlencode(GOOGLE_MAPS_API_KEY)
+            . '&callback=initLikhaMapPickers"></script>';
+    }
+    return $html;
+}
+
 function business_avg_rating(int $businessId): float
 {
     $stmt = db()->prepare(

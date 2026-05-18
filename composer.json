@@ -1,0 +1,11 @@
+{
+    "name": "likhalokal/app",
+    "description": "Vinzons LikhaLokal web application",
+    "require": {
+        "php": ">=8.1",
+        "phpmailer/phpmailer": "^6.9"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

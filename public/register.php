@@ -9,7 +9,7 @@ require_once dirname(__DIR__) . '/bootstrap.php';
 require_once BASE_PATH . '/middleware/auth.php';
 
 if (is_logged_in()) {
-    redirect_after_login();
+    redirect_by_role();
 }
 
 require_once BASE_PATH . '/middleware/csrf.php';
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     set_flash('success', $role === 'seller'
         ? 'Account created. Use your profile menu to set up your business.'
         : 'Welcome to LikhaLokal!');
-    redirect_after_login();
+    redirect_by_role();
 }
 
 require BASE_PATH . '/includes/header.php';
@@ -64,51 +64,55 @@ require BASE_PATH . '/includes/navbar.php';
 ?>
 <div class="lk-auth-wrap">
     <div class="row justify-content-center w-100">
-        <div class="col-lg-6">
+        <div class="col-md-6 col-lg-5">
             <div class="card card-lk shadow lk-auth-card">
                 <div class="card-body p-4">
                     <h1 class="h4 mb-3">Create account</h1>
                     <?php if ($m = flash('error')): ?><div class="alert alert-danger"><?= e($m) ?></div><?php endif; ?>
-                    <form method="post">
+                    <?php if ($m = flash('success')): ?><div class="alert alert-success"><?= e($m) ?></div><?php endif; ?>
+                    <form method="post" novalidate>
                         <?= csrf_field() ?>
                         <div class="mb-3">
                             <label class="form-label">Account type</label>
-                            <select name="account_type" class="form-select">
+                            <select name="account_type" class="form-select" required>
                                 <option value="local_user">Local User / Tourist</option>
                                 <option value="seller">Entrepreneur / Business Owner</option>
                             </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Full name</label>
-                            <input type="text" name="full_name" class="form-control" required>
+                            <input type="text" name="full_name" class="form-control" required autocomplete="name">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Email</label>
-                            <input type="email" name="email" class="form-control" required>
+                            <input type="email" name="email" class="form-control" required autocomplete="email">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Contact number</label>
-                            <input type="text" name="contact_number" class="form-control">
+                            <input type="text" name="contact_number" class="form-control" autocomplete="tel">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Password</label>
-                            <input type="password" name="password" class="form-control" required minlength="8">
+                            <input type="password" name="password" class="form-control" required minlength="8" autocomplete="new-password">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Confirm password</label>
-                            <input type="password" name="confirm_password" class="form-control" required minlength="8">
+                            <input type="password" name="confirm_password" class="form-control" required minlength="8" autocomplete="new-password">
                         </div>
                         <button class="btn btn-lk-orange w-100 mb-3" type="submit">Register</button>
                     </form>
-                    <div class="lk-auth-divider"><span>or</span></div>
+                    <div class="lk-auth-divider auth-divider"><span>or</span></div>
                     <?php if (google_oauth_configured()): ?>
-                        <a href="<?= e(BASE_URL) ?>google-login.php" class="btn btn-lk-google w-100">
+                        <a href="<?= e(BASE_URL) ?>google-auth.php" class="btn btn-lk-google google-auth-btn w-100">
                             <span class="lk-google-g" aria-hidden="true">G</span> Continue with Google
                         </a>
                     <?php else: ?>
-                        <p class="small text-muted text-center mb-0">Google login is not configured yet. Use email and password, or set GOOGLE_CLIENT_ID in config/app.php.</p>
+                        <button type="button" class="btn btn-lk-google google-auth-btn w-100" disabled>
+                            <span class="lk-google-g" aria-hidden="true">G</span> Continue with Google
+                        </button>
+                        <p class="small text-muted text-center mt-2 mb-0">Google login requires OAuth setup.</p>
                     <?php endif; ?>
-                    <p class="text-center small mt-4 mb-0">Already have an account? <a href="<?= e(BASE_URL) ?>login.php">Sign in</a></p>
+                    <p class="auth-switch-text">Already have an account? <a href="<?= e(BASE_URL) ?>login.php">Sign in</a></p>
                 </div>
             </div>
         </div>

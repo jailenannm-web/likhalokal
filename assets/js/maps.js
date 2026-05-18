@@ -115,8 +115,14 @@ function likhaInitMapPicker(containerId, latInputId, lngInputId) {
 }
 
 window.initMapPickers = function () {
+  if (typeof window.initLikhaMapPickers === "function") {
+    window.initLikhaMapPickers();
+    return;
+  }
   likhaInitMapPicker("businessMapPicker", "businessLatitude", "businessLongitude");
+  likhaInitMapPicker("businessMapPicker", "latitude", "longitude");
   likhaInitMapPicker("attractionMapPicker", "attractionLatitude", "attractionLongitude");
+  likhaInitMapPicker("attractionMapPicker", "latitude", "longitude");
 };
 
 window.likhaMapsLoadScript = likhaMapsLoadScript;

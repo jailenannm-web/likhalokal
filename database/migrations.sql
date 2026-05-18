@@ -16,6 +16,10 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) NULL AFTER ema
 ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider ENUM('local','google') NOT NULL DEFAULT 'local' AFTER google_id;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen_at DATETIME NULL;
 
+-- Optional unique indexes (ignore errors if they already exist)
+-- ALTER TABLE users ADD UNIQUE INDEX idx_users_email (email);
+-- ALTER TABLE users ADD UNIQUE INDEX idx_users_google_id (google_id);
+
 -- Businesses
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS business_category VARCHAR(120) NULL AFTER business_type;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS latitude DECIMAL(10,7) NULL;

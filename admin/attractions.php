@@ -249,15 +249,22 @@ require BASE_PATH . '/includes/partials/dash-flash.php';
             <div class="col-12">
                 <label class="form-label">Attraction Location</label>
                 <p class="small text-muted mb-2">Tap the map to set the tourist attraction location.</p>
-                <div id="attractionMapPicker" class="lk-map-picker"></div>
+                <div
+                  class="lk-map-picker"
+                  id="attractionMapPicker"
+                  data-map-picker
+                  data-lat-input="latitude"
+                  data-lng-input="longitude"
+                  data-default-lat="14.1720000"
+                  data-default-lng="122.9450000"></div>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Latitude</label>
-                <input class="form-control" name="latitude" id="attractionLatitude" value="<?= e((string) ($formAttraction['latitude'] ?? '')) ?>">
+                <input class="form-control" name="latitude" id="latitude" value="<?= e((string) ($formAttraction['latitude'] ?? '')) ?>">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Longitude</label>
-                <input class="form-control" name="longitude" id="attractionLongitude" value="<?= e((string) ($formAttraction['longitude'] ?? '')) ?>">
+                <input class="form-control" name="longitude" id="longitude" value="<?= e((string) ($formAttraction['longitude'] ?? '')) ?>">
             </div>
             <div class="col-md-4">
                 <label class="form-label">Attraction image</label>
@@ -339,8 +346,7 @@ require BASE_PATH . '/includes/partials/dash-flash.php';
     </div>
 </div>
 <?php
-$extraScripts = '<script src="' . e(asset_url('js/maps.js')) . '"></script>
-<script>document.addEventListener("DOMContentLoaded", function () { if (window.initMapPickers) window.initMapPickers(); });</script>';
+$extraScripts = map_picker_footer_scripts();
 require __DIR__ . '/partials/layout-end.php';
 require BASE_PATH . '/includes/footer.php';
 ?>

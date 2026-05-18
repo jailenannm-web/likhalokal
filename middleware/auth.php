@@ -153,10 +153,37 @@ function dashboard_url_for_role(?string $role): string
     };
 }
 
-/** After login/register — always land on the public site unless a safe return URL was provided. */
+function redirect_to_role_dashboard(): void
+{
+    $url = match (current_user_role()) {
+        'admin' => ADMIN_URL . 'dashboard.php',
+        'seller' => SELLER_URL . 'dashboard.php',
+        'local_user' => USER_DASH_URL . 'dashboard.php',
+        default => public_home_url(),
+    };
+    redirect($url);
+}
+
+/** After login/register — safe public return URL, else role dashboard. */
 function redirect_by_role(): void
 {
-    redirect_after_login(consume_login_redirect());
+    $requested = consume_login_redirect();
+    if ($requested !== null && is_safe_post_login_redirect($requested)) {
+        redirect_after_login($requested);
+        return;
+    }
+    redirect_to_role_dashboard();
+}
+
+function user_status_allows_login(string $status, ?string $role = null): bool
+{
+    if ($status === 'active') {
+        return true;
+    }
+    if ($status === 'pending' && $role !== 'admin') {
+        return true;
+    }
+    return false;
 }
 
 function google_oauth_configured(): bool

@@ -11,11 +11,12 @@ if (!google_oauth_configured()) {
 }
 
 $state = (string) ($_GET['state'] ?? '');
-if ($state === '' || !isset($_SESSION['oauth_state']) || !hash_equals($_SESSION['oauth_state'], $state)) {
+$expectedState = (string) ($_SESSION['google_oauth_state'] ?? $_SESSION['oauth_state'] ?? '');
+if ($state === '' || $expectedState === '' || !hash_equals($expectedState, $state)) {
     set_flash('error', 'Invalid OAuth state. Please try again.');
     redirect(BASE_URL . 'login.php');
 }
-unset($_SESSION['oauth_state']);
+unset($_SESSION['google_oauth_state'], $_SESSION['oauth_state']);
 
 if (isset($_GET['error'])) {
     set_flash('error', 'Google sign-in was cancelled.');
@@ -60,13 +61,18 @@ $stmt->execute([$email, $googleId]);
 $user = $stmt->fetch();
 
 if ($user) {
-    if ($user['status'] === 'suspended') {
-        set_flash('error', 'Account suspended.');
+    if (!user_status_allows_login((string) $user['status'], (string) $user['role'])) {
+        set_flash('error', 'Your account is not active. Please contact support.');
         redirect(BASE_URL . 'login.php');
     }
     if ($googleId !== '' && empty($user['google_id'])) {
-        db()->prepare('UPDATE users SET google_id = ?, auth_provider = \'google\', updated_at = NOW() WHERE id = ?')
-            ->execute([$googleId, (int) $user['id']]);
+        if (empty($user['password_hash'])) {
+            db()->prepare('UPDATE users SET google_id = ?, auth_provider = \'google\', updated_at = NOW() WHERE id = ?')
+                ->execute([$googleId, (int) $user['id']]);
+        } else {
+            db()->prepare('UPDATE users SET google_id = ?, updated_at = NOW() WHERE id = ?')
+                ->execute([$googleId, (int) $user['id']]);
+        }
     }
     login_user($user, false);
     log_activity((int) $user['id'], 'login', 'Google OAuth login', $_SERVER['REMOTE_ADDR'] ?? null);

@@ -26,8 +26,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'),
                     '/'
                 ) . BASE_URL . 'reset-password.php?email=' . rawurlencode($email) . '&token=' . rawurlencode($token);
-                $body = '<p>Reset your LikhaLokal password:</p><p><a href="' . htmlspecialchars($resetUrl) . '">Reset password</a></p><p>This link expires in 1 hour.</p>';
-                if (!send_app_mail($email, 'LikhaLokal password reset', $body) && APP_DEBUG) {
+                $body = '<p>Hi,</p>'
+                    . '<p>We received a request to reset your LikhaLokal password.</p>'
+                    . '<p>Click the link below to reset your password:<br>'
+                    . '<a href="' . htmlspecialchars($resetUrl) . '">' . htmlspecialchars($resetUrl) . '</a></p>'
+                    . '<p>This link expires in 1 hour.</p>'
+                    . '<p>If you did not request this, ignore this email.</p>';
+                if (!send_app_mail($email, 'LikhaLokal Password Reset', $body) && APP_DEBUG) {
                     $debugLink = $resetUrl;
                 }
             }
