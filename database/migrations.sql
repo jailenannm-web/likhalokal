@@ -33,6 +33,13 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS faq_payment TEXT NULL;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS faq_delivery TEXT NULL;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS faq_hours TEXT NULL;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS faq_custom TEXT NULL;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS faq_price_response TEXT NULL;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS faq_availability_response TEXT NULL;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS faq_location_response TEXT NULL;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS faq_payment_response TEXT NULL;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS faq_pickup_delivery_response TEXT NULL;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS faq_hours_response TEXT NULL;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS faq_custom_response TEXT NULL;
 
 -- Tourist attractions detail fields
 ALTER TABLE tourist_attractions ADD COLUMN IF NOT EXISTS history TEXT NULL;

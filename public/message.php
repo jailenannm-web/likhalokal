@@ -166,6 +166,7 @@ window.LK_CHAT = {
   apiUrl: <?= json_encode(preg_replace('#/public/?$#', '/api/', rtrim(BASE_URL, '/')) . 'messages.php') ?>,
   appBase: <?= json_encode(app_root_url()) ?>,
   assetBase: <?= json_encode(ASSET_URL) ?>,
+  conversationType: "business_inquiry",
   businessId: <?= (int) $businessId ?>,
   productId: <?= $productId ?: 'null' ?>,
   customerId: <?= $customerId ?: 'null' ?>,

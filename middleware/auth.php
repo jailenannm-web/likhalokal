@@ -153,26 +153,16 @@ function dashboard_url_for_role(?string $role): string
     };
 }
 
+/** @internal Use only when explicitly sending a user to their role dashboard. */
 function redirect_to_role_dashboard(): void
 {
-    $url = match (current_user_role()) {
-        'admin' => ADMIN_URL . 'dashboard.php',
-        'seller' => SELLER_URL . 'dashboard.php',
-        'local_user' => USER_DASH_URL . 'dashboard.php',
-        default => public_home_url(),
-    };
-    redirect($url);
+    redirect(dashboard_url_for_role(current_user_role()));
 }
 
-/** After login/register — safe public return URL, else role dashboard. */
+/** After login/register — safe public return URL, else public home. */
 function redirect_by_role(): void
 {
-    $requested = consume_login_redirect();
-    if ($requested !== null && is_safe_post_login_redirect($requested)) {
-        redirect_after_login($requested);
-        return;
-    }
-    redirect_to_role_dashboard();
+    redirect_after_login(consume_login_redirect());
 }
 
 function user_status_allows_login(string $status, ?string $role = null): bool

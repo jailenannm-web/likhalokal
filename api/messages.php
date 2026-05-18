@@ -81,29 +81,6 @@ function insert_message(
     return (int) db()->lastInsertId();
 }
 
-function maybe_auto_reply(int $businessId, int $customerId, int $sellerId, string $userMessage, ?int $productId): ?array
-{
-    $stmt = db()->prepare('SELECT * FROM businesses WHERE id = ? LIMIT 1');
-    $stmt->execute([$businessId]);
-    $business = $stmt->fetch();
-    if (!$business || !(int) ($business['auto_reply_enabled'] ?? 0)) {
-        return null;
-    }
-    if (!should_send_auto_reply($businessId, $sellerId, $customerId)) {
-        return null;
-    }
-    $productName = null;
-    if ($productId) {
-        $ps = db()->prepare('SELECT product_name FROM products WHERE id = ? LIMIT 1');
-        $ps->execute([$productId]);
-        $pr = $ps->fetch();
-        $productName = $pr['product_name'] ?? null;
-    }
-    $replyText = build_auto_reply_text($business, $userMessage, $productName);
-    $id = insert_message($sellerId, $customerId, $businessId, $productId, $replyText, 'business_inquiry', true, null, null, null);
-    return fetch_message_row($id);
-}
-
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
@@ -358,11 +335,25 @@ try {
             $row = fetch_message_row($id);
             $autoReplySent = false;
             $extra = [];
-            if ($role === 'local_user' && $conversationType === 'business_inquiry' && $owner === $receiverId) {
-                $auto = maybe_auto_reply($businessId, $me, $owner, $text, $productId);
-                if ($auto) {
-                    $autoReplySent = true;
-                    $extra['auto_reply'] = $auto;
+            $inquiryText = $text !== '' ? $text : ($attachmentPath ? '[Image inquiry]' : '');
+            if (
+                $role === 'local_user'
+                && $conversationType === 'business_inquiry'
+                && $businessId > 0
+                && $owner > 0
+                && $receiverId === $owner
+            ) {
+                try {
+                    $autoId = insert_business_auto_reply($businessId, $me, $owner, $inquiryText, $productId);
+                    if ($autoId) {
+                        $auto = fetch_message_row($autoId);
+                        if ($auto) {
+                            $autoReplySent = true;
+                            $extra['auto_reply'] = $auto;
+                        }
+                    }
+                } catch (Throwable $autoEx) {
+                    error_log('auto-reply failed: ' . $autoEx->getMessage());
                 }
             }
             messages_json([

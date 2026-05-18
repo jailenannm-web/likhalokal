@@ -46,16 +46,10 @@ $lkSearchApi = preg_replace('#/public/?$#', '/api/', rtrim(BASE_URL, '/')) . 'se
                         <ul class="dropdown-menu dropdown-menu-end">
                             <?php if ($role === 'admin'): ?>
                                 <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>dashboard.php">Admin Dashboard</a></li>
-                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>business-applications.php">Business Applications</a></li>
-                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>businesses.php">Manage Businesses</a></li>
-                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>attractions.php">Tourist Attractions</a></li>
-                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>events.php">Events</a></li>
-                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>announcements.php">Announcements</a></li>
-                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>cultural-info.php">Cultural Information</a></li>
-                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>reviews.php">Reviews</a></li>
-                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>users.php">Users</a></li>
-                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>reports.php">Reports</a></li>
                                 <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>messages.php">Messages</a></li>
+                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>business-applications.php">Business Applications</a></li>
+                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>manage-businesses.php">Manage Businesses</a></li>
+                                <li><a class="dropdown-item" href="<?= e(BASE_URL) ?>index.php">View Public Website</a></li>
                             <?php elseif ($role === 'seller'): ?>
                                 <li><a class="dropdown-item" href="<?= e(SELLER_URL) ?>dashboard.php">Seller Dashboard</a></li>
                                 <li><a class="dropdown-item" href="<?= e(SELLER_URL) ?>business-profile.php">Business Profile</a></li>

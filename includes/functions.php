@@ -614,6 +614,201 @@ function role_display_label(string $role): string
     };
 }
 
+/** @return list<string> */
+function business_faq_column_names(string $type): array
+{
+    return match ($type) {
+        'price' => ['faq_price', 'faq_price_response'],
+        'availability' => ['faq_availability', 'faq_availability_response'],
+        'location' => ['faq_location', 'faq_location_response'],
+        'payment' => ['faq_payment', 'faq_payment_response'],
+        'pickup_delivery' => ['faq_delivery', 'faq_pickup_delivery_response'],
+        'hours' => ['faq_hours', 'faq_hours_response'],
+        'custom' => ['faq_custom', 'faq_custom_response'],
+        default => ['faq_custom', 'faq_custom_response'],
+    };
+}
+
+function business_faq_value(array $business, string $type): string
+{
+    foreach (business_faq_column_names($type) as $column) {
+        if (!array_key_exists($column, $business)) {
+            continue;
+        }
+        $value = trim((string) $business[$column]);
+        if ($value !== '') {
+            return $value;
+        }
+    }
+    return '';
+}
+
+function business_auto_reply_enabled(array $business): bool
+{
+    if (!db_column_exists('businesses', 'auto_reply_enabled')) {
+        return true;
+    }
+    return (int) ($business['auto_reply_enabled'] ?? 0) === 1;
+}
+
+function message_matches_faq_keyword(string $text, string $keyword): bool
+{
+    $keyword = mb_strtolower(trim($keyword));
+    if ($keyword === '') {
+        return false;
+    }
+    if (mb_strlen($keyword) <= 3) {
+        return preg_match('/\b' . preg_quote($keyword, '/') . '\b/u', $text) === 1;
+    }
+    return str_contains($text, $keyword);
+}
+
+function detect_auto_reply_type(string $message): string
+{
+    $text = mb_strtolower(trim($message));
+    if ($text === '') {
+        return 'default';
+    }
+
+    $map = [
+        'hours' => [
+            'operating hours', 'what time', 'anong oras', 'opening hours', 'closing time',
+            'open', 'opening', 'close', 'closing', 'hours', 'schedule', 'bukas', 'sarado',
+        ],
+        'price' => ['how much', 'magkano', 'price', 'prices', 'presyo', 'cost', 'rate', 'rates', 'bayad'],
+        'availability' => [
+            'still available', 'available pa', 'may stock', 'in stock', 'available', 'availability', 'meron',
+        ],
+        'location' => [
+            'shop location', 'directions', 'located', 'location', 'address', 'saan', 'san', 'map', 'where',
+        ],
+        'payment' => [
+            'mode of payment', 'gcash', 'maya', 'payment', 'transfer', 'bank', 'cash', 'pay', 'cod',
+        ],
+        'pickup_delivery' => [
+            'pick up', 'pickup', 'meet up', 'delivery', 'deliver', 'shipping', 'lalamove', 'courier',
+        ],
+        'custom' => [],
+    ];
+
+    foreach ($map as $type => $keywords) {
+        usort($keywords, static fn (string $a, string $b): int => mb_strlen($b) <=> mb_strlen($a));
+        foreach ($keywords as $keyword) {
+            if (message_matches_faq_keyword($text, $keyword)) {
+                return $type;
+            }
+        }
+    }
+
+    return 'default';
+}
+
+function build_auto_reply_text(array $business, string $userMessage, ?string $productName = null): string
+{
+    $type = detect_auto_reply_type($userMessage);
+
+    if ($type === 'default') {
+        $text = trim((string) ($business['auto_reply_message'] ?? ''));
+        if ($text === '') {
+            $text = business_faq_value($business, 'custom');
+        }
+    } else {
+        $text = business_faq_value($business, $type);
+        if ($text === '') {
+            $text = trim((string) ($business['auto_reply_message'] ?? ''));
+        }
+    }
+
+    if ($text === '') {
+        $text = "Hi! Thanks for your inquiry. We'll get back to you soon.";
+    }
+
+    $productLabel = ($productName !== null && trim($productName) !== '') ? trim($productName) : 'this item';
+    $replacements = [
+        '{business_name}' => (string) ($business['business_name'] ?? ''),
+        '{product_name}' => $productLabel,
+    ];
+
+    return str_replace(array_keys($replacements), array_values($replacements), $text);
+}
+
+function should_send_auto_reply(int $businessId, int $sellerId, int $customerId): bool
+{
+    $convFilter = db_column_exists('messages', 'conversation_type')
+        ? " AND conversation_type = 'business_inquiry'"
+        : '';
+
+    $stmt = db()->prepare(
+        'SELECT sender_id, is_auto_reply, created_at
+         FROM messages
+         WHERE business_id = ?
+           AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?))'
+        . $convFilter . '
+         ORDER BY created_at DESC
+         LIMIT 1'
+    );
+    $stmt->execute([$businessId, $sellerId, $customerId, $customerId, $sellerId]);
+    $last = $stmt->fetch();
+    if ($last
+        && (int) ($last['is_auto_reply'] ?? 0) === 1
+        && (int) ($last['sender_id'] ?? 0) === $sellerId
+    ) {
+        $ts = strtotime((string) ($last['created_at'] ?? ''));
+        if ($ts !== false && (time() - $ts) < 60) {
+            return false;
+        }
+    }
+
+    $stmt = db()->prepare(
+        'SELECT COUNT(*) FROM messages
+         WHERE business_id = ? AND sender_id = ? AND receiver_id = ? AND is_auto_reply = 1'
+        . $convFilter . '
+           AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)'
+    );
+    $stmt->execute([$businessId, $sellerId, $customerId]);
+    return (int) $stmt->fetchColumn() === 0;
+}
+
+/**
+ * Insert seller auto-reply for a business inquiry. Returns new message ID or null if skipped.
+ */
+function insert_business_auto_reply(
+    int $businessId,
+    int $customerId,
+    int $sellerId,
+    string $userMessage,
+    ?int $productId
+): ?int {
+    $stmt = db()->prepare('SELECT * FROM businesses WHERE id = ? LIMIT 1');
+    $stmt->execute([$businessId]);
+    $business = $stmt->fetch();
+    if (!$business || !business_auto_reply_enabled($business)) {
+        return null;
+    }
+    if (!should_send_auto_reply($businessId, $sellerId, $customerId)) {
+        return null;
+    }
+
+    $productName = null;
+    if ($productId) {
+        $ps = db()->prepare('SELECT product_name FROM products WHERE id = ? LIMIT 1');
+        $ps->execute([$productId]);
+        $pr = $ps->fetch();
+        $productName = $pr['product_name'] ?? null;
+    }
+
+    $replyText = build_auto_reply_text($business, $userMessage, $productName);
+    $content = $replyText !== '' ? $replyText : "Hi! Thanks for your inquiry. We'll get back to you soon.";
+
+    $stmt = db()->prepare(
+        'INSERT INTO messages (sender_id, receiver_id, business_id, product_id, message_content, is_read, is_auto_reply, attachment_path, attachment_type, inquiry_context, conversation_type, created_at)
+         VALUES (?,?,?,?,?,0,1,NULL,NULL,NULL,\'business_inquiry\',NOW())'
+    );
+    $stmt->execute([$sellerId, $customerId, $businessId, $productId, $content]);
+
+    return (int) db()->lastInsertId();
+}
+
 function current_request_return_url(): string
 {
     $uri = $_SERVER['REQUEST_URI'] ?? '';
