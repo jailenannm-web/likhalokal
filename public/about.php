@@ -236,7 +236,7 @@ require BASE_PATH . '/includes/navbar.php';
                 <div class="gov-header-amber">MUNICIPAL OFFICE</div>
                 <div class="gov-content">
                     <div class="d-flex align-items-center mb-4">
-                        <img src="mayor.jpg" class="leader-profile-img me-4" alt="Mayor">
+                        <img src="<?= asset_url('images/mayor.jpg') ?>" class="leader-profile-img me-4" alt="Mayor">
                         <div>
                             <h3 class="text-amber h4 mb-1">HON. ELEANOR F. PAJARILLO</h3>
                             <p class="small text-white-50 mb-0">Local Chief Executive</p>
@@ -251,7 +251,7 @@ require BASE_PATH . '/includes/navbar.php';
                 <div class="gov-header-amber">TOURISM HUB</div>
                 <div class="gov-content">
                     <div class="d-flex align-items-center mb-4">
-                        <img src="tourismofficer.jpg" class="leader-profile-img me-4" alt="Tourism Officer">
+                        <img src="<?= asset_url('images/renegae.jpg') ?>" class="leader-profile-img me-4" alt="Tourism Officer">
                         <div>
                             <h3 class="text-amber h4 mb-1">GARY L. PAJARILLO</h3>
                             <p class="small text-white-50 mb-0">Municipal Tourism Officer</p>

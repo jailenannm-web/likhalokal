@@ -335,17 +335,6 @@ body {
 
 <?php $msgReturn = rawurlencode(current_request_return_url() ?: $backUrl); ?>
 
-<div class="vendor-profile-subnav">
-
-    <div class="container">
-
-        <a href="<?= e($backUrl) ?>" aria-label="Go back"><i class="fa-solid fa-arrow-left fs-5"></i> Back</a>
-
-        <span class="fw-bold text-uppercase small" style="letter-spacing: 1px; font-family: 'Montserrat', sans-serif;">Local Business Profile</span>
-
-    </div>
-
-</div>
 
 <?php if ($flashSuccess || $flashError): ?>
 <div class="container vendor-profile-flash py-2">
