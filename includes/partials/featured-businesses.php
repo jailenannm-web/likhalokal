@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 /** @var array<int, array<string, mixed>> $featured */
@@ -22,14 +21,17 @@ $placeholder = asset_url('images/fruitstand.png');
                 </div>
                 <div class="biz-info-bar">
                     <div class="biz-details">
-                        <h4><a href="<?= e($profileUrl) ?>" class="text-decoration-none text-dark"><?= e($biz['business_name']) ?></a></h4>
+                        <h4><a href="<?= e($profileUrl) ?>"><?= e($biz['business_name']) ?></a></h4>
                         <p><?= e(str_limit((string) ($biz['description'] ?? ''), 120)) ?></p>
                     </div>
-                    <?php if (is_logged_in()): ?>
-                        <a href="<?= e($msgUrl) ?>" class="mail-btn" title="Message"><i class="bi bi-envelope"></i></a>
-                    <?php else: ?>
-                        <button type="button" class="mail-btn border-0 bg-transparent" data-require-auth title="Message"><i class="bi bi-envelope"></i></button>
-                    <?php endif; ?>
+                    <div class="biz-action-row">
+                        <a href="<?= e($profileUrl) ?>" class="visit-btn">Visit Shop <i class="fa-solid fa-arrow-right ms-1"></i></a>
+                        <?php if (is_logged_in()): ?>
+                            <a href="<?= e($msgUrl) ?>" class="mail-btn" title="Message"><i class="fa-regular fa-envelope"></i></a>
+                        <?php else: ?>
+                            <button type="button" class="mail-btn border-0 bg-transparent" data-require-auth title="Message"><i class="fa-regular fa-envelope"></i></button>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         <?php endforeach; ?>

@@ -135,6 +135,7 @@ require BASE_PATH . '/includes/navbar.php';
 body {
     background: linear-gradient(135deg, #fff3e0 0%, #e8f5e9 40%, #ffffff 100%);
     background-attachment: fixed;
+    padding-top: 0 !important; /* Eliminate white line space under the navbar */
 }
 .floating-bg-icons {
     position: fixed;
@@ -459,9 +460,22 @@ body {
                                     <?= e(str_limit((string)$spotlightItem['description'], 140)) ?>
                                 </p>
                                 <div>
-                                    <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int)$spotlightItem['business_id'] ?>&product_id=<?= (int)$spotlightItem['id'] ?>&return=<?= rawurlencode($pageReturn) ?>" class="btn text-white fw-bold px-4 py-2 shadow-sm rounded-pill" style="background: #f39200; font-size: 0.8rem;">
-                                        <i class="fa-solid <?= $catMeta['action_icon'] ?> me-2"></i> <?= $catMeta['action_text'] ?>
-                                    </a>
+                                    <button type="button" class="btn text-white fw-bold px-4 py-2 shadow-sm rounded-pill" style="background: #f39200; font-size: 0.8rem;"
+                                        data-bs-toggle="modal" data-bs-target="#productDetailModal"
+                                        data-name="<?= e($spotlightItem['product_name']) ?>"
+                                        data-image="<?= e($imgSpot) ?>"
+                                        data-price="<?= e($itemPrice) ?>"
+                                        data-category="<?= e(product_category_label($spotlightItem['category'] ?? $catKey)) ?>"
+                                        data-type="<?= e(product_type_label($spotlightItem['product_type'] ?? null)) ?>"
+                                        data-availability="<?= e($spotlightItem['availability'] ?? 'available') ?>"
+                                        data-description="<?= e($spotlightItem['description']) ?>"
+                                        data-shop-name="<?= e($spotlightItem['business_name']) ?>"
+                                        data-shop-url="<?= e(vendor_profile_url((int)$spotlightItem['business_id'], $pageReturn)) ?>"
+                                        data-shop-contact="<?= e($spotlightItem['contact_number'] ?? 'Contact not provided') ?>"
+                                        data-shop-address="<?= e($spotlightItem['address'] ?? 'Vinzons') ?>"
+                                        data-inquire-url="<?= e(BASE_URL . 'message.php?business_id=' . (int)$spotlightItem['business_id'] . '&product_id=' . (int)$spotlightItem['id'] . '&return=' . rawurlencode($pageReturn)) ?>">
+                                        <i class="fa-solid fa-circle-info me-2"></i> View Details
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -503,17 +517,45 @@ body {
                                             $img = $p['image'] ? media_url($p['image'], 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80') : 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80';
                                             $displayPrice = isset($p['price']) && (float)$p['price'] > 0 ? '₱' . number_format((float)$p['price'], 2) : 'Contact Vendor';
                                         ?>
-                                        <div class="w-100 aspect-ratio-1x1 position-relative overflow-hidden" style="border-radius: 12px 12px 0 0; aspect-ratio: 1/1; background-color: #fcfcfc;">
+                                        <a href="#" class="w-100 aspect-ratio-1x1 position-relative overflow-hidden d-block" style="border-radius: 12px 12px 0 0; aspect-ratio: 1/1; background-color: #fcfcfc;"
+                                            data-bs-toggle="modal" data-bs-target="#productDetailModal"
+                                            data-name="<?= e($p['product_name']) ?>"
+                                            data-image="<?= e($img) ?>"
+                                            data-price="<?= e($displayPrice) ?>"
+                                            data-category="<?= e(product_category_label($p['category'] ?? $catKey)) ?>"
+                                            data-type="<?= e(product_type_label($p['product_type'] ?? null)) ?>"
+                                            data-availability="<?= e($p['availability'] ?? 'available') ?>"
+                                            data-description="<?= e($p['description']) ?>"
+                                            data-shop-name="<?= e($p['business_name']) ?>"
+                                            data-shop-url="<?= e(vendor_profile_url((int)$p['business_id'], $pageReturn)) ?>"
+                                            data-shop-contact="<?= e($p['contact_number'] ?? 'Contact not provided') ?>"
+                                            data-shop-address="<?= e($p['address'] ?? 'Vinzons') ?>"
+                                            data-inquire-url="<?= e(BASE_URL . 'message.php?business_id=' . (int)$p['business_id'] . '&product_id=' . (int)$p['id'] . '&return=' . rawurlencode($pageReturn)) ?>">
                                             <img src="<?= e($img) ?>" class="object-fit-cover w-100 h-100" style="transition: transform 0.4s ease;" alt="">
                                             <span class="position-absolute bottom-0 start-0 bg-success text-white px-2 py-0.5 m-2 rounded fw-bold shadow-sm" style="font-size: 0.65rem; background-color: #1b4332 !important;">
                                                 <?= $displayPrice ?>
                                             </span>
-                                        </div>
+                                        </a>
                                         <div class="p-3 bg-white d-flex flex-column flex-grow-1" style="border-radius: 0 0 12px 12px;">
                                             <span class="text-uppercase text-muted tracking-wider d-block mb-1" style="font-size: 0.58rem; font-weight: 700; letter-spacing: 0.5px;">
                                                 <?= e(product_category_label($p['category'] ?? $catKey)) ?> / <?= e(product_type_label($p['product_type'] ?? null)) ?>
                                             </span>
-                                            <h6 class="fw-bold mb-1 text-truncate text-dark" style="font-family: 'Montserrat', sans-serif; font-size: 0.85rem;" title="<?= e($p['product_name']) ?>"><?= e($p['product_name']) ?></h6>
+                                            <h6 class="fw-bold mb-1 text-truncate" style="font-family: 'Montserrat', sans-serif; font-size: 0.85rem;" title="<?= e($p['product_name']) ?>">
+                                                <a href="#" style="transition: color 0.2s;" class="text-decoration-none text-dark hover-orange"
+                                                    data-bs-toggle="modal" data-bs-target="#productDetailModal"
+                                                    data-name="<?= e($p['product_name']) ?>"
+                                                    data-image="<?= e($img) ?>"
+                                                    data-price="<?= e($displayPrice) ?>"
+                                                    data-category="<?= e(product_category_label($p['category'] ?? $catKey)) ?>"
+                                                    data-type="<?= e(product_type_label($p['product_type'] ?? null)) ?>"
+                                                    data-availability="<?= e($p['availability'] ?? 'available') ?>"
+                                                    data-description="<?= e($p['description']) ?>"
+                                                    data-shop-name="<?= e($p['business_name']) ?>"
+                                                    data-shop-url="<?= e(vendor_profile_url((int)$p['business_id'], $pageReturn)) ?>"
+                                                    data-shop-contact="<?= e($p['contact_number'] ?? 'Contact not provided') ?>"
+                                                    data-shop-address="<?= e($p['address'] ?? 'Vinzons') ?>"
+                                                    data-inquire-url="<?= e(BASE_URL . 'message.php?business_id=' . (int)$p['business_id'] . '&product_id=' . (int)$p['id'] . '&return=' . rawurlencode($pageReturn)) ?>"><?= e($p['product_name']) ?></a>
+                                            </h6>
                                             <span class="badge align-self-start mb-2 bg-<?= ($p['availability'] ?? '') === 'available' ? 'success' : 'secondary' ?>" style="font-size: 0.62rem;">
                                                 <?= e(ucfirst((string) ($p['availability'] ?? 'available'))) ?>
                                             </span>
@@ -522,9 +564,22 @@ body {
                                             </p>
                                             
                                             <!-- Action Button Layer dependent on Category Context -->
-                                            <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int)$p['business_id'] ?>&product_id=<?= (int)$p['id'] ?>&return=<?= rawurlencode($pageReturn) ?>" class="btn btn-outline-success border-1 rounded-pill w-100 py-1 text-center fw-bold mt-auto" style="font-size: 0.68rem; transition: all 0.2s;">
-                                                <i class="fa-solid <?= $catMeta['action_icon'] ?> me-1"></i> <?= $catMeta['action_text'] ?>
-                                            </a>
+                                            <button type="button" class="btn btn-outline-success border-1 rounded-pill w-100 py-1 text-center fw-bold mt-auto" style="font-size: 0.68rem; transition: all 0.2s;"
+                                                data-bs-toggle="modal" data-bs-target="#productDetailModal"
+                                                data-name="<?= e($p['product_name']) ?>"
+                                                data-image="<?= e($img) ?>"
+                                                data-price="<?= e($displayPrice) ?>"
+                                                data-category="<?= e(product_category_label($p['category'] ?? $catKey)) ?>"
+                                                data-type="<?= e(product_type_label($p['product_type'] ?? null)) ?>"
+                                                data-availability="<?= e($p['availability'] ?? 'available') ?>"
+                                                data-description="<?= e($p['description']) ?>"
+                                                data-shop-name="<?= e($p['business_name']) ?>"
+                                                data-shop-url="<?= e(vendor_profile_url((int)$p['business_id'], $pageReturn)) ?>"
+                                                data-shop-contact="<?= e($p['contact_number'] ?? 'Contact not provided') ?>"
+                                                data-shop-address="<?= e($p['address'] ?? 'Vinzons') ?>"
+                                                data-inquire-url="<?= e(BASE_URL . 'message.php?business_id=' . (int)$p['business_id'] . '&product_id=' . (int)$p['id'] . '&return=' . rawurlencode($pageReturn)) ?>">
+                                                <i class="fa-solid fa-circle-info me-1"></i> View Details
+                                            </button>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -590,5 +645,117 @@ body {
     </div>
 
 </div>
+
+<!-- Product Details Modal -->
+<div class="modal fade" id="productDetailModal" tabindex="-1" aria-labelledby="productDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 24px; overflow: hidden; border: none; box-shadow: 0 20px 50px rgba(0, 31, 63, 0.15);">
+      <div class="modal-header text-white" style="background: #001F3F; border-bottom: none; padding: 22px 28px;">
+        <h5 class="modal-title fw-bold" id="productDetailModalLabel" style="font-family: 'Montserrat', sans-serif; letter-spacing: 0.5px;">Product Information</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 p-md-5" style="background: linear-gradient(135deg, #fffdf9 0%, #f4faf6 100%);">
+        <div class="row g-4 align-items-center">
+          <!-- Left: Image Box -->
+          <div class="col-md-5">
+            <div class="shadow-sm overflow-hidden" style="border-radius: 16px; border: 4px solid #fff; aspect-ratio: 1/1; background-color: #fcfcfc;">
+              <img id="modal-product-img" src="" class="w-100 h-100 object-fit-cover" alt="Product Image" style="transition: transform 0.4s ease;">
+            </div>
+          </div>
+          <!-- Right: Information -->
+          <div class="col-md-7 text-start">
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <span id="modal-product-cat" class="badge bg-warning text-dark px-2.5 py-1.5 rounded-pill fw-bold" style="font-size:0.68rem; letter-spacing:0.5px;">CATEGORY</span>
+              <span id="modal-product-type" class="badge bg-light text-dark border px-2.5 py-1.5 rounded-pill fw-bold" style="font-size:0.68rem; letter-spacing:0.5px;">TYPE</span>
+              <span id="modal-product-avail" class="badge bg-success px-2.5 py-1.5 rounded-pill fw-bold text-white" style="font-size:0.68rem; letter-spacing:0.5px;">AVAILABLE</span>
+            </div>
+            <h3 id="modal-product-name" class="fw-bold text-dark mb-2" style="font-family: 'Montserrat', sans-serif;">Product Name</h3>
+            
+            <div class="my-3 py-2 border-top border-bottom border-light">
+              <span class="small text-muted d-block font-monospace mb-0.5" style="font-size:0.75rem; font-weight:700;">PROPOSED PRICE</span>
+              <span id="modal-product-price" class="h3 fw-bold" style="color: #f39200; font-family: 'Montserrat', sans-serif;">PHP 0.00</span>
+            </div>
+            
+            <div class="mb-4">
+              <h6 class="fw-bold text-dark mb-1" style="font-size:0.9rem;"><i class="fa-solid fa-circle-info me-1.5 text-warning"></i> Specifications</h6>
+              <p id="modal-product-desc" class="text-secondary small" style="line-height:1.6; text-align:justify; font-family: 'Montserrat', sans-serif; font-size:0.85rem;">Product description goes here.</p>
+            </div>
+            
+            <!-- Seller Details -->
+            <div class="p-3 bg-white rounded-3 shadow-sm border border-light mb-4">
+              <h6 class="fw-bold mb-2 text-dark" style="font-size:0.85rem;"><i class="fa-solid fa-store me-1.5 text-secondary"></i> Seller Information</h6>
+              <div class="row g-2 small text-muted" style="font-size:0.8rem; line-height:1.4;">
+                <div class="col-12"><strong>Shop Name:</strong> <a id="modal-shop-link" href="#" class="text-decoration-none fw-bold" style="color: #1b4332;">Shop Name</a></div>
+                <div class="col-sm-6"><strong>Contact:</strong> <span id="modal-shop-contact">Contact</span></div>
+                <div class="col-sm-6"><strong>Address:</strong> <span id="modal-shop-address">Address</span></div>
+              </div>
+            </div>
+
+            <div class="d-grid">
+              <a id="modal-inquire-btn" href="" class="btn text-white fw-bold py-2.5 rounded-3" style="background: #1b4332; font-size: 0.9rem; transition: background 0.3s;" onmouseover="this.style.background='#f39200';" onmouseout="this.style.background='#1b4332';"><i class="fa-solid fa-comment-dots me-2"></i> Inquire / Message Seller</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById('productDetailModal');
+    if (modal) {
+        modal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget; // Button/link that triggered the modal
+            if (!button) return;
+            
+            // Extract info from data-* attributes
+            const name = button.getAttribute('data-name');
+            const image = button.getAttribute('data-image');
+            const price = button.getAttribute('data-price');
+            const category = button.getAttribute('data-category');
+            const type = button.getAttribute('data-type');
+            const availability = button.getAttribute('data-availability');
+            const description = button.getAttribute('data-description');
+            const shopName = button.getAttribute('data-shop-name');
+            const shopUrl = button.getAttribute('data-shop-url');
+            const shopContact = button.getAttribute('data-shop-contact');
+            const shopAddress = button.getAttribute('data-shop-address');
+            const inquireUrl = button.getAttribute('data-inquire-url');
+            
+            // Update modal elements
+            modal.querySelector('#modal-product-img').src = image;
+            modal.querySelector('#modal-product-name').textContent = name;
+            modal.querySelector('#modal-product-price').textContent = price;
+            modal.querySelector('#modal-product-cat').textContent = category;
+            modal.querySelector('#modal-product-type').textContent = type;
+            modal.querySelector('#modal-product-desc').textContent = description || "No specifications provided.";
+            
+            const availBadge = modal.querySelector('#modal-product-avail');
+            availBadge.textContent = availability.toUpperCase();
+            if (availability === 'available') {
+                availBadge.className = 'badge bg-success px-2.5 py-1.5 rounded-pill fw-bold text-white';
+            } else {
+                availBadge.className = 'badge bg-secondary px-2.5 py-1.5 rounded-pill fw-bold text-white';
+            }
+            
+            const shopLink = modal.querySelector('#modal-shop-link');
+            shopLink.textContent = shopName;
+            shopLink.href = shopUrl;
+            
+            modal.querySelector('#modal-shop-contact').textContent = shopContact;
+            modal.querySelector('#modal-shop-address').textContent = shopAddress;
+            
+            const inquireBtn = modal.querySelector('#modal-inquire-btn');
+            if (inquireUrl) {
+                inquireBtn.href = inquireUrl;
+                inquireBtn.style.display = 'block';
+            } else {
+                inquireBtn.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
 
 <?php require BASE_PATH . '/includes/footer.php'; ?>

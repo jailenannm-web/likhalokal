@@ -1,10 +1,11 @@
 <?php
 declare(strict_types=1);
 
-$pageTitle = 'Local Business';
+$pageTitle = 'Local Business Directory';
 $activeNav = 'business';
 require_once dirname(__DIR__) . '/bootstrap.php';
 
+// Fetch featured businesses
 $featured = db()->query(
     "SELECT * FROM businesses WHERE status='approved' AND id IN (10,11,12,13) ORDER BY FIELD(id,10,11,12,13)"
 )->fetchAll();
@@ -22,9 +23,9 @@ $allApproved = db()->query(
 )->fetchAll();
 
 $listingColumns = [
-    ['title' => 'Restaurants & Cafes', 'icon' => 'bi-cup-hot', 'types' => ['restaurant', 'food_vendor'], 'reveal' => 'reveal-left'],
-    ['title' => 'Resorts & Stays', 'icon' => 'bi-building', 'types' => ['resort'], 'reveal' => ''],
-    ['title' => 'Local Services', 'icon' => 'bi-tsunami', 'types' => ['travel_agency', 'recreation', 'service', 'craft_business'], 'reveal' => 'reveal-right'],
+    ['title' => 'Featured Restaurants', 'icon' => 'fa-solid fa-utensils', 'types' => ['restaurant', 'food_vendor'], 'reveal' => 'reveal-left'],
+    ['title' => 'Resorts & Stays', 'icon' => 'fa-solid fa-hotel', 'types' => ['resort'], 'reveal' => ''],
+    ['title' => 'Local Services', 'icon' => 'fa-solid fa-screwdriver-wrench', 'types' => ['travel_agency', 'recreation', 'service', 'craft_business'], 'reveal' => 'reveal-right'],
 ];
 
 require BASE_PATH . '/includes/header.php';
@@ -32,998 +33,694 @@ require BASE_PATH . '/includes/navbar.php';
 ?>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bungee&family=Dancing+Script:wght@400..700&display=swap');
-    :root {
-        --vinzons-blue: #0077C2;
-        --vinzons-dark-blue: #050A30;
-        --vinzons-amber: #FFBF00;
-        --vinzons-orange: #FF9800;
-        --vinzons-white: #ffffff;
-        --body-font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-body, p, span, li, small, a:not(.font-bungee) {
-    font-family: var(--body-font);
+/* Custom style variables for modern premium aesthetic */
+:root {
+    --lk-navy: #001F3F;
+    --lk-navy-dark: #00152b;
+    --lk-amber: #f39200;
+    --lk-gold: #ffb347;
+    --lk-soft-bg: #fffdf9;
+    --lk-light-blue: #a8e0ff;
+    --lk-card-shadow: 0 10px 30px rgba(0, 31, 63, 0.06);
+    --lk-hover-shadow: 0 20px 40px rgba(0, 31, 63, 0.12);
 }
 
-.font-dancing {
-    font-family: 'Dancing Script', cursive !important;
-}
-.container-fluid {
-    width: 100%;
-    padding-right: 15px;
-    padding-left: 15px;
-    margin-right: auto;
-    margin-left: auto;
+body {
+    background-color: #fcfdfd;
+    font-family: 'Montserrat', sans-serif;
+    overflow-x: hidden;
+    padding-top: 0 !important; /* Eliminate white line space under the navbar */
 }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
-}
-
-/* ============================================
-   ANIMATION KEYFRAMES
-   ============================================ */
-
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(40px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeInLeft {
-    from { opacity: 0; transform: translateX(-40px); }
-    to   { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes fadeInRight {
-    from { opacity: 0; transform: translateX(40px); }
-    to   { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-
-@keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.85); }
-    to   { opacity: 1; transform: scale(1); }
-}
-
-@keyframes slideInDown {
-    from { opacity: 0; transform: translateY(-30px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50%       { transform: translateY(-10px); }
-}
-
-@keyframes pulse-ring {
-    0%   { box-shadow: 0 0 0 0 rgba(242, 166, 61, 0.5); }
-    70%  { box-shadow: 0 0 0 14px rgba(242, 166, 61, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(242, 166, 61, 0); }
-}
-
-@keyframes shimmer {
-    0%   { background-position: -200% center; }
-    100% { background-position:  200% center; }
-}
-
-@keyframes lineExpand {
-    from { width: 0; }
-    to   { width: 100%; }
-}
-
-@keyframes bounce-in {
-    0%   { opacity: 0; transform: scale(0.3); }
-    50%  { opacity: 1; transform: scale(1.08); }
-    70%  { transform: scale(0.97); }
-    100% { transform: scale(1); }
-}
-
-@keyframes spin-slow {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-}
-
-@keyframes text-flicker {
-    0%, 100% { opacity: 1; }
-    92%       { opacity: 1; }
-    93%       { opacity: 0.8; }
-    94%       { opacity: 1; }
-}
-
-@keyframes gradient-shift {
-    0%   { background-position: 0% 50%; }
-    50%  { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-/* ============================================
-   SCROLL-REVEAL BASE STATES
-   ============================================ */
-.reveal {
-    opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
-}
-.reveal.reveal-left {
-    transform: translateX(-40px);
-}
-.reveal.reveal-right {
-    transform: translateX(40px);
-}
-.reveal.reveal-scale {
-    transform: scale(0.88);
-}
-.reveal.visible {
-    opacity: 1;
-    transform: none;
-}
-
-/* Staggered children */
-.stagger-children .reveal:nth-child(1) { transition-delay: 0.05s; }
-.stagger-children .reveal:nth-child(2) { transition-delay: 0.15s; }
-.stagger-children .reveal:nth-child(3) { transition-delay: 0.25s; }
-.stagger-children .reveal:nth-child(4) { transition-delay: 0.35s; }
-
-/* ============================================
-   HERO
-   ============================================ */
-.biz-hero {
+/* Hero Section Style */
+.local-hero {
     position: relative;
-    min-height: 450px;
+    min-height: 70vh;
     display: flex;
     align-items: center;
-    justify-content: center;
-    text-align: center;
-    color: #ffffff;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), 
-                      url('assets/images/local.png');
+    background-image: linear-gradient(rgba(0, 31, 63, 0.5), rgba(0, 31, 63, 0.65)), url('<?= asset_url("images/landing-picture.png") ?>');
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: scroll;
-    overflow: hidden;
+    background-attachment: fixed;
+    color: #fff;
+    padding-top: 100px;
+    padding-bottom: 80px;
 }
-
-/* Animated overlay shimmer on hero */
-.biz-hero::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.04) 50%, transparent 70%);
-    background-size: 200% 100%;
-    animation: shimmer 4s infinite linear;
-    pointer-events: none;
+.hero-title {
+    font-family: Impact, sans-serif;
+    font-size: calc(1.475rem + 2.7vw); /* Matches display-3 scale perfectly */
+    line-height: 1.05;
+    letter-spacing: 2px;
+    text-shadow: 3px 3px 15px rgba(0,0,0,0.6);
 }
-
-.biz-hero-content {
-    z-index: 2;
-    padding: 30px;
-}
-
-.biz-hero-title {
-    font-size: 3rem;
-    font-weight: 800;
-    line-height: 1.2;
-    margin-bottom: 15px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    animation: fadeInUp 1s ease both;
-}
-
-.biz-hero-tagline {
-    font-size: 1.25rem;
-    font-weight: 400;
-    opacity: 0.95;
-    max-width: 600px;
-    margin: 0 auto;
-    animation: fadeInUp 1s ease 0.3s both;
-}
-
-/* ============================================
-   CTA SECTION
-   ============================================ */
-.biz-cta-section {
-    padding: 60px 0;
-    text-align: center;
-    background-color: #f9f9f9;
-}
-
-.biz-keywords {
-    font-size: 1rem;
-    color: #007bff;
-    letter-spacing: 3px;
-    margin-bottom: 10px;
+.hero-tagline {
+    font-family: 'Dancing Script', cursive !important;
+    font-size: 2.5rem; /* Matches products.php hero tagline scale */
+    color: #fff;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+    margin-top: 15px;
     font-weight: 700;
 }
 
-.biz-main-heading {
-    font-size: 2rem;
-    color: #333333;
-    margin-bottom: 20px;
-    font-weight: 600;
-}
-
-.biz-description {
-    font-size: 1.1rem;
-    color: #666666;
-    line-height: 1.6;
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-/* ============================================
-   DIRECTORY SECTION
-   ============================================ */
-.directory-section {
-    padding: 60px 4%;
-    background-color: #fffaf5;
-}
-
-@media (max-width: 768px) {
-    .directory-section {
-        padding: 60px 15px;
-    }
-}
-
-.section-title {
-    font-family: 'Bungee';
-    color: var(--dark-navy);
-    font-size: 2rem;
-    margin-bottom: 30px;
-    position: relative;
-    display: inline-block;
-}
-
-/* Animated underline on section titles */
-.section-title::after {
-    content: '';
-    position: absolute;
-    bottom: -6px;
-    left: 0;
-    height: 3px;
-    width: 0;
-    background-color: var(--amber-orange);
-    transition: width 0.6s ease;
-}
-.section-title.visible::after {
-    width: 100%;
-}
-
-.category-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 80px;
-}
-
-.category-card {
-    background-color: var(--amber-orange);
-    border-radius: 15px;
-    padding: 30px 10px;
-    text-align: center;
-    color: var(--dark-navy);
-    text-decoration: none;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    position: relative;
-    overflow: hidden;
-}
-
-/* Ripple effect on category cards */
-.category-card::before {
-    content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 0; height: 0;
-    background: rgba(255,255,255,0.25);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: width 0.5s ease, height 0.5s ease;
-}
-.category-card:hover::before {
-    width: 250px;
-    height: 250px;
-}
-
-.category-card:hover {
-    transform: translateY(-8px) scale(1.03);
-    box-shadow: 0 16px 32px rgba(0,0,0,0.18);
-    background-color: #e8952a;
-}
-
-.category-card i {
-    font-size: 2.5rem;
-    margin-bottom: 15px;
-    display: block;
-    transition: transform 0.4s ease;
-}
-.category-card:hover i {
-    transform: scale(1.25) rotate(-5deg);
-}
-
-.category-card span {
-    font-family: 'Bungee', cursive;
-    font-size: 1.1rem;
-}
-
-/* ============================================
-   SUPPORT LOCAL DIVIDER
-   ============================================ */
-.support-local-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    margin: 50px 0;
-}
-
-.support-line {
-    height: 3px;
-    background-color: var(--dark-navy);
-    flex-grow: 1;
-    transform-origin: left center;
-    transform: scaleX(0);
-    transition: transform 0.8s ease;
-}
-.support-line.line-right {
-    transform-origin: right center;
-}
-.support-local-wrap.visible .support-line {
-    transform: scaleX(1);
-}
-
-.support-text {
+/* CTA Intro Section */
+.cta-sec {
+    background-color: var(--lk-navy);
+    padding: 70px 0;
+    color: #fff;
     text-align: center;
 }
-
-.support-text .small-text {
-    font-family: 'Abril Fatface', serif;
-    font-size: 1.8rem;
-    color: var(--dark-navy);
-    margin: 0;
+.cta-title {
+    font-family: Impact, sans-serif;
+    color: var(--lk-amber);
+    font-size: 2rem; /* Reduced from 2.2rem for styling consistency */
+    letter-spacing: 3px;
+    margin-bottom: 12px;
 }
-
-.support-text .large-text {
-    font-family: 'Bungee';
-    font-size: 3.5rem;
-    color: var(--amber-orange);
-    line-height: 0.8;
-    margin: 0;
-    animation: text-flicker 6s infinite;
-}
-
-/* ============================================
-   FEATURED BUSINESS CARDS
-   ============================================ */
-.featured-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 25px;
-}
-
-.business-card {
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                box-shadow 0.4s ease;
-}
-
-.business-card:hover {
-    transform: translateY(-12px) rotate(0.5deg);
-    box-shadow: 0 24px 48px rgba(0,0,0,0.15);
-}
-
-.biz-image-area {
-    padding: 30px;
-    height: 250px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.biz-image-area img {
-    max-width: 80%;
-    max-height: 80%;
-    object-fit: contain;
-    transition: transform 0.5s ease;
-}
-.business-card:hover .biz-image-area img {
-    transform: scale(1.1);
-}
-
-.biz-info-bar {
-    background-color: var(--amber-orange);
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: auto;
-    transition: background-color 0.3s ease;
-}
-.business-card:hover .biz-info-bar {
-    background-color: #e8952a;
-}
-
-.biz-details h4 {
-    font-family: 'Bungee';
-    font-size: 0.9rem;
-    margin: 0;
-    color: var(--dark-navy);
-}
-
-.biz-details p {
-    font-size: 0.75rem;
-    margin: 3px 0 0;
-    line-height: 1.2;
-    color: #222;
-}
-
-.mail-btn {
-    background: white;
-    border-radius: 8px;
-    padding: 5px 8px;
-    color: var(--dark-navy);
-    text-decoration: none;
-    transition: transform 0.3s ease, background-color 0.3s ease;
-    animation: pulse-ring 2.5s infinite;
-}
-.mail-btn:hover {
-    transform: scale(1.15);
-    background-color: var(--dark-navy);
-    color: white;
-}
-
-/* ============================================
-   ROOT VARIABLES (override/extend)
-   ============================================ */
-:root {
-    --amber-orange: #f2a63d;
-    --dark-navy: #051024;
-    --section-bg: #fffaf5;
-    --light-blue-bg: #a8e0ff;
-}
-
-/* ============================================
-   HERO (MAIN HERO SECTION)
-   ============================================ */
-.biz-hero {
-    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
-                url('images/local.png'); 
-    background-size: cover;
-    background-position: center;
-    padding: 120px 4%;
-    color: white;
-}
-
-@media (max-width: 768px) {
-    .biz-hero {
-        padding: 120px 15px;
-    }
-}
-
-.biz-hero-title {
-    font-family: 'Bungee';
-    font-size: 4rem;
-    line-height: 1.1;
-    text-transform: uppercase;
-}
-
-.biz-hero-tagline {
-    font-family: 'Bilbo Swash Caps';
-    font-size: 2.2rem;
-    margin-top: 15px;
-}
-
-.biz-cta-section {
-    background-color: var(--dark-navy);
-    padding: 80px 4%;
-    text-align: center;
-    color: white;
-}
-
-@media (max-width: 768px) {
-    .biz-cta-section {
-        padding: 80px 15px;
-    }
-}
-
-.biz-keywords {
-    font-family: 'Bungee';
-    color: var(--amber-orange);
-    font-size: 2.2rem;
-    margin-bottom: 10px;
-    background: linear-gradient(90deg, var(--amber-orange), #ffcf6b, var(--amber-orange));
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer 3s linear infinite;
-}
-
-.biz-main-heading {
-    font-family: 'Abril Fatface', serif;
-    font-size: 2.5rem;
+.cta-subtitle {
+    font-size: 1.35rem; /* Reduced from 1.5rem */
+    font-weight: 800;
     margin-bottom: 25px;
-    color: white;
+    color: #fff;
 }
-
-.biz-description {
-    font-family: 'Lisu Bosa', serif;
-    font-size: 1.15rem;
-    line-height: 1.6;
-    max-width: 850px;
+.cta-desc {
+    font-size: 1.08rem;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.8;
+    max-width: 900px;
     margin: 0 auto;
-    color: var(--amber-orange);
 }
 
-/* ============================================
-   DIRECTORY WRAPPER
-   ============================================ */
-.directory-wrapper {
-    background-color: var(--section-bg);
-    padding: 80px 4%;
+/* Category Grid & Cards */
+.cat-sec {
+    background-color: var(--lk-soft-bg);
+    padding: 80px 0;
 }
-
-@media (max-width: 768px) {
-    .directory-wrapper {
-        padding: 80px 15px;
-    }
-}
-
-.section-label {
-    font-family: 'Bungee';
-    color: var(--dark-navy);
-    font-size: 2rem;
+.cat-heading {
+    font-family: Impact, sans-serif;
+    color: var(--lk-navy);
+    font-size: 2rem; /* Reduced from 2.5rem */
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
     margin-bottom: 40px;
 }
-
-.category-grid {
+.cat-card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    margin-bottom: 100px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+    margin-bottom: 60px;
 }
-
-.category-card {
-    background-color: var(--amber-orange);
-    border-radius: 15px;
-    padding: 40px 20px;
+.cat-btn-card {
+    background-color: var(--lk-amber);
+    border-radius: 16px;
+    padding: 35px 20px;
     text-align: center;
-    color: var(--dark-navy);
+    color: var(--lk-navy) !important;
     text-decoration: none;
-    font-family: 'Bungee';
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    font-weight: 800;
+    font-size: 1.15rem;
+    text-transform: uppercase;
+    box-shadow: 0 8px 24px rgba(243, 146, 0, 0.2);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.cat-btn-card i {
+    font-size: 2.8rem;
+    margin-bottom: 15px;
+    color: var(--lk-navy);
+    transition: transform 0.4s ease;
+}
+.cat-btn-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    background-color: #e8952a;
+    box-shadow: 0 16px 32px rgba(243, 146, 0, 0.35);
+    border-color: var(--lk-navy);
+}
+.cat-btn-card:hover i {
+    transform: scale(1.2) rotate(-5deg);
 }
 
-/* ============================================
-   SUPPORT LOCAL DIVIDER (FULL)
-   ============================================ */
+/* Support Local Divider */
 .support-local-divider {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 30px;
-    margin-bottom: 80px;
+    gap: 25px;
+    margin: 60px 0 80px;
+}
+.divider-bar {
+    height: 3px;
+    background-color: var(--lk-navy);
+    flex-grow: 1;
+    opacity: 0.3;
+}
+.support-local-text {
+    text-align: center;
+}
+.support-local-text .lbl-small {
+    font-family: 'Dancing Script', cursive !important;
+    font-size: 2.2rem;
+    color: var(--lk-navy);
+    margin: 0;
+    line-height: 0.8;
+}
+.support-local-text .lbl-large {
+    font-family: Impact, sans-serif;
+    font-size: 4rem;
+    color: var(--lk-amber);
+    line-height: 0.9;
+    margin: 0;
+    letter-spacing: 2px;
 }
 
-.divider-line {
-    height: 3px;
-    background-color: var(--dark-navy);
+/* Featured Business Grid */
+.featured-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 30px;
+    margin-bottom: 20px;
+}
+.featured-grid-wrap {
+    margin-bottom: 40px;
+}
+.featured-sec-title {
+    font-family: Impact, sans-serif;
+    color: var(--lk-navy);
+    font-size: 2rem; /* Reduced from 2.5rem */
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+}
+
+/* Improved Premium Featured Business Cards style */
+.business-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 31, 63, 0.05);
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.business-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 31, 63, 0.12);
+    border-color: rgba(243, 146, 0, 0.25);
+}
+.biz-image-area {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    position: relative;
+    overflow: hidden;
+    background-color: #fcfcfc;
+    border-bottom: 4px solid var(--lk-amber);
+    padding: 0;
+}
+.biz-image-area img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.business-card:hover .biz-image-area img {
+    transform: scale(1.06);
+}
+.biz-info-bar {
+    padding: 24px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
     flex-grow: 1;
 }
-
-.support-title { text-align: center; }
-.support-title .small { font-family: 'Abril Fatface', serif; font-size: 1.8rem; color: var(--dark-navy); margin: 0; }
-.support-title .large { font-family: 'Bungee'; font-size: 3.5rem; color: var(--amber-orange); line-height: 0.8; margin: 0; }
-
-/* ============================================
-   FEATURED BUSINESS GRID (FULL)
-   ============================================ */
-.featured-biz-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 30px;
-    margin-bottom: 100px;
+.biz-details {
+    flex-grow: 1;
+    width: 100%;
+    text-align: left;
+    padding-right: 0;
 }
-
-.biz-card {
-    background: white;
-    border-radius: 20px;
+.biz-details h4 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    font-family: 'Montserrat', sans-serif;
+}
+.biz-details h4 a {
+    color: var(--lk-navy) !important;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+.business-card:hover .biz-details h4 a {
+    color: var(--lk-amber) !important;
+}
+.biz-details p {
+    font-size: 0.85rem;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    border: 1px solid rgba(0,0,0,0.08);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                box-shadow 0.4s ease;
 }
-.biz-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-}
-
-.biz-img-box { height: 200px; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: hidden; }
-.biz-img-box img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.5s ease; }
-.biz-card:hover .biz-img-box img { transform: scale(1.08); }
-
-.biz-footer {
-    background-color: var(--amber-orange);
-    padding: 20px;
+.biz-action-row {
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: background-color 0.3s ease;
+    margin-top: auto;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0,0,0,0.06);
 }
-.biz-card:hover .biz-footer { background-color: #e8952a; }
-
-.biz-footer h4 { font-family: 'Bungee'; font-size: 0.9rem; margin: 0; }
-.biz-footer p { font-size: 0.75rem; margin: 5px 0 0; line-height: 1.3; }
-
-/* ============================================
-   LISTINGS SECTION
-   ============================================ */
-.listings-wrapper {
-    background-color: var(--section-bg);
-    padding: 0 4% 100px;
+.biz-action-row .visit-btn {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--lk-navy);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: color 0.2s ease;
 }
-
-@media (max-width: 768px) {
-    .listings-wrapper {
-        padding: 0 15px 100px;
-    }
+.biz-action-row .visit-btn:hover {
+    color: var(--lk-amber);
 }
-
-.listings-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 50px;
-}
-
-.col-header {
-    font-family: 'Bungee';
-    font-size: 1.5rem;
-    color: var(--dark-navy);
-    border-bottom: 4px solid var(--amber-orange);
-    padding-bottom: 10px;
-    margin-bottom: 35px;
-    position: relative;
-    overflow: hidden;
-}
-.col-header::after {
-    content: '';
-    position: absolute;
-    bottom: -4px; left: 0;
-    height: 4px;
-    width: 0;
-    background: linear-gradient(90deg, var(--amber-orange), #ffcf6b);
-    transition: width 0.8s ease;
-}
-.col-header.visible::after { width: 100%; }
-
-.list-item {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 30px;
-    align-items: flex-start;
-    transition: transform 0.3s ease;
-}
-.list-item:hover {
-    transform: translateX(6px);
-}
-
-.list-icon {
-    min-width: 80px;
-    height: 80px;
-    background: white;
-    border-radius: 18px;
+.biz-action-row .mail-btn {
+    background: var(--lk-soft-bg);
+    border: 1px solid rgba(243, 146, 0, 0.2);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    border: 1px solid #eee;
-    transition: transform 0.4s ease, box-shadow 0.4s ease, background-color 0.3s ease;
-    animation: float 4s ease-in-out infinite;
+    color: var(--lk-amber);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
 }
-.list-item:nth-child(2) .list-icon { animation-delay: 0.5s; }
-.list-item:nth-child(3) .list-icon { animation-delay: 1s; }
+.biz-action-row .mail-btn:hover {
+    background: var(--lk-amber);
+    color: var(--lk-navy);
+    transform: scale(1.1);
+}
 
+/* Listings Grid Styling */
+.listings-grid-wrapper {
+    background-color: #fff;
+    padding: 80px 0;
+}
+.listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 40px;
+}
+.listing-col {
+    background: var(--lk-soft-bg);
+    border-radius: 24px;
+    padding: 35px 25px;
+    border: 1px solid rgba(0,0,0,0.03);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.02);
+}
+.col-header {
+    font-family: Impact, sans-serif;
+    color: var(--lk-navy);
+    font-size: 1.5rem; /* Reduced from 1.8rem */
+    letter-spacing: 1px;
+    border-bottom: 3px solid var(--lk-amber);
+    padding-bottom: 12px;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+}
+.list-item {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 25px;
+    align-items: flex-start;
+    transition: all 0.3s ease;
+    padding: 15px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.03);
+    text-align: left;
+}
+.list-item:hover {
+    transform: translateX(8px);
+    box-shadow: 0 8px 20px rgba(0, 31, 63, 0.06);
+    border-color: rgba(243, 146, 0, 0.2);
+}
+.list-icon {
+    min-width: 54px;
+    height: 54px;
+    background: rgba(243, 146, 0, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--lk-amber);
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+}
 .list-item:hover .list-icon {
-    transform: scale(1.15) rotate(-5deg);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-    background-color: var(--amber-orange);
+    background: var(--lk-amber);
+    color: var(--lk-navy);
+    transform: scale(1.08) rotate(-5deg);
 }
-.list-item:hover .list-icon i {
-    color: white;
+.list-info {
+    flex-grow: 1;
 }
-
-.list-icon i { font-size: 1.8rem; color: var(--dark-navy); transition: color 0.3s ease; }
-
-.list-info h5 { font-family: 'Inter', sans-serif; font-weight: 800; margin: 0; color: var(--dark-navy); }
-.list-info p { font-size: 0.85rem; color: #555; margin: 2px 0; }
+.list-info h5 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    margin-bottom: 6px;
+}
+.list-info h5 a {
+    color: var(--lk-navy);
+    transition: color 0.2s ease;
+}
+.list-info h5 a:hover {
+    color: var(--lk-amber);
+}
+.list-info p {
+    font-size: 0.82rem;
+    color: #666;
+    margin: 2px 0;
+    line-height: 1.4;
+}
 .list-info .contact-btn {
-    font-size: 0.85rem; font-weight: 700; color: var(--dark-navy);
-    text-decoration: underline; display: inline-block; margin-top: 5px;
-    transition: color 0.3s ease, letter-spacing 0.3s ease;
-    position: relative;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--lk-amber);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    transition: color 0.2s ease, transform 0.2s ease;
 }
 .list-info .contact-btn:hover {
-    color: var(--amber-orange);
-    letter-spacing: 0.5px;
+    color: var(--lk-navy);
+    transform: translateX(3px);
 }
 
-/* ============================================
-   REGISTRATION SECTION
-   ============================================ */
-.reg-container {
-    background-color: var(--light-blue-bg);
-    padding-bottom: 80px;
-    margin-top: -1px;
+/* Glass Registration Container */
+.reg-sec {
+    background: linear-gradient(135deg, #e0f2fe 0%, var(--lk-light-blue) 100%);
+    padding: 90px 0;
     position: relative;
     overflow: hidden;
 }
-
-/* Animated floating blobs in bg */
-.reg-container::before,
-.reg-container::after {
+.reg-sec::before {
     content: '';
     position: absolute;
+    width: 350px;
+    height: 350px;
     border-radius: 50%;
-    opacity: 0.15;
+    background: rgba(0, 31, 63, 0.05);
+    top: -100px;
+    left: -100px;
     pointer-events: none;
 }
-.reg-container::before {
-    width: 400px; height: 400px;
-    background: var(--dark-navy);
-    top: -100px; left: -100px;
-    animation: float 8s ease-in-out infinite;
-}
-.reg-container::after {
-    width: 300px; height: 300px;
-    background: var(--amber-orange);
-    bottom: -80px; right: -80px;
-    animation: float 6s ease-in-out infinite reverse;
-}
-
-.reg-banner {
-    background-color: var(--dark-navy);
-    padding: 20px 0;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-}
-.reg-banner::after {
+.reg-sec::after {
     content: '';
     position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
-    background-size: 200% 100%;
-    animation: shimmer 3s infinite linear;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    background: rgba(243, 146, 0, 0.08);
+    bottom: -80px;
+    right: -80px;
+    pointer-events: none;
 }
-
-.reg-banner h2 {
-    font-family: 'Bungee';
-    color: white;
-    margin: 0;
-    font-size: 1.8rem;
-    letter-spacing: 2px;
-    animation: slideInDown 0.8s ease both;
-}
-
-.registration-card {
+.reg-card {
     max-width: 900px;
-    margin: 50px auto;
-    padding: 45px 70px;
-    background: rgba(255, 255, 255, 0.35);
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.45);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-radius: 35px;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 15px 35px rgba(0, 31, 63, 0.05);
+    padding: 50px 60px;
     position: relative;
     z-index: 1;
-    transition: transform 0.4s ease, box-shadow 0.4s ease;
 }
-.registration-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.1);
-}
-
-.reg-title {
-    font-family: 'Bungee';
-    color: var(--amber-orange);
-    font-size: 2.5rem;
-    margin-bottom: 12px;
-}
-
-.lisu-description {
-    font-family: 'Lisu Bosa', serif !important;
-    font-size: 1.15rem;
-    font-weight: 500;
-    line-height: 1.35;
-    color: var(--dark-navy);
+.reg-header {
+    font-family: Impact, sans-serif;
+    color: var(--lk-amber);
+    font-size: 2.2rem; /* Reduced from 2.6rem */
+    letter-spacing: 1px;
     margin-bottom: 20px;
-}
-
-.step-box {
-    margin-bottom: 22px;
-    transition: transform 0.3s ease;
-}
-.step-box:hover { transform: translateX(6px); }
-
-.step-label {
-    font-family: 'Inter', sans-serif;
-    font-weight: 800;
-    font-size: 1.1rem;
-    color: var(--dark-navy);
-    display: block;
-    margin-bottom: 5px;
     text-transform: uppercase;
-    border-left: 4px solid var(--amber-orange);
-    padding-left: 12px;
-    transition: border-color 0.3s ease, color 0.3s ease;
 }
-.step-box:hover .step-label {
-    border-left-color: var(--dark-navy);
-    color: var(--amber-orange);
+.reg-intro {
+    font-size: 1.12rem;
+    font-weight: 500;
+    color: var(--lk-navy);
+    line-height: 1.6;
+    margin-bottom: 35px;
 }
-
-.step-details {
-    list-style: none;
-    padding-left: 35px;
-    margin-top: 8px;
-}
-
-.step-details li {
-    font-family: 'Lisu Bosa', serif !important;
-    font-size: 1.1rem;
-    line-height: 1.25;
-    margin-bottom: 6px;
+/* Futuristic Registration Steps Layout */
+/* Futuristic Registration Steps Layout - Vertically Stacked */
+.steps-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin: 40px auto;
+    max-width: 800px;
     position: relative;
-    color: var(--dark-navy);
-    transition: transform 0.2s ease;
 }
-.step-details li:hover { transform: translateX(4px); }
-
-.step-details li::before {
-    content: "→";
-    color: var(--amber-orange);
-    position: absolute;
-    left: -22px;
-    font-weight: bold;
-    transition: transform 0.3s ease;
-}
-.step-details li:hover::before { transform: translateX(4px); }
-
-.apply-button-wrap {
-    text-align: center;
-    margin-top: 30px;
-}
-
-.apply-button {
-    background-color: var(--amber-orange);
-    color: var(--dark-navy);
-    font-family: 'Bungee';
-    padding: 15px 80px;
-    border: none;
-    border-radius: 12px;
-    font-size: 1.3rem;
-    cursor: pointer;
-    box-shadow: 0 5px 0px #c98220;
-    transition: all 0.2s ease;
-    display: inline-block;
-    text-decoration: none;
+.step-card {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
+    padding: 30px 35px;
+    text-align: left;
+    box-shadow: 0 8px 32px rgba(0, 31, 63, 0.02);
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    display: flex;
+    gap: 30px;
     position: relative;
-    overflow: hidden;
+    overflow: visible; /* Modified to allow sequence line to extend outside the card */
+}
+.step-card:hover {
+    transform: translateY(-8px);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 16px 40px rgba(0, 31, 63, 0.08);
+    border-color: rgba(243, 146, 0, 0.3);
 }
 
-/* Shimmer sweep on button */
-.apply-button::before {
+/* Vertical Process Connection Timeline */
+.step-card:not(:last-child)::after {
     content: '';
     position: absolute;
-    top: 0; left: -100%;
-    width: 60%; height: 100%;
-    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
-    transform: skewX(-20deg);
-    transition: left 0.5s ease;
+    left: 57px; /* Center of the badge: padding-left (35px) + badge-radius (22px) */
+    top: 74px; /* Bottom of the badge: padding-top (30px) + badge-height (44px) */
+    width: 3px;
+    height: calc(100% - 14px); /* Math-derived length to cross the gap and touch the next badge perfectly */
+    background: linear-gradient(180deg, var(--lk-amber) 0%, var(--lk-gold) 60%, rgba(243, 146, 0, 0.15) 100%);
+    z-index: 2;
+    border-radius: 3px;
+    box-shadow: 0 0 8px rgba(243, 146, 0, 0.3);
+    pointer-events: none;
 }
-.apply-button:hover::before { left: 160%; }
 
-.apply-button:hover {
-    transform: translateY(2px);
-    box-shadow: 0 3px 0px #c98220;
-    color: var(--dark-navy);
+@media (max-width: 576px) {
+    .step-card {
+        padding: 24px 20px;
+        gap: 20px;
+    }
+    .step-card:not(:last-child)::after {
+        left: 42px; /* Recalculated for mobile padding: padding-left (20px) + 22px */
+        top: 68px;  /* Recalculated for mobile padding: padding-top (24px) + 44px */
+        height: calc(100% - 14px);
+    }
+}
+
+.step-card-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--lk-amber), var(--lk-gold));
+    color: var(--lk-navy);
+    font-family: Impact, sans-serif;
+    font-size: 1.25rem;
+    border-radius: 50%;
+    box-shadow: 0 6px 16px rgba(243, 146, 0, 0.25);
+    font-weight: bold;
+    flex-shrink: 0;
+}
+.step-card-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--lk-navy);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+.step-card-body {
+    font-size: 0.88rem;
+    color: #4b5563;
+    line-height: 1.55;
+    flex-grow: 1;
+}
+.step-card-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+.step-card-list li {
+    font-size: 0.84rem;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #374151;
+}
+.step-card-list li i {
+    color: var(--lk-amber);
+    margin-top: 3px;
+    font-size: 0.85rem;
+}
+.step-link-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 31, 63, 0.08);
+    border-radius: 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--lk-navy);
+    text-decoration: none;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0, 31, 63, 0.02);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.step-link-btn i {
+    color: var(--lk-amber);
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+.step-link-btn:hover {
+    background: var(--lk-navy);
+    color: #ffffff;
+    border-color: var(--lk-navy);
+    transform: translateX(6px) scale(1.02);
+    box-shadow: 0 10px 20px rgba(0, 31, 63, 0.15);
+}
+.step-link-btn:hover i {
+    color: var(--lk-gold);
+    transform: scale(1.2) rotate(10deg);
+}
+.apply-btn {
+    position: relative;
+    background: linear-gradient(135deg, var(--lk-amber), #ffb347);
+    color: var(--lk-navy) !important;
+    font-weight: 800;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 1.5px;
+    padding: 16px 48px;
+    border: 2px solid var(--lk-navy);
+    border-radius: 50px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 8px 24px rgba(243, 146, 0, 0.3), 4px 4px 0px var(--lk-navy);
+    margin-top: 25px;
+    text-transform: uppercase;
+    overflow: hidden;
+    z-index: 1;
+}
+.apply-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: all 0.6s ease;
+    z-index: -1;
+}
+.apply-btn:hover::before {
+    left: 100%;
+}
+.apply-btn:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 16px 32px rgba(243, 146, 0, 0.45), 2px 2px 0px var(--lk-navy);
+    background: linear-gradient(135deg, #ffb347, var(--lk-amber));
+}
+.apply-btn i {
+    font-size: 1.1rem;
+    transition: transform 0.3s ease;
+}
+.apply-btn:hover i {
+    transform: translateX(6px);
+}
+.help-link {
+    display: block;
+    margin-top: 20px;
+    color: var(--lk-navy);
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: underline;
+}
+.help-link:hover {
+    color: var(--lk-amber);
 }
 
 @media (max-width: 768px) {
-    .registration-card {
-        margin: 20px;
-        padding: 30px;
-    }
-    .reg-title { font-size: 1.8rem; }
+    .hero-title { font-size: 3rem; }
+    .hero-tagline { font-size: 2.2rem; }
+    .reg-card { padding: 30px; }
+    .reg-header { font-size: 2rem; }
 }
 
-/* ============================================
-   MAIN HERO SECTION (inline style override)
-   ============================================ */
-.hero-text-animate h1 {
-    animation: fadeInLeft 1s ease both;
+/* Animations */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
-.hero-text-animate p {
-    animation: fadeInLeft 1s ease 0.25s both;
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
-
-/* Particle dots in hero */
-.hero-particles {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-    z-index: 1;
-}
-.hero-particles span {
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.25);
-    animation: float var(--dur, 5s) ease-in-out infinite;
-    animation-delay: var(--delay, 0s);
-}
-
 </style>
 
-
 <!-- HERO SECTION -->
-<section class="hero position-relative" 
-    style="min-height: 65vh; 
-           background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('<?= asset_url('images/tourismbackground.png') ?>'); 
-           background-position: center; 
-           background-size: cover; 
-           background-repeat: no-repeat;
-           display: flex;
-           align-items: center;
-           padding-bottom: 100px;
-           overflow: hidden;"> 
-
-    <!-- Floating particles -->
-    <div class="hero-particles">
-        <span style="left:10%;top:20%;--dur:6s;--delay:0s;width:8px;height:8px;"></span>
-        <span style="left:25%;top:60%;--dur:8s;--delay:1s;width:5px;height:5px;"></span>
-        <span style="left:50%;top:30%;--dur:7s;--delay:0.5s;width:10px;height:10px;opacity:0.15;"></span>
-        <span style="left:70%;top:70%;--dur:5s;--delay:2s;width:6px;height:6px;"></span>
-        <span style="left:85%;top:25%;--dur:9s;--delay:1.5s;width:7px;height:7px;"></span>
-        <span style="left:40%;top:80%;--dur:6.5s;--delay:0.8s;width:4px;height:4px;"></span>
-        <span style="left:60%;top:15%;--dur:7.5s;--delay:3s;width:9px;height:9px;opacity:0.1;"></span>
+<section class="local-hero">
+    <div class="container text-start">
+        <div class="row">
+            <div class="col-lg-8 col-xl-7">
+                <span class="badge bg-warning text-dark mb-3 px-3 py-2 rounded-pill fw-bold" style="letter-spacing: 1.5px; font-size: 0.8rem;">SUPPORT ENTREPRENEURS</span>
+                <h1 class="hero-title animate__animated animate__fadeInDown">LOKAL NA NEGOSYO,<br><span style="color: var(--lk-amber);">LOKAL NA ASENSO</span></h1>
+                <p class="hero-tagline animate__animated animate__fadeInUp">Supporting entrepreneurs, building community resilience.</p>
+            </div>
+        </div>
     </div>
-    
- <div class="container position-relative h-100 py-5 d-flex flex-column justify-content-center mt-5 hero-text-animate" style="z-index:2; padding-left: 25px; padding-right: 25px;">
-        <h1 class="display-3 fw-bold text-white mb-2" style="font-family: Impact, sans-serif; letter-spacing: 2px; text-shadow: 2px 2px 8px rgba(0,0,0,0.4);">
-            LOKAL NA NEGOSYO,<br><span style="color: #c98220;">LOKAL NA ASENSO</span>
-        </h1>
-        <p class="text-white mb-0 font-dancing" style="font-size: 2.5rem; line-height: 1.2; text-shadow: 2px 2px 6px rgba(0,0,0,0.6); max-width: 750px;">
-            Building community livelihoods.
-        </p>
-    </div>
-
 </section>
 
-<!-- CTA SECTION -->
-<section class="biz-cta-section">
+<!-- CTA / INTRO SECTION -->
+<section class="cta-sec">
     <div class="container">
-        <h2 class="biz-keywords reveal">CONNECT. SHOWCASE. SELL. GROW.</h2>
-        <h3 class="biz-main-heading reveal" style="transition-delay:0.1s;">Bring your business closer to the community.</h3>
-        <p class="biz-description reveal" style="transition-delay:0.2s;">
+        <h2 class="cta-title reveal">CONNECT. SHOWCASE. SELL. GROW.</h2>
+        <h3 class="cta-subtitle reveal">Bring your business closer to the community.</h3>
+        <p class="cta-desc reveal">
             Discover the vibrant local businesses of Vinzons and Talisay! Support homegrown 
             entrepreneurs, explore unique products, and book services directly through our platform. 
             Local business owners can register to showcase their products and services, reaching 
@@ -1033,108 +730,151 @@ body, p, span, li, small, a:not(.font-bungee) {
 </section>
 
 <!-- DIRECTORY SECTION -->
-<section class="directory-section">
-    <h2 class="section-title reveal">BUSINESS DIRECTORY</h2>
-    
-    <div class="category-grid stagger-children">
-        <a href="#" class="category-card reveal">
-            <i class="bi bi-egg-fried"></i>
-            <span>Food & Restaurants</span>
-        </a>
-        <a href="#" class="category-card reveal">
-            <i class="bi bi-house-heart"></i>
-            <span>Resorts & Homestays</span>
-        </a>
-        <a href="#" class="category-card reveal">
-            <i class="bi bi-bag-check"></i>
-            <span>Pasalubongs</span>
-        </a>
-        <a href="#" class="category-card reveal">
-            <i class="bi bi-gear-wide-connected"></i>
-            <span>Services</span>
-        </a>
-    </div>
-
-    <div class="support-local-wrap reveal">
-        <div class="support-line"></div>
-        <div class="support-text">
-            <p class="small-text">Support</p>
-            <h2 class="large-text">LOCAL</h2>
-        </div>
-        <div class="support-line line-right"></div>
-    </div>
-
-    <h2 class="section-title reveal">FEATURED BUSINESS</h2>
-
-    <?php require BASE_PATH . '/includes/partials/featured-businesses.php'; ?>
-</section>
-
-<?php require BASE_PATH . '/includes/partials/business-listings.php'; ?>
-
-<!-- REGISTRATION SECTION -->
-<section class="reg-container">
-    <div class="reg-banner">
-        <h2>REGISTER YOUR BUSINESS</h2>
-    </div>
-
-    <div class="registration-card reveal reveal-scale">
-        <h3 class="reg-title">How to Register?</h3>
+<section class="cat-sec">
+    <div class="container">
+        <h2 class="cat-heading reveal">BUSINESS DIRECTORY</h2>
         
-        <p class="lisu-description">
-            If you're a local business owner from Talisay or Vinzons, you can be part of our online directory! Follow these steps:
-        </p>
-
-        <div class="step-box">
-            <span class="step-label">Step 1 – Prepare Your Information</span>
-            <ul class="step-details">
-                <li>Business Name & Category</li>
-                <li>Address / Barangay</li>
-                <li>Contact Number & Short Description</li>
-                <li>Logo or Photo</li>
-            </ul>
+        <div class="cat-card-grid">
+            <a href="#featured-restaurants" class="cat-btn-card reveal">
+                <i class="fa-solid fa-utensils"></i>
+                <span>Food & Restaurants</span>
+            </a>
+            <a href="#resorts-stays" class="cat-btn-card reveal">
+                <i class="fa-solid fa-hotel"></i>
+                <span>Resorts & Homestays</span>
+            </a>
+            <a href="#local-listings" class="cat-btn-card reveal">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <span>Pasalubongs</span>
+            </a>
+            <a href="#local-listings" class="cat-btn-card reveal">
+                <i class="fa-solid fa-screwdriver-wrench"></i>
+                <span>Services</span>
+            </a>
         </div>
 
-        <div class="step-box">
-            <span class="step-label">Step 2 – Submit Your Details</span>
-            <ul class="step-details">
-                <li><strong>Website:</strong> likhalokal.com</li>
-                <li><strong>Email:</strong> talisayvinzons.directory@gmail.com</li>
-                <li><strong>FB:</strong> LikhaLokal: Tuklas, Kultura, Kabuhayan</li>
-            </ul>
+        <div class="support-local-divider reveal">
+            <div class="divider-bar"></div>
+            <div class="support-local-text">
+                <p class="lbl-small">Support</p>
+                <h2 class="lbl-large">LOCAL</h2>
+            </div>
+            <div class="divider-bar"></div>
         </div>
 
-        <div class="step-box">
-            <span class="step-label">Step 3 – Verification & Listing</span>
-            <p class="lisu-description">
-                Our team will review your submission. Approved businesses are added within 1–2 days.
-            </p>
-        </div>
-
-        <div style="text-align: center;">
-            <a href="register-business.php" class="apply-button">APPLY BUSINESS</a>
+        <h2 class="featured-sec-title reveal">FEATURED BUSINESS</h2>
+        <div class="featured-grid-wrap reveal">
+            <?php require BASE_PATH . '/includes/partials/featured-businesses.php'; ?>
         </div>
     </div>
 </section>
 
-<!-- ============================================
-     SCROLL REVEAL + ANIMATION JAVASCRIPT
-     ============================================ */ -->
+<!-- LISTINGS GRID SECTION -->
+<div class="listings-grid-wrapper" id="local-listings">
+    <div class="container">
+        <?php require BASE_PATH . '/includes/partials/business-listings.php'; ?>
+    </div>
+</div>
+
+<!-- HOW TO REGISTER / GLASS SECTION -->
+<section class="reg-sec">
+    <div class="container text-center">
+        <div class="reg-card reveal">
+            <h2 class="reg-header">REGISTER YOUR BUSINESS</h2>
+            <h3 class="reg-intro">How to Register?</h3>
+            <p class="text-secondary mb-4" style="font-size: 1.05rem; line-height: 1.6;">
+                If you're a local business owner from Talisay or Vinzons, you can be part of our online directory! Follow these simple steps:
+            </p>
+
+            <div class="steps-container">
+                <!-- STEP 1 -->
+                <div class="step-card reveal">
+                    <div class="step-card-num">01</div>
+                    <div class="step-card-content flex-grow-1">
+                        <h4 class="step-card-title"><i class="fa-solid fa-folder-open text-warning me-1.5" style="font-size: 0.95rem;"></i>Prepare Info</h4>
+                        <div class="step-card-body">
+                            <p class="small text-muted mb-3" style="font-size: 0.78rem;">Ensure you have the following ready before starting:</p>
+                            <ul class="step-card-list">
+                                <li><i class="fa-solid fa-circle-check"></i> Business Name</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Category &amp; Type</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Address / Barangay</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Contact &amp; Email</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Short Description</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Logo or Photo</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2 -->
+                <div class="step-card reveal" style="transition-delay: 0.15s;">
+                    <div class="step-card-num">02</div>
+                    <div class="step-card-content flex-grow-1">
+                        <h4 class="step-card-title"><i class="fa-solid fa-paper-plane text-warning me-1.5" style="font-size: 0.95rem;"></i>Submit Details</h4>
+                        <div class="step-card-body">
+                            <p class="small text-muted mb-3" style="font-size: 0.78rem;">Send details through any of our channels:</p>
+                            <a href="https://likhalokal.com" class="step-link-btn" target="_blank" title="Visit website">
+                                <i class="fa-solid fa-globe"></i>
+                                <span>likhalokal.com</span>
+                            </a>
+                            <a href="mailto:talisayvinzons.directory@gmail.com" class="step-link-btn" title="Email us">
+                                <i class="fa-solid fa-envelope"></i>
+                                <span>Email Directory</span>
+                            </a>
+                            <a href="#" class="step-link-btn" title="Visit Facebook Page">
+                                <i class="fa-brands fa-facebook"></i>
+                                <span>Official FB Page</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3 -->
+                <div class="step-card reveal" style="transition-delay: 0.3s;">
+                    <div class="step-card-num">03</div>
+                    <div class="step-card-content flex-grow-1">
+                        <h4 class="step-card-title"><i class="fa-solid fa-shield-halved text-warning me-1.5" style="font-size: 0.95rem;"></i>Verification</h4>
+                        <div class="step-card-body d-flex flex-column justify-content-between">
+                            <p class="mb-0" style="font-size: 0.82rem; color: #475569;">
+                                Our moderation board will carefully review your business details and credentials to guarantee directory authenticity.
+                            </p>
+                            <div class="mt-3 text-start"><span class="badge bg-warning text-dark px-2.5 py-1 fw-bold rounded" style="font-size: 0.65rem; letter-spacing: 0.5px;">TAKES 1-2 BUSINESS DAYS</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 4 -->
+                <div class="step-card reveal" style="transition-delay: 0.45s;">
+                    <div class="step-card-num">04</div>
+                    <div class="step-card-content flex-grow-1">
+                        <h4 class="step-card-title"><i class="fa-solid fa-store text-warning me-1.5" style="font-size: 0.95rem;"></i>Live Listing</h4>
+                        <div class="step-card-body d-flex flex-column justify-content-between">
+                            <p class="mb-0" style="font-size: 0.82rem; color: #475569;">
+                                Once verified, your shop profile is officially published to the directory! You can immediately list products and manage offers.
+                            </p>
+                            <div class="mt-3 text-start"><span class="badge bg-success text-white px-2.5 py-1 fw-bold rounded" style="font-size: 0.65rem; letter-spacing: 0.5px; background-color: #1b4332 !important;">DIRECTORY LIVE</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <a href="register-business.php" class="apply-btn">APPLY BUSINESS <i class="fa-solid fa-chevron-right"></i></a>
+            <a href="<?= e(BASE_URL) ?>about.php" class="help-link">Need Help?</a>
+        </div>
+    </div>
+</section>
+
+<!-- JAVASCRIPT FOR INTERACTIVE SCROLL REVEAL & ANIMS -->
 <script>
-(function () {
-    'use strict';
-
-    /* ---- Intersection Observer for .reveal elements ---- */
-    var revealEls = document.querySelectorAll('.reveal');
-    var sectionTitles = document.querySelectorAll('.section-title');
-    var colHeaders = document.querySelectorAll('.col-header');
-    var supportWraps = document.querySelectorAll('.support-local-wrap');
-
-    var observerOptions = {
-        threshold: 0.15,
-        rootMargin: '0px 0px -40px 0px'
+document.addEventListener("DOMContentLoaded", function () {
+    /* Intersection Observer for reveal items */
+    const revealEls = document.querySelectorAll('.reveal');
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px"
     };
 
-    var revealObserver = new IntersectionObserver(function (entries) {
+    const revealObserver = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
             if (entry.isIntersecting) {
                 entry.target.classList.add('visible');
@@ -1147,99 +887,14 @@ body, p, span, li, small, a:not(.font-bungee) {
         revealObserver.observe(el);
     });
 
-    /* ---- Section title underline animation ---- */
-    var titleObserver = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                titleObserver.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.5 });
-
-    sectionTitles.forEach(function (el) { titleObserver.observe(el); });
-    colHeaders.forEach(function (el) { titleObserver.observe(el); });
-
-    /* ---- Support local wrap lines ---- */
-    var lineObserver = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                lineObserver.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.5 });
-
-    supportWraps.forEach(function (el) { lineObserver.observe(el); });
-
-    /* ---- Tilt effect on business cards ---- */
-    var bizCards = document.querySelectorAll('.business-card, .biz-card');
-    bizCards.forEach(function (card) {
-        card.addEventListener('mousemove', function (e) {
-            var rect = card.getBoundingClientRect();
-            var x = e.clientX - rect.left;
-            var y = e.clientY - rect.top;
-            var cx = rect.width / 2;
-            var cy = rect.height / 2;
-            var rotateX = ((y - cy) / cy) * -6;
-            var rotateY = ((x - cx) / cx) * 6;
-            card.style.transform = 'translateY(-12px) perspective(600px) rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg)';
-        });
-        card.addEventListener('mouseleave', function () {
-            card.style.transform = '';
-        });
-    });
-
-    /* ---- Counter animation for any .count-up elements (future use) ---- */
-    function animateCount(el, target, duration) {
-        var start = 0;
-        var step = target / (duration / 16);
-        var timer = setInterval(function () {
-            start += step;
-            if (start >= target) { start = target; clearInterval(timer); }
-            el.textContent = Math.floor(start).toLocaleString();
-        }, 16);
-    }
-
-    var countEls = document.querySelectorAll('.count-up');
-    if (countEls.length) {
-        var countObserver = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (entry.isIntersecting) {
-                    var target = parseInt(entry.target.getAttribute('data-target'), 10);
-                    animateCount(entry.target, target, 1500);
-                    countObserver.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.5 });
-        countEls.forEach(function (el) { countObserver.observe(el); });
-    }
-
-    /* ---- Category card icon bounce on click ---- */
-    var catCards = document.querySelectorAll('.category-card');
-    catCards.forEach(function (card) {
-        card.addEventListener('click', function (e) {
-            var icon = card.querySelector('i');
-            if (!icon) return;
-            icon.style.animation = 'none';
-            icon.style.transform = 'scale(0.7)';
-            setTimeout(function () {
-                icon.style.transform = '';
-                icon.style.animation = '';
-            }, 200);
-        });
-    });
-
-    /* ---- Apply button shimmer on hover (already handled by CSS) ---- */
-
-    /* ---- Smooth page entrance ---- */
-    document.body.style.opacity = '0';
-    document.body.style.transition = 'opacity 0.5s ease';
-    window.addEventListener('load', function () {
-        document.body.style.opacity = '1';
-    });
-
-})();
+    /* Add animate__fadeIn on hero elements after brief delay */
+    setTimeout(() => {
+        const heroEl = document.querySelector('.local-hero');
+        if (heroEl) {
+            heroEl.style.opacity = '1';
+        }
+    }, 100);
+});
 </script>
 
 <?php require BASE_PATH . '/includes/footer.php'; ?>

@@ -35,6 +35,7 @@ require BASE_PATH . '/includes/navbar.php';
         color: var(--vinzons-black);
         font-size: var(--fs-body);
         line-height: 1.8;
+        padding-top: 0 !important; /* Eliminate white line space under the navbar */
     }
 
     /* Section Divider Design (Reference: image_93eaae.png) */

@@ -49,6 +49,7 @@ $ok = flash('success');
 body {
     background-color: #f4f7f6;
     overflow-x: hidden;
+    padding-top: 0 !important; /* Eliminate white line space under the navbar */
 }
 .hero-text-shadow {
     text-shadow: 3px 3px 15px rgba(0,0,0,0.9);

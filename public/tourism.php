@@ -75,6 +75,7 @@ require BASE_PATH . '/includes/navbar.php';
     body {
         background: var(--sky-gradient);
         font-family: 'Inter', sans-serif;
+        padding-top: 0 !important; /* Eliminate white line space under the navbar */
     } jubilee-fixed { padding-left: 15px; padding-right: 15px; }
 
     /* ============================================
