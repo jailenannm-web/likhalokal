@@ -74,7 +74,8 @@ function post_login_redirect_url(?string $requested = null): string
 
 function redirect_after_login(?string $requested = null): void
 {
-    redirect(post_login_redirect_url($requested));
+    consume_login_redirect();
+    redirect(public_home_url());
 }
 
 function login_url_with_redirect(?string $returnTo = null): string
@@ -163,9 +164,6 @@ function redirect_to_role_dashboard(): void
 function redirect_by_role(): void
 {
     consume_login_redirect();
-    if (current_user_role() === 'admin') {
-        redirect(ADMIN_URL . 'dashboard.php');
-    }
     redirect(public_home_url());
 }
 

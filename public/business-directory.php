@@ -15,7 +15,8 @@ if ($type !== '') {
     $params[] = $type;
 }
 if ($q !== '') {
-    $sql .= ' AND (b.business_name LIKE ? OR b.barangay LIKE ?)';
+    $sql .= ' AND (b.business_name LIKE ? OR b.barangay LIKE ? OR COALESCE(b.business_category, \'\') LIKE ?)';
+    $params[] = '%' . $q . '%';
     $params[] = '%' . $q . '%';
     $params[] = '%' . $q . '%';
 }
@@ -47,7 +48,7 @@ require BASE_PATH . '/includes/navbar.php';
             <div class="col-md-6 col-lg-4">
                 <div class="card card-lk h-100">
                     <div class="card-body d-flex gap-3">
-                        <?php $lg = $b['logo'] ? asset_url($b['logo']) : 'https://ui-avatars.com/api/?name=' . urlencode($b['business_name']); ?>
+                        <?php $lg = media_url($b['logo'] ?? null, 'https://ui-avatars.com/api/?name=' . urlencode($b['business_name'])); ?>
                         <img src="<?= e($lg) ?>" width="56" height="56" class="rounded border" alt="">
                         <div class="flex-grow-1">
                             <h2 class="h6 mb-1"><?= e($b['business_name']) ?></h2>

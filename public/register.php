@@ -9,7 +9,7 @@ require_once dirname(__DIR__) . '/bootstrap.php';
 require_once BASE_PATH . '/middleware/auth.php';
 
 if (is_logged_in()) {
-    redirect_by_role();
+    redirect(public_home_url());
 }
 
 require_once BASE_PATH . '/middleware/csrf.php';
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($role === 'seller') {
         redirect(BASE_URL . 'register-business.php');
     }
-    redirect_by_role();
+    redirect(public_home_url());
 }
 
 require BASE_PATH . '/includes/header.php';

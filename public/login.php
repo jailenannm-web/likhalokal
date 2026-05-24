@@ -9,7 +9,7 @@ require_once dirname(__DIR__) . '/bootstrap.php';
 require_once BASE_PATH . '/middleware/auth.php';
 
 if (is_logged_in()) {
-    redirect_by_role();
+    redirect(public_home_url());
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -39,7 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     login_user($user, $remember);
     log_activity((int) $user['id'], 'login', 'Web login', $_SERVER['REMOTE_ADDR'] ?? null);
     set_flash('success', 'Welcome back!');
-    redirect_by_role();
+    consume_login_redirect();
+    redirect(public_home_url());
 }
 
 $loginRedirect = peek_login_redirect();

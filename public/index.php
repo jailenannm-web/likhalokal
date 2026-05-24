@@ -15,9 +15,15 @@ $spots = db()->query(
     "SELECT * FROM tourist_attractions WHERE status = 'published' ORDER BY id ASC LIMIT 3"
 )->fetchAll();
 
-$events = db()->query(
-    "SELECT * FROM events WHERE status = 'published' AND event_date >= CURDATE() ORDER BY event_date ASC, event_time ASC LIMIT 4"
-)->fetchAll();
+$eventStatus = 'published';
+$eventStmt = db()->prepare(
+    "SELECT * FROM events
+     WHERE status = ? AND event_date >= CURDATE()
+     ORDER BY event_date ASC, event_time IS NULL ASC, event_time ASC, id ASC
+     LIMIT 3"
+);
+$eventStmt->execute([$eventStatus]);
+$events = $eventStmt->fetchAll();
 
 $announcements = db()->query(
     "SELECT * FROM announcements WHERE status = 'published' ORDER BY created_at DESC LIMIT 3"
@@ -585,37 +591,37 @@ body {
                             
                             <div class="position-absolute bg-white shadow-lg p-3 rounded-4 z-3 rotate-badge" style="top: -20px; right: -20px; border-left: 6px solid #dc3545;">
                                 <div class="text-center">
-                                    <span class="d-block text-danger fw-bold" style="font-size: 0.85rem; letter-spacing: 2px;"><?= e($eventDateLabel ?: '—') ?></span>
-                                    <span class="d-block fw-bold" style="font-size: 2rem; color: #001F3F; line-height: 1;"><?= e($eventDay ?? '—') ?></span>
+                                    <span class="d-block text-danger fw-bold" style="font-size: 0.85rem; letter-spacing: 2px;"><?= e($eventDateLabel ?: 'TBA') ?></span>
+                                    <span class="d-block fw-bold" style="font-size: 2rem; color: #001F3F; line-height: 1;"><?= e($eventDay ?: '--') ?></span>
                                 </div>
                             </div>
                         <?php else: ?>
-                            <img src="<?= e(asset_url('images/tacboanfes1.png')) ?>" class="w-100 shadow-lg" style="height: 420px; object-fit: cover; border-radius: 16px;" alt="Festival">
+                            <img src="<?= e(asset_url('images/tacboanfes1.png')) ?>" class="w-100 shadow-lg" style="height: 420px; object-fit: cover; border-radius: 16px;" alt="Upcoming events placeholder">
                             
                             <div class="position-absolute bg-white shadow-lg p-3 rounded-4 z-3 rotate-badge" style="top: -20px; right: -20px; border-left: 6px solid #dc3545;">
                                 <div class="text-center">
-                                    <span class="d-block text-danger fw-bold" style="font-size: 0.85rem; letter-spacing: 2px;">MAY</span>
-                                    <span class="d-block fw-bold" style="font-size: 2rem; color: #001F3F; line-height: 1;">28</span>
+                                    <span class="d-block text-danger fw-bold" style="font-size: 0.85rem; letter-spacing: 2px;">EVENTS</span>
+                                    <span class="d-block fw-bold" style="font-size: 2rem; color: #001F3F; line-height: 1;">--</span>
                                 </div>
                             </div>
                         <?php endif; ?>
                     </div>
                     
-                    <?php if ($heroEvent): ?>
+                    <?php if (!empty($events[1])): ?>
                         <div class="position-absolute hover-tilt-left" style="bottom: -50px; left: -20px; z-index: 3; width: 55%;">
-                            <img src="<?= e($heroImg) ?>" class="w-100 shadow-lg" style="height: 200px; object-fit: cover; border-radius: 12px; border: 6px solid #fff;" alt="Festival Crowd">
+                            <img src="<?= e(media_url($events[1]['image'] ?? null, asset_url('images/tacboanfes1.png'))) ?>" class="w-100 shadow-lg" style="height: 200px; object-fit: cover; border-radius: 12px; border: 6px solid #fff;" alt="<?= e($events[1]['title']) ?>">
                         </div>
+                    <?php endif; ?>
 
+                    <?php if (!empty($events[2])): ?>
                         <div class="position-absolute hover-tilt-right" style="bottom: 20px; right: -40px; z-index: 3; width: 45%;">
-                            <img src="<?= e(asset_url('images/tacboanfes1.png')) ?>" class="w-100 shadow-lg" style="height: 180px; object-fit: cover; border-radius: 12px; border: 5px solid #fff;" alt="Festival Mask">
+                            <img src="<?= e(media_url($events[2]['image'] ?? null, asset_url('images/tacboanfes1.png'))) ?>" class="w-100 shadow-lg" style="height: 180px; object-fit: cover; border-radius: 12px; border: 5px solid #fff;" alt="<?= e($events[2]['title']) ?>">
                         </div>
-                    <?php else: ?>
-                        <div class="position-absolute hover-tilt-left" style="bottom: -50px; left: -20px; z-index: 3; width: 55%;">
-                            <img src="<?= e(asset_url('images/festival2.png')) ?>" class="w-100 shadow-lg" style="height: 200px; object-fit: cover; border-radius: 12px; border: 6px solid #fff;" alt="Festival Crowd">
-                        </div>
+                    <?php endif; ?>
 
-                        <div class="position-absolute hover-tilt-right" style="bottom: 20px; right: -40px; z-index: 3; width: 45%;">
-                            <img src="<?= e(asset_url('images/tacboanfes1.png')) ?>" class="w-100 shadow-lg" style="height: 180px; object-fit: cover; border-radius: 12px; border: 5px solid #fff;" alt="Festival Mask">
+                    <?php if (empty($events)): ?>
+                        <div class="position-absolute bg-white shadow p-3 rounded-4" style="bottom: -30px; left: -10px; z-index: 3; max-width: 280px;">
+                            <p class="mb-0 fw-bold" style="color:#001F3F;">No upcoming events available yet.</p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -635,62 +641,46 @@ body {
                 
                 <?php if ($heroEvent): ?>
                     <h3 class="fw-bold mb-3 mt-4" style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 2.2rem;"><?= e($heroEvent['title']) ?></h3>
-                    
-                    <p class="fs-5 text-secondary mb-5" style="line-height: 1.7; font-family: 'Montserrat', sans-serif;">
-                        <?= e(str_limit((string) $heroEvent['description'], 300)) ?>
+                    <p class="fs-5 text-secondary mb-4" style="line-height: 1.7; font-family: 'Montserrat', sans-serif;">
+                        <?= e(str_limit((string) $heroEvent['description'], 260)) ?>
                     </p>
                 <?php else: ?>
-                    <h3 class="fw-bold mb-3 mt-4" style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 2.2rem;">Tacboan Festival</h3>
-                    
-                    <p class="fs-5 text-secondary mb-5" style="line-height: 1.7; font-family: 'Montserrat', sans-serif;">
-                        Experience the rhythm, vibrant colors, and deep-rooted traditions of Vinzons. Celebrate our history, honoring our founding and local hero, Wenceslao Q. Vinzons through music, dance, and authentic local cuisine.
+                    <h3 class="fw-bold mb-3 mt-4" style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 2.2rem;">No upcoming events available yet.</h3>
+                    <p class="fs-5 text-secondary mb-4" style="line-height: 1.7; font-family: 'Montserrat', sans-serif;">
+                        Published events from the admin calendar will appear here automatically.
                     </p>
                 <?php endif; ?>
-                
-                <ul class="list-unstyled mb-5 text-dark">
-                    <?php if ($heroEvent): ?>
-                        <?php 
-                        $heroTime = !empty($heroEvent['event_time']) ? date('g:i A', strtotime((string) $heroEvent['event_time'])) : 'Time TBA';
+
+                <div class="mb-5 text-dark">
+                    <?php foreach ($events as $eventIndex => $event): ?>
+                        <?php
+                        $eventTs = strtotime((string) $event['event_date']);
+                        $eventDate = $eventTs ? date('M j, Y', $eventTs) : 'Date TBA';
+                        $eventTime = !empty($event['event_time']) ? date('g:i A', strtotime((string) $event['event_time'])) : 'Time TBA';
+                        $eventImg = media_url($event['image'] ?? null, asset_url('images/tacboanfes1.png'));
+                        $eventIconColors = ['#dc3545', '#28a745', '#f39200'];
                         ?>
-                        <li class="mb-4 d-flex align-items-start p-3 rounded-4 scroll-list-item">
-                            <div class="me-3 mt-1 shadow-sm list-icon-badge" style="background: #dc3545;">
+                        <article class="mb-3 d-flex align-items-start p-3 rounded-4 scroll-list-item">
+                            <img src="<?= e($eventImg) ?>" alt="<?= e($event['title']) ?>" class="me-3 rounded-3 shadow-sm flex-shrink-0" style="width:82px;height:82px;object-fit:cover;">
+                            <div class="me-3 mt-1 shadow-sm list-icon-badge" style="background: <?= e($eventIconColors[$eventIndex] ?? '#f39200') ?>;">
                                 <i class="fa-solid fa-calendar-days text-white" style="font-size: 0.9rem;"></i>
                             </div>
-                            <div><strong style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 1.15rem;"><?= e($eventDateLabel . ' ' . $eventDay) ?></strong><br><span class="text-secondary" style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem;"><?= e($heroTime) ?> - <?= e($heroEvent['location'] ?: 'Location TBA') ?></span></div>
-                        </li>
-                        <li class="mb-4 d-flex align-items-start p-3 rounded-4 scroll-list-item">
-                            <div class="me-3 mt-1 shadow-sm list-icon-badge" style="background: #28a745;">
-                                <i class="fa-solid fa-book-open-reader text-white" style="font-size: 0.9rem;"></i>
+                            <div>
+                                <strong class="d-block" style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 1.15rem;"><?= e($event['title']) ?></strong>
+                                <span class="text-secondary d-block" style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem;"><?= e($eventDate) ?> &middot; <?= e($eventTime) ?></span>
+                                <span class="text-secondary d-block" style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem;"><i class="fa-solid fa-location-dot me-1"></i><?= e($event['location'] ?: 'Location TBA') ?></span>
+                                <span class="text-secondary d-block mt-1" style="font-family: 'Montserrat', sans-serif; font-size: 0.9rem;"><?= e(str_limit((string) $event['description'], 110)) ?></span>
+                                <a href="<?= e(BASE_URL) ?>events.php#event-<?= (int) $event['id'] ?>" class="small fw-bold text-decoration-none" style="color:#f39200;">View details</a>
                             </div>
-                            <div><strong style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 1.15rem;">Published Event</strong><br><span class="text-secondary" style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem;">This event is published and visible to all visitors.</span></div>
-                        </li>
-                        <li class="mb-4 d-flex align-items-start p-3 rounded-4 scroll-list-item">
-                            <div class="me-3 mt-1 shadow-sm list-icon-badge" style="background: #f39200;">
-                                <i class="fa-solid fa-monument text-white" style="font-size: 0.9rem;"></i>
-                            </div>
-                            <div><strong style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 1.15rem;">Vinzons Culture</strong><br><span class="text-secondary" style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem;">Celebrating our town's rich heritage and traditions.</span></div>
-                        </li>
-                    <?php else: ?>
-                        <li class="mb-4 d-flex align-items-start p-3 rounded-4 scroll-list-item">
-                            <div class="me-3 mt-1 shadow-sm list-icon-badge" style="background: #dc3545;">
-                                <i class="fa-solid fa-calendar-days text-white" style="font-size: 0.9rem;"></i>
-                            </div>
-                            <div><strong style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 1.15rem;">Annually in May</strong><br><span class="text-secondary" style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem;">Cultural festival activities typically peak in May leading to the feast of St. Peter.</span></div>
-                        </li>
-                        <li class="mb-4 d-flex align-items-start p-3 rounded-4 scroll-list-item">
-                            <div class="me-3 mt-1 shadow-sm list-icon-badge" style="background: #28a745;">
-                                <i class="fa-solid fa-book-open-reader text-white" style="font-size: 0.9rem;"></i>
-                            </div>
-                            <div><strong style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 1.15rem;">Rich History</strong><br><span class="text-secondary" style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem;">Celebrating the town's founding in 1581 and its rich agricultural heritage.</span></div>
-                        </li>
-                        <li class="mb-4 d-flex align-items-start p-3 rounded-4 scroll-list-item">
-                            <div class="me-3 mt-1 shadow-sm list-icon-badge" style="background: #f39200;">
-                                <i class="fa-solid fa-monument text-white" style="font-size: 0.9rem;"></i>
-                            </div>
-                            <div><strong style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 1.15rem;">Hero's Legacy</strong><br><span class="text-secondary" style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem;">The former residence of patriot Wenceslao 'Bintao' Q. Vinzons houses a public library and museum.</span></div>
-                        </li>
+                        </article>
+                    <?php endforeach; ?>
+                    <?php if (empty($events)): ?>
+                        <div class="p-4 rounded-4 bg-white shadow-sm">
+                            <strong style="color:#001F3F;">No upcoming events available yet.</strong>
+                            <p class="mb-0 text-secondary small">Please check back after the admin publishes new events.</p>
+                        </div>
                     <?php endif; ?>
-                </ul>
+                </div>
 
                 <a href="<?= e(BASE_URL) ?>events.php" class="btn text-white fw-bold px-5 py-3 shadow-sm premium-explore-btn" style="background: #001F3F; border-radius: 50px; font-size: 0.9rem; transition: all 0.3s;">
                     View All Events <i class="fa-solid fa-arrow-right ms-2 btn-arrow"></i>
@@ -699,125 +689,6 @@ body {
         </div>
     </div>
 </section>
-
-<style>
-.animate-scale { transition: transform 0.4s ease; }
-.animate-scale:hover { transform: scale(1.02); }
-
-.rotate-badge { transform: rotate(8deg); transition: transform 0.3s ease; }
-.rotate-badge:hover { transform: rotate(0deg) scale(1.1); }
-
-.hover-tilt-left { transition: transform 0.4s ease; }
-.hover-tilt-left:hover { transform: scale(1.05) rotate(-3deg); z-index: 5 !important; }
-
-.hover-tilt-right { transition: transform 0.4s ease; }
-.hover-tilt-right:hover { transform: scale(1.05) rotate(5deg); z-index: 5 !important; }
-
-.scroll-list-item { background: rgba(255,255,255,0.6); transition: all 0.3s ease; }
-.scroll-list-item:hover { background: #fff; transform: translateX(10px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-
-.list-icon-badge { border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-</style>
-
-<?php if (false): ?>
-<section class="py-5 position-relative overflow-hidden" style="background: linear-gradient(135deg, #fffdf8 0%, #ffeedb 100%);">
-    <div class="position-absolute top-0 start-0 w-100 overflow-hidden" style="line-height: 0; z-index: 1; pointer-events: none;">
-        <svg viewBox="0 0 1200 120" preserveAspectRatio="none" style="display: block; width: 100%; height: 70px; opacity: 0.8;">
-            <path d="M0,20 Q150,60 300,20 Q450,60 600,20 Q750,60 900,20 Q1050,60 1200,20" stroke="rgba(0,0,0,0.1)" fill="none" stroke-width="2" />
-            <polygon points="50,30 70,80 90,30" fill="#f39200" />
-            <polygon points="150,45 170,95 190,45" fill="#dc3545" />
-            <polygon points="250,30 270,80 290,30" fill="#28a745" />
-            <polygon points="350,45 370,95 390,45" fill="#17a2b8" />
-            <polygon points="450,30 470,80 490,30" fill="#f39200" />
-            <polygon points="550,45 570,95 590,45" fill="#dc3545" />
-            <polygon points="650,30 670,80 690,30" fill="#28a745" />
-            <polygon points="750,45 770,95 790,45" fill="#17a2b8" />
-            <polygon points="850,30 870,80 890,30" fill="#f39200" />
-            <polygon points="950,45 970,95 990,45" fill="#dc3545" />
-            <polygon points="1050,30 1070,80 1090,30" fill="#28a745" />
-            <polygon points="1150,45 1170,95 1190,45" fill="#17a2b8" />
-        </svg>
-    </div>
-
-    <div class="position-absolute rounded-circle floating-element" style="width: 20px; height: 20px; background: #dc3545; top: 15%; right: 10%; z-index: 1;"></div>
-    <div class="position-absolute rounded-circle floating-element delay-1" style="width: 15px; height: 15px; background: #28a745; top: 40%; left: 5%; z-index: 1;"></div>
-    <div class="position-absolute rounded-circle floating-element delay-2" style="width: 25px; height: 25px; background: #17a2b8; bottom: 20%; right: 45%; z-index: 1;"></div>
-    <div class="position-absolute rounded-circle floating-element delay-3" style="width: 12px; height: 12px; background: #f39200; bottom: 10%; left: 40%; z-index: 1;"></div>
-
-    <div class="container py-5 position-relative z-2">
-        <div class="row align-items-center g-5">
-            <div class="col-lg-6 reveal pe-lg-5">
-                <div class="position-relative mt-4 mb-5">
-                    <div class="position-absolute" style="width: 60%; height: 60%; background: #f39200; top: 0%; left: 0%; opacity: 0.4; filter: blur(70px); z-index: 0; border-radius: 50%;"></div>
-                    <div class="position-absolute" style="width: 60%; height: 60%; background: #dc3545; bottom: -10%; right: 10%; opacity: 0.3; filter: blur(70px); z-index: 0; border-radius: 50%;"></div>
-                    
-                    <div class="position-relative z-2 animate-scale" style="border-radius: 16px;">
-                        <img src="assets/images/mainimage.png" class="w-100 shadow-lg" style="height: 420px; object-fit: cover; border-radius: 16px;" alt="Festival Main">
-                        
-                        <div class="position-absolute bg-white shadow-lg p-3 rounded-4 z-3 rotate-badge" style="top: -20px; right: -20px; border-left: 6px solid #dc3545;">
-                            <div class="text-center">
-                                <span class="d-block text-danger fw-bold" style="font-size: 0.85rem; letter-spacing: 2px;"><?= e($eventDateLabel ?: '—') ?></span>
-                                <span class="d-block fw-bold" style="font-size: 2rem; color: #001F3F; line-height: 1;"><?= e($eventDay ?? '—') ?></span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="position-absolute hover-tilt-left" style="bottom: -50px; left: -20px; z-index: 3; width: 55%;">
-                        <img src="assets/images/festival2.png" class="w-100 shadow-lg" style="height: 200px; object-fit: cover; border-radius: 12px; border: 6px solid #fff;" alt="Festival Crowd">
-                    </div>
-
-                    <div class="position-absolute hover-tilt-right" style="bottom: 20px; right: -40px; z-index: 3; width: 45%;">
-                        <img src="assets/images/tacboanfes1.png" class="w-100 shadow-lg" style="height: 180px; object-fit: cover; border-radius: 12px; border: 5px solid #fff;" alt="Festival Mask">
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-6 ps-lg-5 reveal delay-1 mt-5 mt-lg-0">
-                <div class="d-inline-flex align-items-center mb-3 px-4 py-2 rounded-pill fw-bold shadow-sm" style="background: #fff; color: #dc3545; border: 2px solid #ffeedb; font-size: 0.85rem; letter-spacing: 1px;">
-                    <i class="fa-solid fa-masks-theater me-2"></i> CULTURE & HERITAGE
-                </div>
-                
-                <h2 class="fw-bold mb-0" style="font-family: Impact, sans-serif; letter-spacing: 2px; color: #f39200; line-height: 0.85; font-size: 4.5rem; text-transform: uppercase;">
-                    EVENTS &
-                </h2>
-                <h2 class="fw-bold mb-4" style="font-family: Impact, sans-serif; letter-spacing: 2px; color: #001F3F; line-height: 0.85; font-size: 4.5rem; text-transform: uppercase;">
-                    FESTIVALS
-                </h2>
-                
-                <h3 class="fw-bold mb-3 mt-4" style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 2.2rem;"><?= e($heroEvent['title'] ?? 'Upcoming events') ?></h3>
-                
-                <p class="fs-5 text-secondary mb-5" style="line-height: 1.7; font-family: 'Montserrat', sans-serif;">
-                    <?= nl2br(e((string) ($heroEvent['description'] ?? 'See the latest festivals and cultural programs in Vinzons.'))) ?>
-                </p>
-                <?php if (!empty($events)): ?>
-                <a href="<?= e(BASE_URL) ?>events.php" class="btn btn-sm btn-outline-primary mb-4">View all events</a>
-                <?php endif; ?>
-                
-                <ul class="list-unstyled mb-5 text-dark">
-                    <li class="mb-4 d-flex align-items-start p-3 rounded-4 scroll-list-item">
-                        <div class="me-3 mt-1 shadow-sm list-icon-badge" style="background: #dc3545;">
-                            <i class="fa-solid fa-calendar-days text-white" style="font-size: 0.9rem;"></i>
-                        </div>
-                        <div><strong style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 1.15rem;">Annually in May</strong><br><span class="text-secondary" style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem;">Cultural festival activities typically peak in May leading to the feast of St. Peter.</span></div>
-                    </li>
-                    <li class="mb-4 d-flex align-items-start p-3 rounded-4 scroll-list-item">
-                        <div class="me-3 mt-1 shadow-sm list-icon-badge" style="background: #28a745;">
-                            <i class="fa-solid fa-book-open-reader text-white" style="font-size: 0.9rem;"></i>
-                        </div>
-                        <div><strong style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 1.15rem;">Rich History</strong><br><span class="text-secondary" style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem;">Celebrating the town's founding in 1581 and its rich agricultural heritage.</span></div>
-                    </li>
-                    <li class="mb-4 d-flex align-items-start p-3 rounded-4 scroll-list-item">
-                        <div class="me-3 mt-1 shadow-sm list-icon-badge" style="background: #f39200;">
-                            <i class="fa-solid fa-monument text-white" style="font-size: 0.9rem;"></i>
-                        </div>
-                        <div><strong style="color: #001F3F; font-family: 'Montserrat', sans-serif; font-size: 1.15rem;">Hero's Legacy</strong><br><span class="text-secondary" style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem;">The former residence of patriot Wenceslao 'Bintao' Q. Vinzons houses a public library and museum.</span></div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</section>
-<?php endif; ?>
 
 <style>
 .animate-scale { transition: transform 0.4s ease; }

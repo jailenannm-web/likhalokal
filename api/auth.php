@@ -31,8 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['user_role'] = $user['role'];
         log_activity((int) $user['id'], 'login', 'API login', $_SERVER['REMOTE_ADDR'] ?? null);
-        $requested = $merge['redirect'] ?? null;
-        $redirect = post_login_redirect_url(is_string($requested) ? $requested : null);
+        unset($_SESSION['post_login_redirect']);
+        $redirect = public_home_url();
         json_response(['success' => true, 'message' => 'Logged in', 'data' => ['user' => ['id' => $user['id'], 'name' => $user['full_name'], 'role' => $user['role']], 'redirect' => $redirect]]);
     }
 

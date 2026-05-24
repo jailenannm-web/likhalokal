@@ -8,6 +8,7 @@ require_once __DIR__ . '/_init.php';
 require_once BASE_PATH . '/middleware/csrf.php';
 
 $hasBusinessCategory = db_column_exists('businesses', 'business_category');
+$hasBusinessBranch = db_column_exists('businesses', 'branch');
 
 function promote_business_owner_if_approved(int $userId): void
 {
@@ -83,6 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = trim((string) ($_POST['email'] ?? ''));
         $address = trim((string) ($_POST['address'] ?? ''));
         $barangay = trim((string) ($_POST['barangay'] ?? ''));
+        $branch = trim((string) ($_POST['branch'] ?? ''));
         $latitude = trim((string) ($_POST['latitude'] ?? ''));
         $longitude = trim((string) ($_POST['longitude'] ?? ''));
         $operatingHours = trim((string) ($_POST['operating_hours'] ?? ''));
@@ -110,6 +112,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             set_flash('error', 'Longitude must be a valid number.');
             redirect(ADMIN_URL . 'businesses.php');
         }
+        if (strlen($branch) > 150) {
+            set_flash('error', 'Branch must be 150 characters or fewer.');
+            redirect(ADMIN_URL . 'businesses.php');
+        }
         $ownerStmt = db()->prepare("SELECT id FROM users WHERE id=? AND role IN ('seller','local_user') LIMIT 1");
         $ownerStmt->execute([$userId]);
         if (!$ownerStmt->fetch()) {
@@ -130,9 +136,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
             $logoPath = save_upload($_FILES['logo'], 'businesses');
+            if (!$logoPath) {
+                set_flash('error', 'Business logo must be a JPG, PNG, or WEBP file under the upload limit.');
+                redirect(ADMIN_URL . 'businesses.php' . ($act === 'edit' ? '?edit=' . $id : '?add=1'));
+            }
+        } elseif (isset($_FILES['logo']) && (int) ($_FILES['logo']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            set_flash('error', 'Business logo upload failed.');
+            redirect(ADMIN_URL . 'businesses.php' . ($act === 'edit' ? '?edit=' . $id : '?add=1'));
         }
         if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] === UPLOAD_ERR_OK) {
             $coverPath = save_upload($_FILES['cover_image'], 'businesses');
+            if (!$coverPath) {
+                set_flash('error', 'Cover image must be a JPG, PNG, or WEBP file under the upload limit.');
+                redirect(ADMIN_URL . 'businesses.php' . ($act === 'edit' ? '?edit=' . $id : '?add=1'));
+            }
+        } elseif (isset($_FILES['cover_image']) && (int) ($_FILES['cover_image']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            set_flash('error', 'Cover image upload failed.');
+            redirect(ADMIN_URL . 'businesses.php' . ($act === 'edit' ? '?edit=' . $id : '?add=1'));
         }
         
         $paymentsJson = json_encode($acceptedPayments);
@@ -146,6 +166,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $columns = 'user_id, business_name, business_type, business_category, description, contact_number, email, address, barangay, latitude, longitude, operating_hours, accepted_payments, status, created_at, updated_at';
                 $values = '?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW()';
                 $params = [$userId, $businessName, $businessType, $businessCategory ?: null, $description, $contactNumber, $email, $address, $barangay, $latitude ?: null, $longitude ?: null, $operatingHours, $paymentsJson, $status];
+            }
+            if ($hasBusinessBranch) {
+                $columns .= ', branch';
+                $values .= ',?';
+                $params[] = $branch !== '' ? $branch : null;
             }
             
             if ($logoPath) {
@@ -174,6 +199,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($hasBusinessCategory) {
                 $updates = 'business_name=?, business_type=?, business_category=?, description=?, contact_number=?, email=?, address=?, barangay=?, latitude=?, longitude=?, operating_hours=?, accepted_payments=?, status=?, updated_at=NOW()';
                 $params = [$businessName, $businessType, $businessCategory ?: null, $description, $contactNumber, $email, $address, $barangay, $latitude ?: null, $longitude ?: null, $operatingHours, $paymentsJson, $status];
+            }
+            if ($hasBusinessBranch) {
+                $updates .= ', branch=?';
+                $params[] = $branch !== '' ? $branch : null;
             }
             
             if ($logoPath) {
@@ -300,10 +329,16 @@ if ($editBusiness):
         <label class="form-label">Barangay</label>
         <input class="form-control" name="barangay" value="<?= e((string) ($editBusiness['barangay'] ?? '')) ?>">
     </div>
+    <?php if ($hasBusinessBranch): ?>
+    <div class="col-md-6">
+        <label class="form-label">Branch</label>
+        <input class="form-control" name="branch" maxlength="150" value="<?= e((string) ($editBusiness['branch'] ?? '')) ?>" placeholder="Optional branch or landmark">
+    </div>
+    <?php endif; ?>
     <div class="col-12">
         <label class="form-label">Location on map</label>
         <p class="small text-muted mb-2">Tap the map to set the business location.</p>
-        <div id="businessMapPicker" class="lk-map-picker"></div>
+        <div id="businessMapPicker" class="lk-map-picker" data-map-picker data-lat-input="businessLatitude" data-lng-input="businessLongitude"></div>
     </div>
     <div class="col-md-6">
         <label class="form-label">Latitude</label>
@@ -407,10 +442,16 @@ if ($editBusiness):
         <label class="form-label">Barangay</label>
         <input class="form-control" name="barangay">
     </div>
+    <?php if ($hasBusinessBranch): ?>
+    <div class="col-md-6">
+        <label class="form-label">Branch</label>
+        <input class="form-control" name="branch" maxlength="150" placeholder="Optional branch or landmark">
+    </div>
+    <?php endif; ?>
     <div class="col-12">
         <label class="form-label">Location on map</label>
         <p class="small text-muted mb-2">Tap the map to set the business location.</p>
-        <div id="businessMapPicker" class="lk-map-picker"></div>
+        <div id="businessMapPicker" class="lk-map-picker" data-map-picker data-lat-input="businessLatitude" data-lng-input="businessLongitude"></div>
     </div>
     <div class="col-md-6">
         <label class="form-label">Latitude</label>
@@ -541,8 +582,7 @@ if ($editBusiness):
 <?php
 $needsMap = $editBusiness || isset($_GET['add']);
 if ($needsMap) {
-    $extraScripts = ($extraScripts ?? '') . '<script src="' . e(asset_url('js/maps.js')) . '"></script>
-<script>document.addEventListener("DOMContentLoaded", function () { if (window.initMapPickers) window.initMapPickers(); });</script>';
+    $extraScripts = ($extraScripts ?? '') . map_picker_footer_scripts();
 }
 require __DIR__ . '/partials/layout-end.php';
 require BASE_PATH . '/includes/footer.php';
