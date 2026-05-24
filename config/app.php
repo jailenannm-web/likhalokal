@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+$localConfig = __DIR__ . '/local.php';
+
+if (file_exists($localConfig)) {
+    require_once $localConfig;
+}
+
 /**
  * Application configuration — adjust BASE_URL / ASSET_URL for your server path.
  * XAMPP default: project in htdocs/likhalokal → URLs below.
