@@ -68,8 +68,7 @@ $lkSearchApi = preg_replace('#/public/?$#', '/api/', rtrim(BASE_URL, '/')) . 'se
                         </ul>
                     </li>
                 <?php else: ?>
-                    <li class="nav-item"><a class="nav-link text-white" href="<?= e(BASE_URL) ?>login.php" title="Login"><i class="bi bi-box-arrow-in-right fs-5"></i></a></li>
-                    <li class="nav-item"><a class="nav-link text-warning" href="<?= e(BASE_URL) ?>register.php" title="Register"><i class="bi bi-person-plus fs-5"></i></a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="<?= e(BASE_URL) ?>login.php" title="Login / Register"><i class="bi bi-person fs-5"></i></a></li>
                 <?php endif; ?>
             </ul>
         </div>

@@ -6,7 +6,7 @@ $pageTitle = 'Marketplace & Services | LikhaLokal';
 $activeNav = 'products';
 require_once dirname(__DIR__) . '/bootstrap.php';
 
-$sql = "SELECT p.*, b.business_name, b.id AS business_id, b.logo, b.address, b.contact_number, b.business_type 
+$sql = "SELECT p.*, b.business_name, b.id AS business_id, b.logo, b.address, b.contact_number, b.business_type, b.description, b.cover_image 
         FROM products p 
         JOIN businesses b ON b.id = p.business_id 
         WHERE b.status = 'approved'
@@ -52,6 +52,8 @@ foreach ($products as $p) {
             'id' => $bId,
             'name' => $p['business_name'],
             'logo' => $p['logo'] ?? null,
+            'cover_image' => $p['cover_image'] ?? null,
+            'description' => $p['description'] ?? null,
             'address' => $p['address'] ?? 'Vinzons',
             'contact' => $p['contact_number'] ?? 'N/A',
             'type' => $p['business_type']
@@ -220,6 +222,158 @@ body {
 .shop-header-card:hover {
     box-shadow: 0 6px 16px rgba(27,67,50,0.08) !important;
     border-left-color: #f39200;
+}
+
+/* Premium Smaller Vendor Card Grid & Card styles matching list of agencies section */
+.vendors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    align-items: stretch;
+    margin-top: 25px;
+}
+
+.vendor-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 6px 20px rgba(27, 67, 50, 0.03);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    text-align: left;
+}
+
+.vendor-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 15px 30px rgba(27, 67, 50, 0.08);
+    border-color: rgba(243, 146, 0, 0.25);
+}
+
+.vendor-card-banner {
+    width: 100%;
+    height: 100px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    border-bottom: 3px solid #f39200;
+}
+
+.vendor-card-logo {
+    position: absolute;
+    bottom: -20px;
+    left: 15px;
+    width: 40px;
+    height: 40px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: 2px solid #ffffff;
+    z-index: 2;
+}
+
+.vendor-card-logo img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.vendor-card-body {
+    padding: 28px 16px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    text-align: left;
+}
+
+.vendor-card-badge {
+    display: inline-block;
+    font-size: 0.58rem;
+    font-weight: 800;
+    color: #1b4332;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.vendor-card-body h3 {
+    margin: 0 0 4px 0;
+    color: #1b4332;
+    font-size: 0.92rem;
+    font-weight: 850;
+    line-height: 1.2;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.vendor-card-body h3 a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.vendor-card-body h3 a:hover {
+    color: #f39200;
+}
+
+.vendor-card-body p {
+    margin: 0 0 10px 0;
+    font-size: 0.72rem;
+    color: #555;
+    line-height: 1.4;
+    flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.vendor-card-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    padding-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.vendor-card-phone {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.vendor-card-phone i {
+    color: #f39200;
+}
+
+.vendor-msg-btn {
+    background-color: #1b4332;
+    color: #ffffff !important;
+    border: none;
+    border-radius: 50px;
+    padding: 4px 12px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(27, 67, 50, 0.15);
+}
+
+.vendor-msg-btn:hover {
+    background-color: #f39200;
+    color: #00152b !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(243, 146, 0, 0.25);
 }
 
 .product-card-tourism {
@@ -430,7 +584,7 @@ body {
                     $itemPrice = isset($spotlightItem['price']) ? '₱' . number_format((float)$spotlightItem['price'], 2) : 'Inquire for Price';
                 ?>
                 <div style="max-width: 950px; margin: 0 auto 3rem auto;">
-                    <div class="card border-0 shadow-sm spotlight-card">
+                    <div class="card border-0 shadow-sm spotlight-card hover-lift">
                         <div class="row g-0 align-items-center">
                             <div class="col-md-5 col-lg-4 p-3">
                                 <div class="shadow-sm overflow-hidden position-relative" style="border-radius: 12px;">
@@ -512,7 +666,7 @@ body {
                         <div class="position-relative">
                             <div class="d-flex overflow-auto gap-3 product-carousel px-1" id="carousel-<?= $catKey ?>-<?= $shopId ?>">
                                 <?php foreach ($shopData['products'] as $p): ?>
-                                    <div class="product-card-tourism flex-shrink-0 d-flex flex-column" style="width: 190px;">
+                                    <div class="product-card-tourism flex-shrink-0 d-flex flex-column hover-lift" style="width: 190px;">
                                         <?php 
                                             $img = $p['image'] ? media_url($p['image'], 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80') : 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80';
                                             $displayPrice = isset($p['price']) && (float)$p['price'] > 0 ? '₱' . number_format((float)$p['price'], 2) : 'Contact Vendor';
@@ -615,30 +769,36 @@ body {
             </div>
         </div>
 
-        <div class="row g-4">
+        <div class="vendors-grid">
             <?php foreach ($allShops as $shop): ?>
-                <div class="col-md-6 col-lg-4">
-                    <a href="<?= e(vendor_profile_url((int) $shop['id'], current_request_return_url())) ?>" class="text-decoration-none">
-                        <div class="product-card-tourism p-4 h-100 d-flex flex-column shadow-sm" style="background: #ffffff; width: 100%;">
-                            <div class="d-flex align-items-center gap-3 mb-3">
-                                <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm border" style="width: 48px; height: 48px; flex-shrink: 0; border-color: #e8f5e9 !important;">
-                                    <?php if(!empty($shop['logo'])): ?>
-                                        <img src="<?= e(media_url($shop['logo'])) ?>" class="w-100 h-100 rounded-circle object-fit-cover" alt="">
-                                    <?php else: ?>
-                                        <i class="fa-solid fa-store text-muted" style="font-size: 0.9rem;"></i>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="text-truncate">
-                                    <div class="fw-bold text-dark text-truncate" style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem;"><?= e($shop['name']) ?></div>
-                                    <span class="badge bg-light text-dark border py-1" style="font-size: 0.6rem; font-weight: 600; text-transform: uppercase; color: #1b4332 !important;"><?= e($shop['type'] ?: 'Local Business') ?></span>
-                                </div>
-                            </div>
-                            <div class="mt-auto pt-2 border-top border-light" style="font-size: 0.75rem; font-family: 'Montserrat', sans-serif;">
-                                <div class="text-muted text-truncate mb-0.5"><i class="fa-solid fa-phone me-1.5 text-secondary"></i> <?= e($shop['contact']) ?></div>
-                                <div class="text-muted text-truncate"><i class="fa-solid fa-location-dot me-1.5 text-secondary"></i> <?= e($shop['address']) ?></div>
-                            </div>
+                <?php
+                $logo = media_url($shop['logo'] ?? null, asset_url('images/likhalokal-logo.png'));
+                $cover = media_url($shop['cover_image'] ?? null, asset_url('images/localbg.png'));
+                $profileUrl = vendor_profile_url((int) $shop['id'], current_request_return_url());
+                $desc = e(str_limit((string) ($shop['description'] ?? 'Proud partner vendor offering local delicacies and handicrafts in Vinzons.'), 95));
+                ?>
+                <div class="vendor-card">
+                    <div class="vendor-card-banner" style="background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.25)), url('<?= e($cover) ?>');">
+                        <div class="vendor-card-logo">
+                            <img src="<?= e($logo) ?>" alt="">
                         </div>
-                    </a>
+                    </div>
+                    <div class="vendor-card-body">
+                        <span class="vendor-card-badge"><i class="fa-solid fa-store me-1"></i> <?= e($shop['type'] ?: 'Local Seller') ?></span>
+                        <h3><a href="<?= e($profileUrl) ?>"><?= e($shop['name']) ?></a></h3>
+                        <p><?= $desc ?></p>
+                        <div class="vendor-card-footer">
+                            <span class="vendor-card-phone">
+                                <i class="fa-solid fa-phone"></i>
+                                <?= e($shop['contact'] ?: 'No contact') ?>
+                            </span>
+                            <?php if (is_logged_in()): ?>
+                                <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int) $shop['id'] ?>&return=<?= rawurlencode(current_request_return_url()) ?>" class="vendor-msg-btn text-decoration-none d-inline-block text-center">Message</a>
+                            <?php else: ?>
+                                <button type="button" class="vendor-msg-btn" data-require-auth>Message</button>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 </div>
             <?php endforeach; ?>
         </div>

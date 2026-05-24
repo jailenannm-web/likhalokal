@@ -315,6 +315,56 @@ body {
 
 }
 
+body {
+    padding-top: 0 !important; /* Enable full-bleed cover behind transparent navbar */
+}
+
+/* Premium Spacious Vendor Info Grid Override */
+.vendor-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 25px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+.vendor-info-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: none;
+    border-left: none;
+    box-shadow: none;
+    padding: 0;
+    min-height: auto;
+}
+.vendor-info-card i {
+    width: 40px;
+    height: 40px;
+    background: rgba(243, 146, 0, 0.1);
+    color: var(--lk-orange);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    padding-top: 0;
+}
+.vendor-info-card span {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+.vendor-info-card strong {
+    font-size: 0.92rem;
+    color: var(--lk-navy);
+    font-weight: 600;
+}
 </style>
 
 
@@ -346,6 +396,13 @@ body {
     <?php endif; ?>
 </div>
 <?php endif; ?>
+
+<div class="vendor-profile-subnav">
+    <div class="container">
+        <a href="<?= e($backUrl) ?>" aria-label="Go back"><i class="fa-solid fa-arrow-left fs-5"></i> Back</a>
+        <span class="fw-bold text-uppercase small" style="letter-spacing: 1px; font-family: 'Montserrat', sans-serif;">Vendor Profile</span>
+    </div>
+</div>
 
 <div class="vendor-profile-cover" style="background-image: url('<?= e($cover) ?>');"></div>
 

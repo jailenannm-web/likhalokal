@@ -74,7 +74,7 @@ require BASE_PATH . '/includes/navbar.php';
 
     body {
         background: var(--sky-gradient);
-        font-family: 'Inter', sans-serif;
+        font-family: 'Montserrat', sans-serif;
         padding-top: 0 !important; /* Eliminate white line space under the navbar */
     } jubilee-fixed { padding-left: 15px; padding-right: 15px; }
 
@@ -649,94 +649,151 @@ require BASE_PATH . '/includes/navbar.php';
 
     .agencies-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 30px;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 20px;
         align-items: stretch;
     }
 
-    @media (max-width: 768px) {
-        .agencies-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
     .agency-card {
-        background: rgba(255, 255, 255, 0.4);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 20px;
-        padding: 25px;
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 6px 20px rgba(0, 70, 140, 0.03);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         display: flex;
-        align-items: center;
-        gap: 20px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-        transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
-                    background 0.3s ease,
-                    box-shadow 0.4s ease;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
     }
 
     .agency-card:hover {
-        transform: translateY(-10px);
-        background: rgba(255, 255, 255, 0.65);
-        box-shadow: 0 20px 40px rgba(31, 38, 135, 0.12);
+        transform: translateY(-6px);
+        box-shadow: 0 15px 30px rgba(0, 70, 140, 0.08);
+        border-color: rgba(0, 70, 140, 0.12);
     }
 
-    .logo-box {
-        background-color: #D9D9D9;
-        min-width: 100px;
+    .agency-card-banner {
+        width: 100%;
         height: 100px;
-        border-radius: 15px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        border-bottom: 3px solid var(--vinzons-amber);
+    }
+
+    .agency-card-logo {
+        position: absolute;
+        bottom: -20px;
+        left: 15px;
+        width: 40px;
+        height: 40px;
+        background: #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0;
-        transition: transform 0.4s ease, background-color 0.3s ease;
-    }
-    .agency-card:hover .logo-box {
-        transform: rotate(-6deg) scale(1.08);
-        background-color: #c5d8f0;
+        padding: 4px;
+        border: 2px solid #ffffff;
+        z-index: 2;
     }
 
-    .agency-info h3 {
-        margin: 0 0 5px 0;
-        color: #1a1a1a;
-        font-size: 1.2rem;
-        font-weight: 700;
-        transition: color 0.3s ease;
-    }
-    .agency-card:hover .agency-info h3 { color: var(--vinzons-blue); }
-
-    .agency-info p {
-        margin: 0 0 10px 0;
-        font-size: 0.9rem;
-        color: #444;
-        line-height: 1.4;
+    .agency-card-logo img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
     }
 
-    .contact-row {
-        font-family: 'Inter', sans-serif;
-        font-weight: 700;
-        font-size: 1rem;
-        color: #1a1a1a;
+    .agency-card-body {
+        padding: 28px 16px 16px 16px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        text-align: left;
     }
 
-    .msg-btn {
-        font-weight: 400;
-        font-size: 0.85rem;
-        color: #666;
-        text-decoration: none;
-        margin-left: 8px;
-        cursor: pointer;
-        background: none;
-        border: none;
-        transition: color 0.3s ease, letter-spacing 0.3s ease;
-        padding: 0;
-    }
-    .msg-btn:hover {
-        text-decoration: underline;
+    .agency-card-badge {
+        display: inline-block;
+        font-size: 0.58rem;
+        font-weight: 800;
         color: var(--vinzons-blue);
-        letter-spacing: 0.3px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+    }
+
+    .agency-card-body h3 {
+        margin: 0 0 4px 0;
+        color: var(--vinzons-blue);
+        font-size: 0.92rem;
+        font-weight: 850;
+        line-height: 1.2;
+        font-family: 'Montserrat', sans-serif;
+    }
+    
+    .agency-card-body h3 a {
+        color: inherit;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .agency-card-body h3 a:hover {
+        color: var(--vinzons-amber);
+    }
+
+    .agency-card-body p {
+        margin: 0 0 10px 0;
+        font-size: 0.72rem;
+        color: #555;
+        line-height: 1.4;
+        flex-grow: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .agency-card-footer {
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+        padding-top: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+    }
+
+    .agency-card-phone {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .agency-card-phone i {
+        color: var(--vinzons-amber);
+    }
+
+    .agency-msg-btn {
+        background-color: var(--vinzons-blue);
+        color: #ffffff !important;
+        border: none;
+        border-radius: 50px;
+        padding: 4px 12px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 8px rgba(0, 70, 140, 0.15);
+    }
+
+    .agency-msg-btn:hover {
+        background-color: var(--vinzons-amber);
+        color: var(--vinzons-black) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(255, 179, 0, 0.25);
     }
 
     /* ============================================
@@ -1044,19 +1101,27 @@ require BASE_PATH . '/includes/navbar.php';
       $logo = media_url($agency['logo'], asset_url('images/likhalokal-logo.png'));
       $profileUrl = vendor_profile_url((int) $agency['id'], current_request_return_url());
       ?>
-      <div class="agency-card reveal">
-        <div class="logo-box">
-          <img src="<?= e($logo) ?>" alt="<?= e($agency['business_name']) ?>">
+      <div class="agency-card">
+        <div class="agency-card-banner" style="background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.25)), url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=500&q=80');">
+          <div class="agency-card-logo">
+            <img src="<?= e($logo) ?>" alt="">
+          </div>
         </div>
-        <div class="agency-info">
-          <h3><?= e($agency['business_name']) ?></h3>
-          <p><?= e(str_limit((string) ($agency['description'] ?? ''), 160)) ?></p>
-          <span class="phone"><?= e($agency['contact_number'] ?? '') ?></span>
-          <?php if (is_logged_in()): ?>
-          <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int) $agency['id'] ?>&return=<?= rawurlencode(current_request_return_url()) ?>" class="msg-btn text-decoration-none d-inline-block text-center">Message now</a>
-          <?php else: ?>
-          <button type="button" class="msg-btn" data-require-auth>Message now</button>
-          <?php endif; ?>
+        <div class="agency-card-body">
+          <span class="agency-card-badge"><i class="fa-solid fa-map-location-dot me-1"></i> Tourism Partner</span>
+          <h3><a href="<?= e($profileUrl) ?>"><?= e($agency['business_name']) ?></a></h3>
+          <p><?= e(str_limit((string) ($agency['description'] ?? ''), 110)) ?></p>
+          <div class="agency-card-footer">
+            <span class="agency-card-phone">
+              <i class="fa-solid fa-phone"></i>
+              <?= e($agency['contact_number'] ?? 'No contact') ?>
+            </span>
+            <?php if (is_logged_in()): ?>
+              <a href="<?= e(BASE_URL) ?>message.php?business_id=<?= (int) $agency['id'] ?>&return=<?= rawurlencode(current_request_return_url()) ?>" class="agency-msg-btn text-decoration-none d-inline-block text-center">Message</a>
+            <?php else: ?>
+              <button type="button" class="agency-msg-btn" data-require-auth>Message</button>
+            <?php endif; ?>
+          </div>
         </div>
       </div>
       <?php endforeach; ?>

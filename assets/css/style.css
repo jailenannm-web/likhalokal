@@ -1972,3 +1972,63 @@ body.lk-auth-page footer {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.18);
 }
+
+/* ==========================================================================
+   GLOBAL SCROLL REVEAL & INTERACTIVE MICRO-ANIMATIONS
+   ========================================================================== */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s cubic-bezier(0.165, 0.84, 0.44, 1),
+              transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition: opacity 0.8s cubic-bezier(0.165, 0.84, 0.44, 1),
+              transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.reveal-right {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 0.8s cubic-bezier(0.165, 0.84, 0.44, 1),
+              transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.9) translateY(20px);
+  transition: opacity 0.8s cubic-bezier(0.165, 0.84, 0.44, 1),
+              transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.reveal-left.visible,
+.reveal-right.visible,
+.reveal-scale.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Dynamic Hover Effects on Cards & Buttons */
+.hover-lift {
+  transition: transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1),
+              box-shadow 0.35s ease,
+              border-color 0.35s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 35px rgba(0, 31, 63, 0.12) !important;
+}
+
+.hover-zoom-img {
+  overflow: hidden;
+}
+.hover-zoom-img img {
+  transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.hover-zoom-img:hover img {
+  transform: scale(1.06);
+}
+

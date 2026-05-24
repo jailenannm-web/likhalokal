@@ -87,8 +87,20 @@ body {
 }
 
 /* ── MICRO-ANIMATIONS & HOVER EFFECTS ── */
-.team-wrapper .team-card:hover .img-container svg {
-    transform: scale(1.1) rotate(-3deg);
+.team-wrapper .img-container img {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    object-fit: cover;
+    z-index: 10;
+    border: 4px solid var(--card-white);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.team-wrapper .team-card:hover .img-container img {
+    transform: scale(1.08) rotate(-3deg);
+    border-color: var(--amber-bright);
+    box-shadow: 0 12px 32px rgba(255, 159, 28, 0.3);
 }
 .team-wrapper .value-item {
     background: rgba(255,255,255,0.03);
@@ -722,29 +734,7 @@ body {
                 <!-- Niña Theressa B. Ragos -->
                 <div class="team-card reveal from-scale">
                     <div class="img-container">
-                        <svg viewBox="0 0 100 100" width="80%" height="80%" xmlns="http://www.w3.org/2000/svg" style="z-index: 10; filter: drop-shadow(0 6px 12px rgba(255,159,28,0.25)); transition: transform 0.4s ease;">
-                            <defs>
-                                <linearGradient id="grad-nr" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#FF9F1C" />
-                                    <stop offset="100%" stop-color="#E63946" />
-                                </linearGradient>
-                            </defs>
-                            <circle cx="50" cy="50" r="48" fill="url(#grad-nr)" />
-                            <!-- Abstract Tech Architecture Grid Background Overlay -->
-                            <path d="M50 5 L50 95 M5 50 L95 50 M25 25 L75 75 M75 25 L25 75" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" />
-                            <circle cx="50" cy="50" r="35" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="3,3" />
-                            <!-- Face / Hair silhouette -->
-                            <circle cx="50" cy="38" r="16" fill="#0A1128" />
-                            <path d="M26 78 C 26 58, 74 58, 74 78 Z" fill="#0A1128" />
-                            <!-- Integrations / Tech Network nodes -->
-                            <circle cx="28" cy="28" r="5" fill="#FFFFFF" />
-                            <circle cx="72" cy="28" r="5" fill="#FFFFFF" />
-                            <line x1="28" y1="28" x2="38" y2="35" stroke="#FFFFFF" stroke-width="2" />
-                            <line x1="72" y1="28" x2="62" y2="35" stroke="#FFFFFF" stroke-width="2" />
-                            <!-- Custom Developer Label Overlay -->
-                            <rect x="35" y="48" width="30" height="12" rx="4" fill="#FFFFFF" />
-                            <text x="50" y="57" font-family="'Poppins', sans-serif" font-size="9" font-weight="900" fill="#E63946" text-anchor="middle" letter-spacing="0.5">NTR</text>
-                        </svg>
+                        <img src="<?= asset_url('images/nina.png') ?>" alt="Niña Theressa B. Ragos" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Nina+Ragos&background=FF9F1C&color=0A1128&bold=true&size=180'">
                     </div>
                     <div class="team-info">
                         <h3>Niña Theressa B. Ragos</h3>
@@ -760,28 +750,7 @@ body {
                 <!-- Jailen Ann A. Mostoles -->
                 <div class="team-card reveal from-scale">
                     <div class="img-container">
-                        <svg viewBox="0 0 100 100" width="80%" height="80%" xmlns="http://www.w3.org/2000/svg" style="z-index: 10; filter: drop-shadow(0 6px 12px rgba(124,58,237,0.25)); transition: transform 0.4s ease;">
-                            <defs>
-                                <linearGradient id="grad-jm" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#7C3AED" />
-                                    <stop offset="100%" stop-color="#3B82F6" />
-                                </linearGradient>
-                            </defs>
-                            <circle cx="50" cy="50" r="48" fill="url(#grad-jm)" />
-                            <!-- Data / Database Storage Ring Background Overlay -->
-                            <rect x="25" y="25" width="50" height="50" rx="6" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" />
-                            <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" />
-                            <!-- Face / Hair silhouette -->
-                            <circle cx="50" cy="38" r="16" fill="#0A1128" />
-                            <path d="M26 78 C 26 58, 74 58, 74 78 Z" fill="#0A1128" />
-                            <!-- Database Nodes / Stacks illustration -->
-                            <path d="M24 35 L40 35 M60 35 L76 35" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
-                            <circle cx="32" cy="35" r="3" fill="#FFFFFF" />
-                            <circle cx="68" cy="35" r="3" fill="#FFFFFF" />
-                            <!-- Custom Developer Label Overlay -->
-                            <rect x="35" y="48" width="30" height="12" rx="4" fill="#FFFFFF" />
-                            <text x="50" y="57" font-family="'Poppins', sans-serif" font-size="9" font-weight="900" fill="#3B82F6" text-anchor="middle" letter-spacing="0.5">JAM</text>
-                        </svg>
+                        <img src="<?= asset_url('images/jailen.png') ?>" alt="Jailen Ann A. Mostoles" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Jailen+Mostoles&background=7C3AED&color=0A1128&bold=true&size=180'">
                     </div>
                     <div class="team-info">
                         <h3>Jailen Ann A. Mostoles</h3>
@@ -797,27 +766,7 @@ body {
                 <!-- Christianne Ley B. Ubana -->
                 <div class="team-card reveal from-scale">
                     <div class="img-container">
-                        <svg viewBox="0 0 100 100" width="80%" height="80%" xmlns="http://www.w3.org/2000/svg" style="z-index: 10; filter: drop-shadow(0 6px 12px rgba(16,185,129,0.25)); transition: transform 0.4s ease;">
-                            <defs>
-                                <linearGradient id="grad-cu" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#10B981" />
-                                    <stop offset="100%" stop-color="#06B6D4" />
-                                </linearGradient>
-                            </defs>
-                            <circle cx="50" cy="50" r="48" fill="url(#grad-cu)" />
-                            <!-- UI Vector pen / grid lines Background Overlay -->
-                            <path d="M50 5 L50 95 M5 50 L95 50" stroke="rgba(255,255,255,0.06)" stroke-width="1.5" />
-                            <circle cx="50" cy="50" r="28" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" stroke-dasharray="4,4" />
-                            <!-- Face / Hair silhouette -->
-                            <circle cx="50" cy="38" r="16" fill="#0A1128" />
-                            <path d="M26 78 C 26 58, 74 58, 74 78 Z" fill="#0A1128" />
-                            <!-- Graphic / Vector points decoration -->
-                            <rect x="22" y="44" width="6" height="6" fill="#FFFFFF" />
-                            <rect x="72" y="44" width="6" height="6" fill="#FFFFFF" />
-                            <!-- Custom Developer Label Overlay -->
-                            <rect x="35" y="48" width="30" height="12" rx="4" fill="#FFFFFF" />
-                            <text x="50" y="57" font-family="'Poppins', sans-serif" font-size="9" font-weight="900" fill="#06B6D4" text-anchor="middle" letter-spacing="0.5">CLU</text>
-                        </svg>
+                        <img src="<?= asset_url('images/christianne.png') ?>" alt="Christianne Ley B. Ubana" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Christianne+Ubana&background=10B981&color=0A1128&bold=true&size=180'">
                     </div>
                     <div class="team-info">
                         <h3>Christianne Ley B. Ubana</h3>
@@ -833,27 +782,7 @@ body {
                 <!-- Samantha B. Frondozo -->
                 <div class="team-card reveal from-scale">
                     <div class="img-container">
-                        <svg viewBox="0 0 100 100" width="80%" height="80%" xmlns="http://www.w3.org/2000/svg" style="z-index: 10; filter: drop-shadow(0 6px 12px rgba(244,63,94,0.25)); transition: transform 0.4s ease;">
-                            <defs>
-                                <linearGradient id="grad-sf" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#F43F5E" />
-                                    <stop offset="100%" stop-color="#D946EF" />
-                                </linearGradient>
-                            </defs>
-                            <circle cx="50" cy="50" r="48" fill="url(#grad-sf)" />
-                            <!-- QA Audit / verification check Background Overlay -->
-                            <path d="M20 50 L40 70 L80 30" stroke="rgba(255,255,255,0.06)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-                            <circle cx="50" cy="50" r="32" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1.5" />
-                            <!-- Face / Hair silhouette -->
-                            <circle cx="50" cy="38" r="16" fill="#0A1128" />
-                            <path d="M26 78 C 26 58, 74 58, 74 78 Z" fill="#0A1128" />
-                            <!-- Testing validation sparkles illustration -->
-                            <path d="M28 28 L34 28 M31 25 L31 31" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
-                            <path d="M72 28 L66 28 M69 25 L69 31" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
-                            <!-- Custom Developer Label Overlay -->
-                            <rect x="35" y="48" width="30" height="12" rx="4" fill="#FFFFFF" />
-                            <text x="50" y="57" font-family="'Poppins', sans-serif" font-size="9" font-weight="900" fill="#D946EF" text-anchor="middle" letter-spacing="0.5">SBF</text>
-                        </svg>
+                        <img src="<?= asset_url('images/samantha.png') ?>" alt="Samantha B. Frondozo" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Samantha+Frondozo&background=F43F5E&color=0A1128&bold=true&size=180'">
                     </div>
                     <div class="team-info">
                         <h3>Samantha B. Frondozo</h3>
