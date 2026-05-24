@@ -216,6 +216,7 @@ if (!is_array($payments)) {
 }
 
 $display = static fn($value, string $placeholder): string => trim((string) $value) !== '' ? trim((string) $value) : $placeholder;
+$branch = trim((string) ($b['branch'] ?? ''));
 
 $hasCoords = isset($b['latitude'], $b['longitude'])
 
@@ -517,6 +518,18 @@ body {
                         <div><span>Barangay</span><strong><?= e($display($b['barangay'] ?? '', 'Barangay not provided')) ?></strong></div>
 
                     </div>
+
+                    <?php if ($branch !== ''): ?>
+
+                    <div class="vendor-info-card">
+
+                        <i class="fa-solid fa-code-branch"></i>
+
+                        <div><span>Branch</span><strong><?= e($branch) ?></strong></div>
+
+                    </div>
+
+                    <?php endif; ?>
 
                     <div class="vendor-info-card">
 

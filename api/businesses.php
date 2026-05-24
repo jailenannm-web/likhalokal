@@ -6,6 +6,8 @@ require_once __DIR__ . '/_init.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
+$hasBusinessCategory = db_column_exists('businesses', 'business_category');
+$hasBusinessBranch = db_column_exists('businesses', 'branch');
 
 if ($method === 'GET') {
     $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
@@ -43,7 +45,8 @@ if ($method === 'GET') {
         $params[] = $type;
     }
     if ($q !== '') {
-        $sql .= ' AND (b.business_name LIKE ? OR b.barangay LIKE ? OR b.address LIKE ?)';
+        $sql .= ' AND (b.business_name LIKE ? OR b.barangay LIKE ? OR b.address LIKE ? OR COALESCE(b.business_category, \'\') LIKE ?)';
+        $params[] = '%' . $q . '%';
         $params[] = '%' . $q . '%';
         $params[] = '%' . $q . '%';
         $params[] = '%' . $q . '%';
@@ -72,11 +75,9 @@ if ($method === 'POST') {
         if ($stmt->fetch()) {
             json_response(['success' => false, 'message' => 'You already have a business profile or pending application.', 'data' => []], 422);
         }
-        $stmt = db()->prepare(
-            'INSERT INTO businesses (user_id, business_name, business_type, description, contact_number, email, address, barangay, latitude, longitude, operating_hours, accepted_payments, status, created_at, updated_at)
-             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,\'pending\',NOW(),NOW())'
-        );
-        $stmt->execute([
+        $columns = 'user_id, business_name, business_type, description, contact_number, email, address, barangay, latitude, longitude, operating_hours, accepted_payments, status, created_at, updated_at';
+        $marks = '?,?,?,?,?,?,?,?,?,?,?,?,' . "'pending',NOW(),NOW()";
+        $params = [
             current_user_id(),
             trim((string) ($input['business_name'] ?? '')),
             (string) ($input['business_type'] ?? 'pasalubong'),
@@ -89,7 +90,18 @@ if ($method === 'POST') {
             $input['longitude'] !== '' && $input['longitude'] !== null ? (float) $input['longitude'] : null,
             trim((string) ($input['operating_hours'] ?? '')),
             (string) ($input['accepted_payments'] ?? '[]'),
-        ]);
+        ];
+        if ($hasBusinessCategory) {
+            $columns .= ', business_category';
+            $marks .= ',?';
+            $params[] = trim((string) ($input['business_category'] ?? ''));
+        }
+        if ($hasBusinessBranch) {
+            $columns .= ', branch';
+            $marks .= ',?';
+            $params[] = trim((string) ($input['branch'] ?? '')) ?: null;
+        }
+        db()->prepare('INSERT INTO businesses (' . $columns . ') VALUES (' . $marks . ')')->execute($params);
         $bid = (int) db()->lastInsertId();
         log_activity(current_user_id(), 'business_create', 'Business application #' . $bid, $_SERVER['REMOTE_ADDR'] ?? null);
         json_response(['success' => true, 'message' => 'Application submitted', 'data' => ['id' => $bid]]);
@@ -110,10 +122,8 @@ if ($method === 'POST') {
         if (current_user_role() === 'seller' && (int) $biz['user_id'] !== current_user_id()) {
             json_response(['success' => false, 'message' => 'Forbidden', 'data' => []], 403);
         }
-        $stmt = db()->prepare(
-            'UPDATE businesses SET business_name=?, business_type=?, description=?, contact_number=?, email=?, address=?, barangay=?, latitude=?, longitude=?, operating_hours=?, accepted_payments=?, promotional_note=?, updated_at=NOW() WHERE id=?'
-        );
-        $stmt->execute([
+        $updates = 'business_name=?, business_type=?, description=?, contact_number=?, email=?, address=?, barangay=?, latitude=?, longitude=?, operating_hours=?, accepted_payments=?, promotional_note=?, updated_at=NOW()';
+        $params = [
             trim((string) ($input['business_name'] ?? $biz['business_name'])),
             (string) ($input['business_type'] ?? $biz['business_type']),
             trim((string) ($input['description'] ?? $biz['description'])),
@@ -126,8 +136,17 @@ if ($method === 'POST') {
             trim((string) ($input['operating_hours'] ?? $biz['operating_hours'])),
             (string) ($input['accepted_payments'] ?? $biz['accepted_payments']),
             trim((string) ($input['promotional_note'] ?? $biz['promotional_note'] ?? '')),
-            $bid,
-        ]);
+        ];
+        if ($hasBusinessCategory) {
+            $updates .= ', business_category=?';
+            $params[] = trim((string) ($input['business_category'] ?? $biz['business_category'] ?? ''));
+        }
+        if ($hasBusinessBranch) {
+            $updates .= ', branch=?';
+            $params[] = trim((string) ($input['branch'] ?? $biz['branch'] ?? '')) ?: null;
+        }
+        $params[] = $bid;
+        db()->prepare('UPDATE businesses SET ' . $updates . ' WHERE id=?')->execute($params);
         json_response(['success' => true, 'message' => 'Updated', 'data' => ['id' => $bid]]);
     }
 

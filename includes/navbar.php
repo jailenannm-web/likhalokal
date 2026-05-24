@@ -48,7 +48,7 @@ $lkSearchApi = preg_replace('#/public/?$#', '/api/', rtrim(BASE_URL, '/')) . 'se
                                 <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>dashboard.php">Admin Dashboard</a></li>
                                 <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>messages.php">Messages</a></li>
                                 <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>business-applications.php">Business Applications</a></li>
-                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>manage-businesses.php">Manage Businesses</a></li>
+                                <li><a class="dropdown-item" href="<?= e(ADMIN_URL) ?>businesses.php">Manage Businesses</a></li>
                                 <li><a class="dropdown-item" href="<?= e(BASE_URL) ?>index.php">View Public Website</a></li>
                             <?php elseif ($role === 'seller'): ?>
                                 <li><a class="dropdown-item" href="<?= e(SELLER_URL) ?>dashboard.php">Seller Dashboard</a></li>
@@ -58,8 +58,8 @@ $lkSearchApi = preg_replace('#/public/?$#', '/api/', rtrim(BASE_URL, '/')) . 'se
                                 <li><a class="dropdown-item" href="<?= e(SELLER_URL) ?>reviews.php">Reviews</a></li>
                                 <li><a class="dropdown-item" href="<?= e(SELLER_URL) ?>promotions.php">Promotions</a></li>
                             <?php else: ?>
-                                <li><a class="dropdown-item" href="<?= e(USER_DASH_URL) ?>dashboard.php">My Dashboard</a></li>
-                                <li><a class="dropdown-item" href="<?= e(USER_DASH_URL) ?>messages.php">My Messages</a></li>
+                                <li><a class="dropdown-item" href="<?= e(USER_DASH_URL) ?>dashboard.php">My Account</a></li>
+                                <li><a class="dropdown-item" href="<?= e(USER_DASH_URL) ?>messages.php">Inquiry Hub</a></li>
                                 <li><a class="dropdown-item" href="<?= e(USER_DASH_URL) ?>reviews.php">My Reviews</a></li>
                                 <li><a class="dropdown-item" href="<?= e(USER_DASH_URL) ?>profile.php">My Profile</a></li>
                             <?php endif; ?>

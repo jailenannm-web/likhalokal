@@ -13,14 +13,14 @@ if (!is_logged_in()) {
 
 $role = current_user_role();
 if ($role === 'admin') {
-    redirect_after_login();
+    redirect(public_home_url());
 }
 
 $existingBusiness = null;
 if (in_array($role, ['seller', 'local_user'], true)) {
     $existingBusiness = seller_business_for_user();
     if ($existingBusiness && $existingBusiness['status'] === 'approved') {
-        redirect($role === 'seller' ? SELLER_URL . 'dashboard.php' : BASE_URL . 'index.php');
+        redirect(public_home_url());
     }
     if ($role === 'seller' && $existingBusiness && $existingBusiness['status'] === 'pending' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
         redirect(SELLER_URL . 'pending.php');
@@ -30,6 +30,7 @@ if (in_array($role, ['seller', 'local_user'], true)) {
 function public_business_type_from_form(string $type): string
 {
     return match ($type) {
+        'food_vendor', 'craft_business', 'restaurant', 'travel_agency', 'resort', 'recreation', 'service', 'pasalubong', 'fresh_produce' => $type,
         'Food' => 'food_vendor',
         'Retail' => 'pasalubong',
         'Services' => 'service',
@@ -38,27 +39,74 @@ function public_business_type_from_form(string $type): string
     };
 }
 
+function public_business_payment_values(array $values): array
+{
+    $normalized = [];
+    $map = [
+        'COD' => 'Cash on pickup',
+        'Cash on Delivery/Pickup' => 'Cash on pickup',
+        'Cash on pickup' => 'Cash on pickup',
+        'Gcash' => 'GCash',
+        'GCash' => 'GCash',
+        'Maya' => 'Maya',
+        'Bank Transfer' => 'Bank transfer',
+        'Bank transfer' => 'Bank transfer',
+        'Pay Upon Booking' => 'Pay upon booking',
+        'Pay upon booking' => 'Pay upon booking',
+    ];
+
+    foreach ($values as $value) {
+        $value = trim((string) $value);
+        if (isset($map[$value])) {
+            $normalized[] = $map[$value];
+        }
+    }
+
+    return array_values(array_unique($normalized));
+}
+
+function public_uploaded_file_from(array $keys): ?array
+{
+    foreach ($keys as $key) {
+        if (isset($_FILES[$key]) && is_array($_FILES[$key]) && (int) ($_FILES[$key]['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            return $_FILES[$key];
+        }
+    }
+
+    return null;
+}
+
+$hasBusinessCategory = db_column_exists('businesses', 'business_category');
+$hasBusinessBranch = db_column_exists('businesses', 'branch');
+$formBusiness = $existingBusiness ?: [];
+$currentUser = current_user();
+$selectedPayments = json_decode((string) ($formBusiness['accepted_payments'] ?? '[]'), true);
+if (!is_array($selectedPayments)) {
+    $selectedPayments = [];
+}
+$selectedPayments = public_business_payment_values($selectedPayments);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf($_POST['csrf_token'] ?? null)) {
         set_flash('error', 'Invalid token. Please try again.');
         redirect(BASE_URL . 'register-business.php');
     }
 
-    $businessName = trim((string) ($_POST['biz_name'] ?? ''));
-    $businessType = public_business_type_from_form((string) ($_POST['biz_type'] ?? 'Services'));
-    $businessCategory = trim((string) ($_POST['biz_category'] ?? ''));
-    $address = trim((string) ($_POST['biz_address'] ?? ''));
+    $businessName = trim((string) ($_POST['business_name'] ?? $_POST['biz_name'] ?? ''));
+    $businessType = public_business_type_from_form((string) ($_POST['business_type'] ?? $_POST['biz_type'] ?? 'service'));
+    $businessCategory = trim((string) ($_POST['business_category'] ?? $_POST['biz_category'] ?? ''));
+    $address = trim((string) ($_POST['address'] ?? $_POST['biz_address'] ?? ''));
     $barangay = trim((string) ($_POST['barangay'] ?? ''));
-    $branch = trim((string) ($_POST['biz_branch'] ?? ''));
-    $ownerContact = trim((string) ($_POST['owner_contact'] ?? ''));
-    $ownerEmail = trim((string) ($_POST['owner_email'] ?? current_user()['email'] ?? ''));
+    $branch = trim((string) ($_POST['branch'] ?? $_POST['biz_branch'] ?? ''));
+    $ownerContact = trim((string) ($_POST['contact_number'] ?? $_POST['owner_contact'] ?? ''));
+    $ownerEmail = trim((string) ($_POST['email'] ?? $_POST['owner_email'] ?? current_user()['email'] ?? ''));
     $latitude = trim((string) ($_POST['latitude'] ?? ''));
     $longitude = trim((string) ($_POST['longitude'] ?? ''));
     $operatingHours = trim((string) ($_POST['operating_hours'] ?? ''));
     $productList = trim((string) ($_POST['product_list'] ?? ''));
     $priceRange = trim((string) ($_POST['price_range'] ?? ''));
-    $shortDescription = trim((string) ($_POST['biz_short_desc'] ?? ''));
-    $payments = json_encode(array_values($_POST['payments'] ?? []));
+    $shortDescription = trim((string) ($_POST['description'] ?? $_POST['biz_short_desc'] ?? ''));
+    $payments = json_encode(public_business_payment_values(array_values($_POST['pay'] ?? $_POST['payments'] ?? [])));
     $methods = array_values($_POST['methods'] ?? []);
     $descriptionParts = array_filter([
         $shortDescription,
@@ -84,10 +132,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($longitude !== '' && !is_numeric($longitude)) {
         $errors[] = 'Longitude must be a valid number.';
     }
+    if (strlen($branch) > 150) {
+        $errors[] = 'Branch must be 150 characters or fewer.';
+    }
 
     $logo = $existingBusiness['logo'] ?? null;
-    if (!empty($_FILES['biz_logo']['tmp_name'])) {
-        $upload = save_upload($_FILES['biz_logo'], 'businesses');
+    $logoFile = public_uploaded_file_from(['logo', 'biz_logo']);
+    if ($logoFile !== null) {
+        $upload = save_upload($logoFile, 'businesses');
         if ($upload) {
             $logo = $upload;
         } else {
@@ -96,10 +148,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $cover = $existingBusiness['cover_image'] ?? null;
-    if (!empty($_FILES['product_img']['tmp_name'])) {
-        $upload = save_upload($_FILES['product_img'], 'businesses');
+    $coverFile = public_uploaded_file_from(['cover_image', 'product_img']);
+    if ($coverFile !== null) {
+        $upload = save_upload($coverFile, 'businesses');
         if ($upload) {
             $cover = $upload;
+        } else {
+            $errors[] = 'Business cover image must be a valid image under the upload limit.';
         }
     }
 
@@ -108,8 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(BASE_URL . 'register-business.php');
     }
 
-    $fullAddress = trim($address . ($branch !== '' ? ' - ' . $branch : ''));
-    $hasBusinessCategory = db_column_exists('businesses', 'business_category');
+    $fullAddress = $hasBusinessBranch ? $address : trim($address . ($branch !== '' ? ' - ' . $branch : ''));
 
     if ($existingBusiness && in_array($existingBusiness['status'], ['rejected', 'pending'], true)) {
         $sql = 'UPDATE businesses SET business_name=?, business_type=?, description=?, contact_number=?, email=?, address=?, barangay=?, latitude=?, longitude=?, operating_hours=?, accepted_payments=?, logo=?, cover_image=?, status=\'pending\', rejection_reason=NULL, approved_by=NULL, approved_at=NULL';
@@ -117,6 +171,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($hasBusinessCategory) {
             $sql .= ', business_category=?';
             $params[] = $businessCategory;
+        }
+        if ($hasBusinessBranch) {
+            $sql .= ', branch=?';
+            $params[] = $branch !== '' ? $branch : null;
         }
         $sql .= ', updated_at=NOW() WHERE id=? AND user_id=?';
         $params[] = (int) $existingBusiness['id'];
@@ -131,11 +189,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $marks = '?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,' . "'pending',NOW(),NOW()";
             $params = [current_user_id(), $businessName, $businessType, $businessCategory, $description, $ownerContact, $ownerEmail, $fullAddress, $barangay, $latitude !== '' ? $latitude : null, $longitude !== '' ? $longitude : null, $operatingHours, $payments, $logo, $cover];
         }
+        if ($hasBusinessBranch) {
+            $columns .= ', branch';
+            $marks .= ',?';
+            $params[] = $branch !== '' ? $branch : null;
+        }
         db()->prepare('INSERT INTO businesses (' . $columns . ') VALUES (' . $marks . ')')->execute($params);
     }
 
     set_flash('success', 'Your business registration is under review. Please wait for admin approval before accessing seller features.');
-    redirect($role === 'seller' ? SELLER_URL . 'pending.php' : BASE_URL . 'register-business.php');
+    redirect(public_home_url());
 }
 
 require BASE_PATH . '/includes/header.php';
@@ -379,65 +442,61 @@ require BASE_PATH . '/includes/navbar.php';
             <div class="section-body">
                 <div class="form-group">
                     <label>Business Name:</label>
-                    <input type="text" name="biz_name" class="form-control" placeholder="Enter your business name" required>
+                    <input type="text" name="business_name" class="form-control" placeholder="Enter your business name" required value="<?= e((string) ($formBusiness['business_name'] ?? '')) ?>">
                 </div>
 
                 <div class="form-group">
                     <label>Type of Business:</label>
-                    <select name="biz_type" class="form-control" required>
-                        <option value="Food">Food</option>
-                        <option value="Retail">Retail</option>
-                        <option value="Services">Services</option>
-                        <option value="Accomodation">Accommodation</option>
+                    <select name="business_type" class="form-control" required>
+                        <?php foreach (['food_vendor','craft_business','restaurant','travel_agency','resort','recreation','service','pasalubong','fresh_produce'] as $type): ?>
+                            <option value="<?= e($type) ?>" <?= (($formBusiness['business_type'] ?? '') === $type) ? 'selected' : '' ?>><?= e(business_type_label($type)) ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label>Business Category:</label>
-                    <select name="biz_category" class="form-control" required>
-                        <option value="Products (Snacks, Produce, Pastries)">Products (Snacks, Produce, Pastries)</option>
-                        <option value="Restaurants/Cafe">Restaurants/Cafe</option>
-                        <option value="Resorts/Homestay">Resorts/Homestay</option>
-                        <option value="Local Handicrafts">Local Handicrafts</option>
-                    </select>
+                    <input type="text" name="business_category" class="form-control" required placeholder="Example: Pasalubong, Fresh Produce, Tours" value="<?= e((string) ($formBusiness['business_category'] ?? '')) ?>">
                 </div>
 
                 <div class="form-group">
                     <label>Business Address:</label>
-                    <input type="text" name="biz_address" class="form-control" placeholder="Enter your business address" required>
+                    <input type="text" name="address" class="form-control" placeholder="Enter your business address" required value="<?= e((string) ($formBusiness['address'] ?? '')) ?>">
                 </div>
 
                 <div class="form-group">
                     <label>Barangay:</label>
-                    <input type="text" name="barangay" class="form-control" placeholder="Example: Poblacion">
+                    <input type="text" name="barangay" class="form-control" placeholder="Example: Poblacion" value="<?= e((string) ($formBusiness['barangay'] ?? '')) ?>">
                 </div>
 
+                <?php if ($hasBusinessBranch): ?>
                 <div class="form-group">
                     <label>Branch (if any):</label>
-                    <input type="text" name="biz_branch" class="form-control" placeholder="">
+                    <input type="text" name="branch" class="form-control" maxlength="150" placeholder="Optional branch or landmark" value="<?= e((string) ($formBusiness['branch'] ?? '')) ?>">
                 </div>
+                <?php endif; ?>
 
                 <div class="form-group">
                     <label>Operating Hours:</label>
-                    <input type="text" name="operating_hours" class="form-control" placeholder="Example: Mon-Sat 8:00 AM - 6:00 PM">
+                    <input type="text" name="operating_hours" class="form-control" placeholder="Example: Mon-Sat 8:00 AM - 6:00 PM" value="<?= e((string) ($formBusiness['operating_hours'] ?? '')) ?>">
                 </div>
 
                 <div class="form-group" style="align-items: flex-start;">
                     <label style="margin-top: 10px;">Map Location:</label>
                     <div>
-                        <div id="businessMapPicker" class="lk-map-picker" style="height:350px;border-radius:12px;overflow:hidden;border:1px solid #ced4da;"></div>
+                        <div id="businessMapPicker" class="lk-map-picker" data-map-picker data-lat-input="businessLatitude" data-lng-input="businessLongitude" style="height:350px;border-radius:12px;overflow:hidden;border:1px solid #ced4da;"></div>
                         <p class="small text-muted mt-2 mb-0">Tap the map or edit the coordinates to set the business location.</p>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Latitude:</label>
-                    <input type="text" name="latitude" id="businessLatitude" class="form-control" placeholder="14.1720">
+                    <input type="text" name="latitude" id="businessLatitude" class="form-control" placeholder="14.1720" value="<?= e((string) ($formBusiness['latitude'] ?? '')) ?>">
                 </div>
 
                 <div class="form-group">
                     <label>Longitude:</label>
-                    <input type="text" name="longitude" id="businessLongitude" class="form-control" placeholder="122.9450">
+                    <input type="text" name="longitude" id="businessLongitude" class="form-control" placeholder="122.9450" value="<?= e((string) ($formBusiness['longitude'] ?? '')) ?>">
                 </div>
             </div>
         </div>
@@ -449,17 +508,17 @@ require BASE_PATH . '/includes/navbar.php';
             <div class="section-body">
                 <div class="form-group">
                     <label>Full Name:</label>
-                    <input type="text" name="owner_name" class="form-control" required>
+                    <input type="text" name="owner_name" class="form-control" required value="<?= e((string) ($currentUser['full_name'] ?? '')) ?>">
                 </div>
 
                 <div class="form-group">
                     <label>Contact Number:</label>
-                    <input type="text" name="owner_contact" class="form-control" required>
+                    <input type="text" name="contact_number" class="form-control" required value="<?= e((string) ($formBusiness['contact_number'] ?? $currentUser['contact_number'] ?? '')) ?>">
                 </div>
 
                 <div class="form-group">
                     <label>Email Address:</label>
-                    <input type="email" name="owner_email" class="form-control" required>
+                    <input type="email" name="email" class="form-control" required value="<?= e((string) ($formBusiness['email'] ?? $currentUser['email'] ?? '')) ?>">
                 </div>
 
                 <div class="form-group">
@@ -479,12 +538,12 @@ require BASE_PATH . '/includes/navbar.php';
                         <div class="upload-box" onclick="document.getElementById('id_front').click()">
                             <i class="bi bi-cloud-arrow-up"></i>
                             <span>Upload Front ID</span>
-                            <input type="file" id="id_front" name="id_front" style="display:none" accept="image/*" required>
+                            <input type="file" id="id_front" name="id_front" style="display:none" accept="image/jpeg,image/png,image/webp">
                         </div>
                         <div class="upload-box" onclick="document.getElementById('id_back').click()">
                             <i class="bi bi-cloud-arrow-up"></i>
                             <span>Upload Back ID</span>
-                            <input type="file" id="id_back" name="id_back" style="display:none" accept="image/*" required>
+                            <input type="file" id="id_back" name="id_back" style="display:none" accept="image/jpeg,image/png,image/webp">
                         </div>
                     </div>
                 </div>
@@ -506,7 +565,7 @@ require BASE_PATH . '/includes/navbar.php';
                     <div class="upload-box" style="width: 100%; height: 200px;" onclick="document.getElementById('product_img').click()">
                         <i class="bi bi-cloud-arrow-up"></i>
                         <span>Upload Product Image</span>
-                        <input type="file" id="product_img" name="product_img" style="display:none" accept="image/*">
+                        <input type="file" id="product_img" name="cover_image" style="display:none" accept="image/jpeg,image/png,image/webp">
                     </div>
                 </div>
 
@@ -549,23 +608,23 @@ require BASE_PATH . '/includes/navbar.php';
                     <label>Choose Accepted Payments:</label>
                     <div class="checkbox-group">
                         <label class="check-container">Cash on Delivery/Pickup
-                            <input type="checkbox" name="payments[]" value="COD">
+                            <input type="checkbox" name="pay[]" value="Cash on pickup" <?= in_array('Cash on pickup', $selectedPayments, true) ? 'checked' : '' ?>>
                             <span class="checkmark"></span>
                         </label>
                         <label class="check-container">Gcash
-                            <input type="checkbox" name="payments[]" value="Gcash">
+                            <input type="checkbox" name="pay[]" value="GCash" <?= in_array('GCash', $selectedPayments, true) ? 'checked' : '' ?>>
                             <span class="checkmark"></span>
                         </label>
                         <label class="check-container">Maya
-                            <input type="checkbox" name="payments[]" value="Maya">
+                            <input type="checkbox" name="pay[]" value="Maya" <?= in_array('Maya', $selectedPayments, true) ? 'checked' : '' ?>>
                             <span class="checkmark"></span>
                         </label>
                         <label class="check-container">Bank Transfer
-                            <input type="checkbox" name="payments[]" value="Bank Transfer">
+                            <input type="checkbox" name="pay[]" value="Bank transfer" <?= in_array('Bank transfer', $selectedPayments, true) ? 'checked' : '' ?>>
                             <span class="checkmark"></span>
                         </label>
                         <label class="check-container">Pay Upon Booking
-                            <input type="checkbox" name="payments[]" value="Pay Upon Booking">
+                            <input type="checkbox" name="pay[]" value="Pay upon booking" <?= in_array('Pay upon booking', $selectedPayments, true) ? 'checked' : '' ?>>
                             <span class="checkmark"></span>
                         </label>
                     </div>
@@ -583,13 +642,13 @@ require BASE_PATH . '/includes/navbar.php';
                     <div class="upload-box" style="width: 100%; height: 220px;" onclick="document.getElementById('biz_logo').click()">
                         <i class="bi bi-cloud-arrow-up"></i>
                         <span>Upload Logo</span>
-                        <input type="file" id="biz_logo" name="biz_logo" style="display:none" accept="image/*">
+                        <input type="file" id="biz_logo" name="logo" style="display:none" accept="image/jpeg,image/png,image/webp">
                     </div>
                 </div>
 
                 <div class="form-group" style="margin-top: 30px;">
                     <label>Short Business Description:</label>
-                    <textarea name="biz_short_desc" class="form-control" style="height: 100px;"></textarea>
+                    <textarea name="description" class="form-control" style="height: 100px;"><?= e((string) ($formBusiness['description'] ?? '')) ?></textarea>
                 </div>
             </div>
         </div>
@@ -629,7 +688,7 @@ require BASE_PATH . '/includes/navbar.php';
                     <div class="upload-box" style="width: 100%; height: 280px;" onclick="document.getElementById('digital_sig').click()">
                         <i class="bi bi-cloud-arrow-up"></i>
                         <span>Upload Image</span>
-                        <input type="file" id="digital_sig" name="digital_sig" style="display:none" accept="image/*" required>
+                        <input type="file" id="digital_sig" name="digital_sig" style="display:none" accept="image/jpeg,image/png,image/webp">
                     </div>
                 </div>
             </div>
@@ -669,11 +728,6 @@ require BASE_PATH . '/includes/navbar.php';
     });
 </script>
 
-<script src="<?= e(asset_url('js/maps.js')) ?>"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        if (window.initMapPickers) window.initMapPickers();
-    });
-</script>
+<?= map_picker_footer_scripts() ?>
 
 <?php require BASE_PATH . '/includes/footer.php'; ?>

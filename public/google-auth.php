@@ -6,7 +6,7 @@ require_once dirname(__DIR__) . '/bootstrap.php';
 require_once BASE_PATH . '/middleware/auth.php';
 
 if (is_logged_in()) {
-    redirect_after_login();
+    redirect(public_home_url());
 }
 
 if (!google_oauth_configured()) {
@@ -18,10 +18,7 @@ $source = (string) ($_GET['source'] ?? 'login');
 $source = $source === 'register' ? 'register' : 'login';
 $accountType = (string) ($_GET['account_type'] ?? 'local_user');
 $accountType = ($source === 'register' && $accountType === 'seller') ? 'seller' : 'local_user';
-$redirect = (string) ($_GET['redirect'] ?? peek_login_redirect() ?? '');
-if ($redirect !== '' && is_safe_post_login_redirect($redirect)) {
-    $_SESSION['post_login_redirect'] = $redirect;
-}
+unset($_SESSION['post_login_redirect']);
 
 $_SESSION['google_oauth_state'] = bin2hex(random_bytes(32));
 $_SESSION['google_oauth_source'] = $source;

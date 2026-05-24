@@ -52,8 +52,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $eventId = (int) ($_POST['event_id'] ?? 0);
 
     if ($action === 'delete') {
-        db()->prepare('DELETE FROM events WHERE id = ?')->execute([$eventId]);
-        set_flash('success', 'Event deleted.');
+        if (admin_event_by_id($eventId)) {
+            db()->prepare('DELETE FROM events WHERE id = ?')->execute([$eventId]);
+            set_flash('success', 'Event deleted.');
+        } else {
+            set_flash('error', 'Event not found.');
+        }
         redirect(ADMIN_URL . 'events.php');
     }
 
@@ -147,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $editId = (int) ($_GET['edit'] ?? 0);
 $editingEvent = $editId > 0 ? admin_event_by_id($editId) : null;
 $formEvent = $editingEvent ?: $emptyEvent;
-$list = db()->query('SELECT * FROM events ORDER BY event_date DESC, event_time DESC, id DESC')->fetchAll();
+$list = db()->query('SELECT * FROM events ORDER BY event_date >= CURDATE() DESC, event_date ASC, event_time IS NULL ASC, event_time ASC, id DESC')->fetchAll();
 
 require __DIR__ . '/partials/layout-start.php';
 require BASE_PATH . '/includes/partials/dash-flash.php';

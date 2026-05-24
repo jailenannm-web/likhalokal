@@ -8,13 +8,15 @@ $bodyClass = trim(($bodyClass ?? '') . ' events-page lk-internal-workspace');
 $isDashboardLayout = true;
 require_once dirname(__DIR__) . '/bootstrap.php';
 
+$publicEventStatus = 'published';
+
 $stmt = db()->prepare(
     "SELECT * FROM events
-     WHERE status = 'published' AND event_date >= CURDATE()
-     ORDER BY event_date ASC, event_time ASC
+     WHERE status = ? AND event_date >= CURDATE()
+     ORDER BY event_date ASC, event_time IS NULL ASC, event_time ASC, id ASC
      LIMIT 50"
 );
-$stmt->execute();
+$stmt->execute([$publicEventStatus]);
 $list = $stmt->fetchAll();
 
 // Get current month for calendar
@@ -25,12 +27,13 @@ $monthName = date('F', mktime(0, 0, 0, $currentMonth, 1));
 // Get events for current month
 $monthEvents = db()->prepare(
     "SELECT * FROM events
-     WHERE status = 'published' 
+     WHERE status = ?
+     AND event_date >= CURDATE()
      AND YEAR(event_date) = ? 
      AND MONTH(event_date) = ?
-     ORDER BY event_date ASC, event_time ASC"
+     ORDER BY event_date ASC, event_time IS NULL ASC, event_time ASC, id ASC"
 );
-$monthEvents->execute([$currentYear, $currentMonth]);
+$monthEvents->execute([$publicEventStatus, $currentYear, $currentMonth]);
 $monthEventsList = $monthEvents->fetchAll();
 
 // Build array of event dates for highlighting
@@ -67,7 +70,7 @@ require BASE_PATH . '/includes/header.php';
                     <div class="lk-calendar-grid">
                         <?php
                         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $currentMonth, $currentYear);
-                        $firstDayOfWeek = date('N', mktime(0, 0, 0, $currentMonth, 1, $currentYear));
+                        $firstDayOfWeek = (int) date('w', mktime(0, 0, 0, $currentMonth, 1, $currentYear));
                         
                         // Day headers
                         $dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -76,7 +79,7 @@ require BASE_PATH . '/includes/header.php';
                         <?php endforeach;
                         
                         // Empty cells before first day
-                        for ($i = 1; $i < $firstDayOfWeek; $i++): ?>
+                        for ($i = 0; $i < $firstDayOfWeek; $i++): ?>
                             <div class="lk-calendar-day empty"></div>
                         <?php endfor;
                         
@@ -149,7 +152,7 @@ require BASE_PATH . '/includes/header.php';
                     $img = media_url($event['image'] ?? null, asset_url('images/tacboanfes1.png'));
                     ?>
                     <div class="col-md-6 col-xl-4">
-                        <article class="lk-event-card h-100">
+                        <article id="event-<?= (int) $event['id'] ?>" class="lk-event-card h-100">
                             <div class="lk-event-image">
                                 <img src="<?= e($img) ?>" alt="<?= e($event['title']) ?>">
                                 <div class="lk-event-date">
