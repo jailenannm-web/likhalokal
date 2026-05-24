@@ -178,7 +178,10 @@ function user_status_allows_login(string $status, ?string $role = null): bool
 
 function google_oauth_configured(): bool
 {
-    return GOOGLE_CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID'
-        && GOOGLE_CLIENT_SECRET !== 'YOUR_GOOGLE_CLIENT_SECRET'
+    $placeholderIds = ['YOUR_GOOGLE_CLIENT_ID', 'your_google_client_id_here', ''];
+    $placeholderSecrets = ['YOUR_GOOGLE_CLIENT_SECRET', 'your_google_client_secret_here', ''];
+
+    return !in_array(GOOGLE_CLIENT_ID, $placeholderIds, true)
+        && !in_array(GOOGLE_CLIENT_SECRET, $placeholderSecrets, true)
         && GOOGLE_REDIRECT_URI !== '';
 }

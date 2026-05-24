@@ -95,9 +95,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $params[] = $uid;
         db()->prepare($sql)->execute($params);
     } else {
-        $columns = 'user_id, business_name, business_type, description, contact_number, email, address, barangay, latitude, longitude, operating_hours, accepted_payments, logo, cover_image';
-        $marks = '?,?,?,?,?,?,?,?,?,?,?,?,?,?';
-        $params = [$uid, $businessName, $businessType, $description, $contact, $email, $address, $barangay, $latValue, $lngValue, $hours, $payments, $logo, $cover];
+        $columns = 'user_id, business_name, business_type, description, contact_number, email, address, barangay, latitude, longitude, operating_hours, accepted_payments, logo, cover_image, auto_reply_enabled, auto_reply_message, faq_price, faq_availability, faq_location, faq_payment, faq_delivery, faq_hours, faq_custom';
+        $marks = '?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?';
+        $params = [$uid, $businessName, $businessType, $description, $contact, $email, $address, $barangay, $latValue, $lngValue, $hours, $payments, $logo, $cover, $autoEnabled, $autoMsg, $faqPrice, $faqAvail, $faqLoc, $faqPay, $faqDel, $faqHours, $faqCustom];
         if ($hasBusinessCategory) {
             $columns .= ', business_category';
             $marks .= ',?';

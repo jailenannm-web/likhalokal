@@ -23,15 +23,15 @@
       document.getElementById("lkAdminChatInput");
     const fileInput = document.getElementById(cfg.fileId || "chatAttachment");
     const previewEl = document.getElementById(cfg.previewId || "chatAttachmentPreview");
+    const quickRepliesEl = document.getElementById(cfg.quickRepliesId || "lkChatQuickReplies");
     const sendBtn =
       form && (form.querySelector('button[type="submit"]') || form.querySelector(".lk-chat-send-btn"));
     const apiUrl = cfg.apiUrl || "/likhalokal/api/messages.php";
     const errorElId = cfg.errorId || "lkChatError";
     let errorEl = document.getElementById(errorElId);
+    let lastRenderedSignature = "";
 
-    if (!listEl || !form) {
-      return;
-    }
+    const chatReady = !!(listEl && form);
 
     function getAppBase() {
       if (cfg.appBase) {
@@ -148,10 +148,16 @@
     }
 
     function render(messages) {
+      const signature = messages && messages.length ? messages[messages.length - 1].id + ":" + messages.length : "empty";
+      if (signature === lastRenderedSignature) {
+        return;
+      }
+      lastRenderedSignature = signature;
       listEl.innerHTML = "";
       if (!messages || !messages.length) {
         listEl.innerHTML =
           '<p class="text-center text-muted small py-4">No messages yet. Start the conversation!</p>';
+        listEl.scrollTop = listEl.scrollHeight;
         return;
       }
       messages.forEach((m) => {
@@ -280,28 +286,413 @@
       }
     }
 
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      sendMessage();
-    });
+    function renderQuickReplies(items) {
+      if (!quickRepliesEl) return;
+      quickRepliesEl.innerHTML = "";
+      if (!Array.isArray(items) || !items.length) {
+        quickRepliesEl.classList.add("d-none");
+        return;
+      }
+      const intro = document.createElement("span");
+      intro.className = "lk-quick-replies-label";
+      intro.textContent = "Ask about";
+      quickRepliesEl.appendChild(intro);
+      items.forEach((item) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "lk-quick-reply-chip";
+        btn.textContent = item.label || item.type || "Question";
+        btn.dataset.faqType = item.type || "";
+        btn.dataset.faqLabel = item.label || item.type || "Question";
+        quickRepliesEl.appendChild(btn);
+      });
+      quickRepliesEl.classList.remove("d-none");
+    }
 
-    if (fileInput && previewEl) {
-      fileInput.addEventListener("change", function () {
-        previewEl.innerHTML = "";
-        const f = fileInput.files && fileInput.files[0];
-        if (f && f.type.startsWith("image/")) {
-          const img = document.createElement("img");
-          img.src = URL.createObjectURL(f);
-          img.className = "rounded mt-2";
-          img.style.maxHeight = "120px";
-          previewEl.appendChild(img);
+    async function loadQuickReplies() {
+      if (!quickRepliesEl || cfg.conversationType !== "business_inquiry" || !cfg.businessId) return;
+      try {
+        const params = new URLSearchParams();
+        params.set("action", "quick_replies");
+        params.set("business_id", cfg.businessId);
+        const res = await fetch(apiUrl + "?" + params.toString(), { credentials: "same-origin" });
+        const json = await res.json();
+        const items = json.success && json.data && Array.isArray(json.data.quick_replies)
+          ? json.data.quick_replies
+          : [];
+        renderQuickReplies(items);
+      } catch (err) {
+        console.error("Quick replies failed:", err);
+        renderQuickReplies([]);
+      }
+    }
+
+    async function sendQuickReply(type, label, button) {
+      if (!type || !label) return;
+      clearError();
+      if (button) button.disabled = true;
+
+      const fd = new FormData();
+      fd.append("action", "send");
+      fd.append("csrf_token", cfg.csrf || "");
+      fd.append("message_content", label);
+      fd.append("conversation_type", "business_inquiry");
+      fd.append("business_id", String(cfg.businessId || ""));
+      fd.append("receiver_id", String(cfg.receiverId || ""));
+      fd.append("faq_type", type);
+      if (cfg.productId) fd.append("product_id", String(cfg.productId));
+
+      try {
+        const res = await fetch(apiUrl, { method: "POST", credentials: "same-origin", body: fd });
+        const json = await res.json();
+        if (!json.success) {
+          showError(json.message || "Unable to send quick reply.");
+          return;
+        }
+        await load();
+      } catch (err) {
+        console.error("Quick reply send failed:", err);
+        showError("Network error. Please try again.");
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
+    if (chatReady) {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        sendMessage();
+      });
+
+      if (fileInput && previewEl) {
+        fileInput.addEventListener("change", function () {
+          previewEl.innerHTML = "";
+          const f = fileInput.files && fileInput.files[0];
+          if (f && f.type.startsWith("image/")) {
+            const img = document.createElement("img");
+            img.src = URL.createObjectURL(f);
+            img.className = "rounded mt-2";
+            img.style.maxHeight = "120px";
+            previewEl.appendChild(img);
+          }
+        });
+      }
+
+      if (cfg.conversationType === "admin_support" || cfg.businessId) {
+        load();
+        loadQuickReplies();
+        setInterval(load, cfg.pollMs || 3500);
+      }
+
+      if (quickRepliesEl) {
+        quickRepliesEl.addEventListener("click", function (e) {
+          const btn = e.target.closest(".lk-quick-reply-chip");
+          if (!btn) return;
+          sendQuickReply(btn.dataset.faqType || "", btn.dataset.faqLabel || btn.textContent || "", btn);
+        });
+      }
+    }
+
+    initNewMessage();
+    initDeleteConversation();
+
+    function initNewMessage() {
+      const newCfg = cfg.newMessage || window.LK_NEW_MESSAGE;
+      if (!newCfg) return;
+      const newForm = document.getElementById(newCfg.formId || "lkNewMessageForm");
+      const legacySelect = document.getElementById(newCfg.receiverId || "lkNewMessageReceiver");
+      const searchInput = document.getElementById(newCfg.searchId || "lkNewMessageReceiverSearch");
+      const resultsEl = document.getElementById(newCfg.resultsId || "lkNewMessageReceiverResults");
+      const selectedEl = document.getElementById(newCfg.selectedId || "lkNewMessageSelected");
+      const conversationTypeInput = document.getElementById(newCfg.conversationTypeId || "lkNewMessageConversationType");
+      const receiverIdInput = document.getElementById(newCfg.receiverIdId || "lkNewMessageReceiverId");
+      const roleInput = document.getElementById(newCfg.roleId || "lkNewMessageReceiverRole");
+      const businessIdInput = document.getElementById(newCfg.businessIdId || "lkNewMessageBusinessId");
+      const redirectInput = document.getElementById(newCfg.redirectId || "lkNewMessageRedirect");
+      const textInput = document.getElementById(newCfg.inputId || "lkNewMessageText");
+      const submitBtn =
+        document.getElementById(newCfg.submitId || "lkNewMessageSubmit") ||
+        (newForm && newForm.querySelector('button[type="submit"]'));
+      const errorHost = document.getElementById(newCfg.errorId || "lkNewMessageError");
+      const clearBtn = selectedEl ? selectedEl.querySelector("[data-recipient-clear]") : null;
+      const selectedLabel = selectedEl ? selectedEl.querySelector("[data-selected-label]") : null;
+      const selectedMeta = selectedEl ? selectedEl.querySelector("[data-selected-meta]") : null;
+      const searchUrl = newCfg.searchUrl || cfg.receiverSearchUrl || cfg.receiversUrl || "";
+      let searchTimer = 0;
+      let activeController = null;
+      let selectedReceiver = null;
+
+      if (!newForm || !textInput) return;
+
+      function setNewError(message) {
+        if (!errorHost) {
+          if (message) alert(message);
+          return;
+        }
+        errorHost.textContent = message || "";
+        errorHost.classList.toggle("d-none", !message);
+      }
+
+      function escapeText(value) {
+        return (value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function updateSubmitState() {
+        const hasMessage = textInput.value.trim() !== "";
+        let hasReceiver = false;
+        if (searchInput) {
+          hasReceiver = !!(receiverIdInput && receiverIdInput.value);
+        } else if (legacySelect) {
+          hasReceiver = !!legacySelect.value;
+        }
+        if (submitBtn) {
+          submitBtn.disabled = !(hasReceiver && hasMessage);
+        }
+      }
+
+      function renderHint(message) {
+        if (!resultsEl) return;
+        resultsEl.innerHTML = '<div class="lk-recipient-empty">' + escapeText(message) + "</div>";
+        resultsEl.classList.add("show");
+      }
+
+      function hideResults() {
+        if (!resultsEl) return;
+        resultsEl.classList.remove("show");
+      }
+
+      function clearSelectedReceiver() {
+        selectedReceiver = null;
+        if (conversationTypeInput) conversationTypeInput.value = "";
+        if (receiverIdInput) receiverIdInput.value = "";
+        if (roleInput) roleInput.value = "";
+        if (businessIdInput) businessIdInput.value = "";
+        if (redirectInput) redirectInput.value = "";
+        if (selectedEl) selectedEl.classList.add("d-none");
+        if (searchInput) {
+          searchInput.value = "";
+          searchInput.disabled = false;
+          searchInput.focus();
+        }
+        renderHint("Type a name to search");
+        updateSubmitState();
+      }
+
+      function selectReceiver(receiver) {
+        selectedReceiver = receiver;
+        if (conversationTypeInput) conversationTypeInput.value = receiver.conversation_type || "";
+        if (receiverIdInput) receiverIdInput.value = receiver.receiver_id || "";
+        if (roleInput) roleInput.value = receiver.role || receiver.role_label || "";
+        if (businessIdInput) businessIdInput.value = receiver.business_id || "";
+        if (redirectInput) redirectInput.value = receiver.redirect || "";
+        if (selectedLabel) selectedLabel.textContent = receiver.label || "Selected receiver";
+        if (selectedMeta) {
+          const metaParts = [receiver.role_label, receiver.meta].filter(Boolean);
+          selectedMeta.textContent = metaParts.join(" - ");
+        }
+        if (selectedEl) selectedEl.classList.remove("d-none");
+        if (searchInput) {
+          searchInput.value = "";
+          searchInput.disabled = true;
+        }
+        hideResults();
+        updateSubmitState();
+      }
+
+      function renderResults(receivers) {
+        if (!resultsEl) return;
+        if (!receivers.length) {
+          renderHint("No users found");
+          return;
+        }
+        resultsEl.innerHTML = receivers
+          .map(function (receiver, index) {
+            return (
+              '<button type="button" class="lk-recipient-result" data-index="' +
+              index +
+              '">' +
+              '<strong>' +
+              escapeText(receiver.label) +
+              "</strong>" +
+              "<span>" +
+              escapeText(receiver.role_label || "") +
+              "</span>" +
+              (receiver.meta ? "<small>" + escapeText(receiver.meta) + "</small>" : "") +
+              "</button>"
+            );
+          })
+          .join("");
+        resultsEl.classList.add("show");
+        resultsEl.querySelectorAll("[data-index]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            const receiver = receivers[Number(button.dataset.index)];
+            if (receiver) {
+              selectReceiver(receiver);
+            }
+          });
+        });
+      }
+
+      async function searchReceivers(query) {
+        if (!searchUrl || !resultsEl) return;
+        if (activeController) {
+          activeController.abort();
+        }
+        activeController = new AbortController();
+        try {
+          const url = searchUrl + "?q=" + encodeURIComponent(query);
+          const res = await fetch(url, { credentials: "same-origin", signal: activeController.signal });
+          const json = await res.json();
+          if (!json.success) {
+            renderHint(json.message || "Could not search receivers");
+            return;
+          }
+          const receivers = json.data && Array.isArray(json.data.receivers) ? json.data.receivers : [];
+          renderResults(receivers);
+        } catch (err) {
+          if (err.name !== "AbortError") {
+            console.error("Receiver search failed:", err);
+            renderHint("Could not search receivers");
+          }
+        }
+      }
+
+      if (searchInput) {
+        renderHint("Type a name to search");
+        searchInput.addEventListener("input", function () {
+          clearTimeout(searchTimer);
+          const query = searchInput.value.trim();
+          if (selectedReceiver) {
+            clearSelectedReceiver();
+            return;
+          }
+          if (query.length < 1) {
+            renderHint("Type a name to search");
+            return;
+          }
+          renderHint("Searching...");
+          searchTimer = setTimeout(function () {
+            searchReceivers(query);
+          }, 220);
+        });
+        searchInput.addEventListener("focus", function () {
+          if (!selectedReceiver && resultsEl && !resultsEl.classList.contains("show")) {
+            renderHint(searchInput.value.trim() ? "Searching..." : "Type a name to search");
+            if (searchInput.value.trim()) {
+              searchReceivers(searchInput.value.trim());
+            }
+          }
+        });
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener("click", clearSelectedReceiver);
+      }
+
+      textInput.addEventListener("input", updateSubmitState);
+      if (legacySelect) {
+        legacySelect.addEventListener("change", updateSubmitState);
+      }
+      updateSubmitState();
+
+      newForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        setNewError("");
+        const message = textInput.value.trim();
+        if (searchInput && !(receiverIdInput && receiverIdInput.value)) {
+          setNewError("Choose who you want to message.");
+          return;
+        }
+        if (!searchInput) {
+          const option = legacySelect && legacySelect.options[legacySelect.selectedIndex];
+          if (!option || !option.value) {
+            setNewError("Choose who you want to message.");
+            return;
+          }
+        }
+        if (!message) {
+          setNewError("Type your first message.");
+          return;
+        }
+
+        const fd = new FormData();
+        fd.append("action", "send");
+        fd.append("csrf_token", cfg.csrf || "");
+        fd.append("message_content", message);
+        if (searchInput) {
+          fd.append("conversation_type", conversationTypeInput.value || "business_inquiry");
+          if (receiverIdInput.value) fd.append("receiver_id", receiverIdInput.value);
+          if (businessIdInput.value) fd.append("business_id", businessIdInput.value);
+        } else {
+          const option = legacySelect.options[legacySelect.selectedIndex];
+          fd.append("conversation_type", option.dataset.conversationType || "business_inquiry");
+          if (option.dataset.receiverId) fd.append("receiver_id", option.dataset.receiverId);
+          if (option.dataset.businessId) fd.append("business_id", option.dataset.businessId);
+        }
+
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+          const res = await fetch(apiUrl, { method: "POST", credentials: "same-origin", body: fd });
+          const json = await res.json();
+          if (!json.success) {
+            setNewError(json.message || "Could not create conversation.");
+            return;
+          }
+          let redirect = newCfg.defaultRedirect || window.location.href;
+          if (searchInput && redirectInput && redirectInput.value) {
+            redirect = redirectInput.value;
+          } else if (!searchInput && legacySelect) {
+            const option = legacySelect.options[legacySelect.selectedIndex];
+            redirect = option.dataset.redirect || redirect;
+          }
+          window.location.href = redirect;
+        } catch (err) {
+          console.error("New message failed:", err);
+          setNewError("Network error. Please try again.");
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
         }
       });
     }
 
-    if (cfg.conversationType === "admin_support" || cfg.businessId) {
-      load();
-      setInterval(load, cfg.pollMs || 3500);
+    function initDeleteConversation() {
+      const buttons = document.querySelectorAll("[data-delete-conversation]");
+      if (!buttons.length) return;
+      buttons.forEach(function (button) {
+        button.addEventListener("click", async function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (!confirm("Are you sure you want to delete this conversation?")) {
+            return;
+          }
+          const fd = new FormData();
+          fd.append("action", "delete_conversation");
+          fd.append("csrf_token", cfg.csrf || button.dataset.csrf || "");
+          fd.append("conversation_type", button.dataset.conversationType || cfg.conversationType || "business_inquiry");
+          if (button.dataset.businessId) fd.append("business_id", button.dataset.businessId);
+          if (button.dataset.receiverId) fd.append("receiver_id", button.dataset.receiverId);
+
+          button.disabled = true;
+          try {
+            const res = await fetch(apiUrl, { method: "POST", credentials: "same-origin", body: fd });
+            const json = await res.json();
+            if (!json.success) {
+              alert(json.message || "Could not delete conversation.");
+              button.disabled = false;
+              return;
+            }
+            window.location.href = button.dataset.redirect || window.location.href;
+          } catch (err) {
+            console.error("Delete conversation failed:", err);
+            alert("Network error. Please try again.");
+            button.disabled = false;
+          }
+        });
+      });
     }
   }
 

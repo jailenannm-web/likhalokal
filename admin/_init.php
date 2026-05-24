@@ -9,6 +9,6 @@ require_once BASE_PATH . '/middleware/role.php';
 require_role(['admin']);
 
 $isDashboardLayout = true;
-$extraHead = ($extraHead ?? '') . '<link rel="stylesheet" href="' . e(asset_url('css/dashboard.css')) . '?v=1">';
-$extraHead .= '<link rel="stylesheet" href="' . e(asset_url('css/user-dashboard.css')) . '?v=3">';
+$extraHead = ($extraHead ?? '') . '<link rel="stylesheet" href="' . e(asset_url('css/dashboard.css')) . '?v=4">';
+$extraHead .= '<link rel="stylesheet" href="' . e(asset_url('css/user-dashboard.css')) . '?v=4">';
 $bodyClass = trim(($bodyClass ?? '') . ' lk-dash-page lk-dash-admin');

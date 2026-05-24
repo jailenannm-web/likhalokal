@@ -199,6 +199,7 @@ CREATE TABLE messages (
   message_content TEXT NOT NULL,
   is_read TINYINT(1) NOT NULL DEFAULT 0,
   is_auto_reply TINYINT(1) NOT NULL DEFAULT 0,
+  auto_reply_type VARCHAR(50) DEFAULT NULL,
   attachment_path VARCHAR(255) DEFAULT NULL,
   attachment_type VARCHAR(50) DEFAULT NULL,
   inquiry_context VARCHAR(255) DEFAULT NULL,
@@ -211,6 +212,20 @@ CREATE TABLE messages (
   INDEX idx_messages_business (business_id),
   INDEX idx_messages_pair (sender_id, receiver_id),
   INDEX idx_messages_created (created_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE message_conversation_deletions (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  conversation_type ENUM('business_inquiry','admin_support') NOT NULL,
+  business_id INT UNSIGNED DEFAULT NULL,
+  peer_user_id INT UNSIGNED NOT NULL,
+  deleted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_message_conversation_delete (user_id, conversation_type, business_id, peer_user_id),
+  INDEX idx_message_conversation_delete_user (user_id, conversation_type),
+  CONSTRAINT fk_msg_conv_del_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_msg_conv_del_peer FOREIGN KEY (peer_user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_msg_conv_del_business FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE inquiries (

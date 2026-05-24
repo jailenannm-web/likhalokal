@@ -292,7 +292,7 @@ function google_maps_api_configured(): bool
 
 function map_picker_footer_scripts(): string
 {
-    $html = '<script src="' . e(asset_url('js/map-picker.js')) . '?v=1"></script>';
+    $html = '<script src="' . e(asset_url('js/map-picker.js')) . '?v=2"></script>';
     if (google_maps_api_configured()) {
         $html .= '<script async defer src="https://maps.googleapis.com/maps/api/js?key='
             . urlencode(GOOGLE_MAPS_API_KEY)
@@ -393,11 +393,20 @@ function user_message_conversations(int $userId): array
     $stmt = db()->prepare(
         'SELECT m.business_id,
                 b.business_name,
+                b.user_id AS owner_user_id,
                 MAX(m.created_at) AS last_at,
                 (SELECT m2.message_content FROM messages m2
                  WHERE m2.business_id = m.business_id
                    AND m2.conversation_type = \'business_inquiry\'
                    AND (m2.sender_id = ? OR m2.receiver_id = ?)
+                   AND m2.created_at > COALESCE((
+                       SELECT d2.deleted_at FROM message_conversation_deletions d2
+                       WHERE d2.user_id = ?
+                         AND d2.conversation_type = \'business_inquiry\'
+                         AND d2.business_id = m2.business_id
+                         AND d2.peer_user_id = b.user_id
+                       LIMIT 1
+                   ), \'1000-01-01 00:00:00\')
                  ORDER BY m2.created_at DESC LIMIT 1) AS last_message,
                 SUM(CASE WHEN m.receiver_id = ? AND m.is_read = 0 THEN 1 ELSE 0 END) AS unread_count
          FROM messages m
@@ -405,10 +414,18 @@ function user_message_conversations(int $userId): array
          WHERE m.business_id IS NOT NULL
            AND m.conversation_type = \'business_inquiry\'
            AND (m.sender_id = ? OR m.receiver_id = ?)
-         GROUP BY m.business_id, b.business_name
+           AND m.created_at > COALESCE((
+               SELECT d.deleted_at FROM message_conversation_deletions d
+               WHERE d.user_id = ?
+                 AND d.conversation_type = \'business_inquiry\'
+                 AND d.business_id = m.business_id
+                 AND d.peer_user_id = b.user_id
+               LIMIT 1
+           ), \'1000-01-01 00:00:00\')
+         GROUP BY m.business_id, b.business_name, b.user_id
          ORDER BY last_at DESC'
     );
-    $stmt->execute([$userId, $userId, $userId, $userId, $userId]);
+    $stmt->execute([$userId, $userId, $userId, $userId, $userId, $userId, $userId]);
     return $stmt->fetchAll();
 }
 
@@ -550,13 +567,20 @@ function seller_message_threads(int $sellerUserId, int $businessId): array
              WHERE m2.business_id = ?
                AND m2.conversation_type = \'business_inquiry\'
                AND (m2.sender_id = u.id OR m2.receiver_id = u.id)
+               AND m2.created_at > COALESCE(d.deleted_at, \'1000-01-01 00:00:00\')
              ORDER BY m2.created_at DESC LIMIT 1) AS last_message,
             SUM(CASE WHEN m.receiver_id = ? AND m.is_read = 0 THEN 1 ELSE 0 END) AS unread_count
          FROM messages m
          INNER JOIN users u ON u.id = CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END
+         LEFT JOIN message_conversation_deletions d
+           ON d.user_id = ?
+          AND d.conversation_type = \'business_inquiry\'
+          AND d.business_id = m.business_id
+          AND d.peer_user_id = u.id
          WHERE m.business_id = ?
            AND m.conversation_type = \'business_inquiry\'
            AND (m.sender_id = ? OR m.receiver_id = ?)
+           AND m.created_at > COALESCE(d.deleted_at, \'1000-01-01 00:00:00\')
          GROUP BY customer_id, u.full_name
          HAVING customer_id != ?
          ORDER BY last_at DESC
@@ -565,6 +589,7 @@ function seller_message_threads(int $sellerUserId, int $businessId): array
     $stmt->execute([
         $sellerUserId,
         $businessId,
+        $sellerUserId,
         $sellerUserId,
         $sellerUserId,
         $businessId,
@@ -582,21 +607,48 @@ function admin_support_threads(int $adminId, ?string $filterRole = null): array
             (SELECT m2.message_content FROM messages m2
              WHERE m2.conversation_type = 'admin_support'
                AND ((m2.sender_id = u.id AND m2.receiver_id = ?) OR (m2.sender_id = ? AND m2.receiver_id = u.id))
+               AND m2.created_at > COALESCE(d.deleted_at, '1000-01-01 00:00:00')
              ORDER BY m2.created_at DESC LIMIT 1) AS last_message,
             (SELECT MAX(created_at) FROM messages m3
              WHERE m3.conversation_type = 'admin_support'
-               AND ((m3.sender_id = u.id AND m3.receiver_id = ?) OR (m3.sender_id = ? AND m3.receiver_id = u.id))) AS last_at,
+               AND ((m3.sender_id = u.id AND m3.receiver_id = ?) OR (m3.sender_id = ? AND m3.receiver_id = u.id))
+               AND m3.created_at > COALESCE(d.deleted_at, '1000-01-01 00:00:00')) AS last_at,
             (SELECT COUNT(*) FROM messages m4
-             WHERE m4.conversation_type = 'admin_support' AND m4.sender_id = u.id AND m4.receiver_id = ? AND m4.is_read = 0) AS unread_count
+             WHERE m4.conversation_type = 'admin_support'
+               AND m4.sender_id = u.id
+               AND m4.receiver_id = ?
+               AND m4.is_read = 0
+               AND m4.created_at > COALESCE(d.deleted_at, '1000-01-01 00:00:00')) AS unread_count
             FROM users u
+            LEFT JOIN message_conversation_deletions d
+              ON d.user_id = ?
+             AND d.conversation_type = 'admin_support'
+             AND d.business_id IS NULL
+             AND d.peer_user_id = u.id
             WHERE u.role != 'admin' AND u.id IN (
                 SELECT DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END
                 FROM messages WHERE conversation_type = 'admin_support' AND (sender_id = ? OR receiver_id = ?)
             )";
-    $params = [$adminId, $adminId, $adminId, $adminId, $adminId, $adminId, $adminId, $adminId];
+    $params = [$adminId, $adminId, $adminId, $adminId, $adminId, $adminId, $adminId, $adminId, $adminId];
     if ($filterRole !== null && $filterRole !== '') {
-        $sql .= ' AND u.role = ?';
+        $sql .= " AND u.role = ? AND EXISTS (
+            SELECT 1 FROM messages mx
+            WHERE mx.conversation_type = 'admin_support'
+              AND ((mx.sender_id = u.id AND mx.receiver_id = ?) OR (mx.sender_id = ? AND mx.receiver_id = u.id))
+              AND mx.created_at > COALESCE(d.deleted_at, '1000-01-01 00:00:00')
+        )";
         $params[] = $filterRole;
+        $params[] = $adminId;
+        $params[] = $adminId;
+    } else {
+        $sql .= " AND EXISTS (
+            SELECT 1 FROM messages mx
+            WHERE mx.conversation_type = 'admin_support'
+              AND ((mx.sender_id = u.id AND mx.receiver_id = ?) OR (mx.sender_id = ? AND mx.receiver_id = u.id))
+              AND mx.created_at > COALESCE(d.deleted_at, '1000-01-01 00:00:00')
+        )";
+        $params[] = $adminId;
+        $params[] = $adminId;
     }
     $sql .= ' ORDER BY last_at DESC';
     $stmt = db()->prepare($sql);
@@ -641,6 +693,40 @@ function business_faq_value(array $business, string $type): string
         }
     }
     return '';
+}
+
+function business_faq_label(string $type): string
+{
+    return match ($type) {
+        'price' => 'Price',
+        'availability' => 'Availability',
+        'location' => 'Location',
+        'payment' => 'Payment',
+        'pickup_delivery' => 'Pickup / Delivery',
+        'hours' => 'Hours',
+        'custom' => 'Other question',
+        default => ucwords(str_replace('_', ' ', $type)),
+    };
+}
+
+/** @return list<array{type:string,label:string}> */
+function business_quick_replies(array $business): array
+{
+    if (!business_auto_reply_enabled($business)) {
+        return [];
+    }
+
+    $items = [];
+    foreach (['price', 'availability', 'location', 'payment', 'pickup_delivery', 'hours', 'custom'] as $type) {
+        if (business_faq_value($business, $type) === '') {
+            continue;
+        }
+        $items[] = [
+            'type' => $type,
+            'label' => business_faq_label($type),
+        ];
+    }
+    return $items;
 }
 
 function business_auto_reply_enabled(array $business): bool
@@ -703,9 +789,13 @@ function detect_auto_reply_type(string $message): string
     return 'default';
 }
 
-function build_auto_reply_text(array $business, string $userMessage, ?string $productName = null): string
+/** @return array{type:string,text:string} */
+function build_auto_reply_payload(array $business, string $userMessage, ?string $productName = null, ?string $forcedType = null): array
 {
-    $type = detect_auto_reply_type($userMessage);
+    $type = $forcedType !== null && $forcedType !== '' ? $forcedType : detect_auto_reply_type($userMessage);
+    if (!in_array($type, ['price', 'availability', 'location', 'payment', 'pickup_delivery', 'hours', 'custom', 'default'], true)) {
+        $type = 'default';
+    }
 
     if ($type === 'default') {
         $text = trim((string) ($business['auto_reply_message'] ?? ''));
@@ -715,6 +805,10 @@ function build_auto_reply_text(array $business, string $userMessage, ?string $pr
     } else {
         $text = business_faq_value($business, $type);
         if ($text === '') {
+            if ($forcedType !== null) {
+                return ['type' => $type, 'text' => ''];
+            }
+            $type = 'default';
             $text = trim((string) ($business['auto_reply_message'] ?? ''));
         }
     }
@@ -729,17 +823,26 @@ function build_auto_reply_text(array $business, string $userMessage, ?string $pr
         '{product_name}' => $productLabel,
     ];
 
-    return str_replace(array_keys($replacements), array_values($replacements), $text);
+    return [
+        'type' => $type,
+        'text' => str_replace(array_keys($replacements), array_values($replacements), $text),
+    ];
 }
 
-function should_send_auto_reply(int $businessId, int $sellerId, int $customerId): bool
+function build_auto_reply_text(array $business, string $userMessage, ?string $productName = null): string
+{
+    return build_auto_reply_payload($business, $userMessage, $productName)['text'];
+}
+
+function should_send_auto_reply(int $businessId, int $sellerId, int $customerId, string $replyType = 'default'): bool
 {
     $convFilter = db_column_exists('messages', 'conversation_type')
         ? " AND conversation_type = 'business_inquiry'"
         : '';
+    $hasReplyType = db_column_exists('messages', 'auto_reply_type');
 
     $stmt = db()->prepare(
-        'SELECT sender_id, is_auto_reply, created_at
+        'SELECT sender_id, is_auto_reply, created_at' . ($hasReplyType ? ', auto_reply_type' : '') . '
          FROM messages
          WHERE business_id = ?
            AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?))'
@@ -759,11 +862,28 @@ function should_send_auto_reply(int $businessId, int $sellerId, int $customerId)
         }
     }
 
+    if ($replyType !== 'default') {
+        if (!$hasReplyType) {
+            return true;
+        }
+        $stmt = db()->prepare(
+            'SELECT COUNT(*) FROM messages
+             WHERE business_id = ? AND sender_id = ? AND receiver_id = ? AND is_auto_reply = 1
+               AND auto_reply_type = ?'
+            . $convFilter . '
+               AND created_at >= DATE_SUB(NOW(), INTERVAL 60 SECOND)'
+        );
+        $stmt->execute([$businessId, $sellerId, $customerId, $replyType]);
+        return (int) $stmt->fetchColumn() === 0;
+    }
+
+    $typeFilter = $hasReplyType ? " AND (auto_reply_type = 'default' OR auto_reply_type IS NULL)" : '';
     $stmt = db()->prepare(
         'SELECT COUNT(*) FROM messages
          WHERE business_id = ? AND sender_id = ? AND receiver_id = ? AND is_auto_reply = 1'
+        . $typeFilter
         . $convFilter . '
-           AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)'
+           AND created_at >= DATE_SUB(NOW(), INTERVAL 12 HOUR)'
     );
     $stmt->execute([$businessId, $sellerId, $customerId]);
     return (int) $stmt->fetchColumn() === 0;
@@ -777,7 +897,8 @@ function insert_business_auto_reply(
     int $customerId,
     int $sellerId,
     string $userMessage,
-    ?int $productId
+    ?int $productId,
+    ?string $forcedType = null
 ): ?int {
     $stmt = db()->prepare('SELECT * FROM businesses WHERE id = ? LIMIT 1');
     $stmt->execute([$businessId]);
@@ -785,10 +906,6 @@ function insert_business_auto_reply(
     if (!$business || !business_auto_reply_enabled($business)) {
         return null;
     }
-    if (!should_send_auto_reply($businessId, $sellerId, $customerId)) {
-        return null;
-    }
-
     $productName = null;
     if ($productId) {
         $ps = db()->prepare('SELECT product_name FROM products WHERE id = ? LIMIT 1');
@@ -797,14 +914,30 @@ function insert_business_auto_reply(
         $productName = $pr['product_name'] ?? null;
     }
 
-    $replyText = build_auto_reply_text($business, $userMessage, $productName);
-    $content = $replyText !== '' ? $replyText : "Hi! Thanks for your inquiry. We'll get back to you soon.";
+    $payload = build_auto_reply_payload($business, $userMessage, $productName, $forcedType);
+    $replyType = $payload['type'];
+    $content = trim($payload['text']);
+    if ($content === '') {
+        return null;
+    }
 
-    $stmt = db()->prepare(
-        'INSERT INTO messages (sender_id, receiver_id, business_id, product_id, message_content, is_read, is_auto_reply, attachment_path, attachment_type, inquiry_context, conversation_type, created_at)
-         VALUES (?,?,?,?,?,0,1,NULL,NULL,NULL,\'business_inquiry\',NOW())'
-    );
-    $stmt->execute([$sellerId, $customerId, $businessId, $productId, $content]);
+    if (!should_send_auto_reply($businessId, $sellerId, $customerId, $replyType)) {
+        return null;
+    }
+
+    if (db_column_exists('messages', 'auto_reply_type')) {
+        $stmt = db()->prepare(
+            'INSERT INTO messages (sender_id, receiver_id, business_id, product_id, message_content, is_read, is_auto_reply, auto_reply_type, attachment_path, attachment_type, inquiry_context, conversation_type, created_at)
+             VALUES (?,?,?,?,?,0,1,?,NULL,NULL,NULL,\'business_inquiry\',NOW())'
+        );
+        $stmt->execute([$sellerId, $customerId, $businessId, $productId, $content, $replyType]);
+    } else {
+        $stmt = db()->prepare(
+            'INSERT INTO messages (sender_id, receiver_id, business_id, product_id, message_content, is_read, is_auto_reply, attachment_path, attachment_type, inquiry_context, conversation_type, created_at)
+             VALUES (?,?,?,?,?,0,1,NULL,NULL,NULL,\'business_inquiry\',NOW())'
+        );
+        $stmt->execute([$sellerId, $customerId, $businessId, $productId, $content]);
+    }
 
     return (int) db()->lastInsertId();
 }

@@ -14,6 +14,7 @@ ALTER TABLE users MODIFY COLUMN password_hash VARCHAR(255) NULL;
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) NULL AFTER email;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider ENUM('local','google') NOT NULL DEFAULT 'local' AFTER google_id;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at DATETIME NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen_at DATETIME NULL;
 
 -- Optional unique indexes (ignore errors if they already exist)
@@ -55,10 +56,25 @@ ALTER TABLE tourist_attractions ADD COLUMN IF NOT EXISTS image VARCHAR(255) NULL
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS product_id INT UNSIGNED NULL;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read TINYINT(1) NOT NULL DEFAULT 0;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_auto_reply TINYINT(1) NOT NULL DEFAULT 0;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS auto_reply_type VARCHAR(50) NULL;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS attachment_path VARCHAR(255) NULL;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS attachment_type VARCHAR(50) NULL;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS inquiry_context VARCHAR(255) NULL;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS conversation_type ENUM('business_inquiry','admin_support') NOT NULL DEFAULT 'business_inquiry';
+
+CREATE TABLE IF NOT EXISTS message_conversation_deletions (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  conversation_type ENUM('business_inquiry','admin_support') NOT NULL,
+  business_id INT UNSIGNED NULL,
+  peer_user_id INT UNSIGNED NOT NULL,
+  deleted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_message_conversation_delete (user_id, conversation_type, business_id, peer_user_id),
+  INDEX idx_message_conversation_delete_user (user_id, conversation_type),
+  CONSTRAINT fk_msg_conv_del_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_msg_conv_del_peer FOREIGN KEY (peer_user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_msg_conv_del_business FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
 -- Password resets
 CREATE TABLE IF NOT EXISTS password_resets (

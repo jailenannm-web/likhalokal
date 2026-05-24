@@ -18,11 +18,6 @@ if ($role === 'local_user') {
     set_flash('error', 'Business registration requires an entrepreneur account. Register as a seller to apply.');
     redirect(BASE_URL . 'register.php');
 }
-if ($role === 'seller') {
-    set_flash('success', 'Complete your business profile below.');
-    redirect(SELLER_URL . 'business-profile.php');
-}
-
 require BASE_PATH . '/includes/header.php';
 require BASE_PATH . '/includes/navbar.php';
 ?>

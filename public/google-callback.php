@@ -5,101 +5,227 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/bootstrap.php';
 require_once BASE_PATH . '/middleware/auth.php';
 
+$oauthSource = (string) ($_SESSION['google_oauth_source'] ?? 'login');
+$failureUrl = BASE_URL . ($oauthSource === 'register' ? 'register.php' : 'login.php');
+
 if (!google_oauth_configured()) {
-    set_flash('error', 'Google login is not configured.');
-    redirect(BASE_URL . 'login.php');
+    set_flash('error', 'Google sign-in is not configured.');
+    redirect($failureUrl);
 }
 
 $state = (string) ($_GET['state'] ?? '');
 $expectedState = (string) ($_SESSION['google_oauth_state'] ?? $_SESSION['oauth_state'] ?? '');
 if ($state === '' || $expectedState === '' || !hash_equals($expectedState, $state)) {
-    set_flash('error', 'Invalid OAuth state. Please try again.');
-    redirect(BASE_URL . 'login.php');
+    unset($_SESSION['google_oauth_state'], $_SESSION['oauth_state'], $_SESSION['google_oauth_source']);
+    set_flash('error', 'Google sign-in failed. Please try again.');
+    redirect($failureUrl);
 }
-unset($_SESSION['google_oauth_state'], $_SESSION['oauth_state']);
+unset($_SESSION['google_oauth_state'], $_SESSION['oauth_state'], $_SESSION['google_oauth_source']);
 
 if (isset($_GET['error'])) {
     set_flash('error', 'Google sign-in was cancelled.');
-    redirect(BASE_URL . 'login.php');
+    redirect($failureUrl);
 }
 
 $code = (string) ($_GET['code'] ?? '');
 if ($code === '') {
-    set_flash('error', 'Missing authorization code.');
-    redirect(BASE_URL . 'login.php');
+    set_flash('error', 'Google sign-in failed. Please try again.');
+    redirect($failureUrl);
 }
 
-$tokenResponse = google_http_post('https://oauth2.googleapis.com/token', [
-    'code' => $code,
-    'client_id' => GOOGLE_CLIENT_ID,
-    'client_secret' => GOOGLE_CLIENT_SECRET,
-    'redirect_uri' => GOOGLE_REDIRECT_URI,
-    'grant_type' => 'authorization_code',
-]);
-
-if (!$tokenResponse || empty($tokenResponse['access_token'])) {
-    set_flash('error', 'Could not complete Google sign-in.');
-    redirect(BASE_URL . 'login.php');
-}
-
-$userInfo = google_http_get(
-    'https://www.googleapis.com/oauth2/v2/userinfo',
-    (string) $tokenResponse['access_token']
-);
-
-if (!$userInfo || empty($userInfo['email'])) {
-    set_flash('error', 'Could not read Google profile.');
-    redirect(BASE_URL . 'login.php');
-}
-
-$email = strtolower(trim((string) $userInfo['email']));
-$googleId = (string) ($userInfo['id'] ?? '');
-$fullName = trim((string) ($userInfo['name'] ?? $email));
-
-$stmt = db()->prepare('SELECT * FROM users WHERE email = ? OR google_id = ? LIMIT 1');
-$stmt->execute([$email, $googleId]);
-$user = $stmt->fetch();
-
-if ($user) {
-    if (!user_status_allows_login((string) $user['status'], (string) $user['role'])) {
-        set_flash('error', 'Your account is not active. Please contact support.');
-        redirect(BASE_URL . 'login.php');
+try {
+    $profile = google_oauth_profile_from_code($code);
+    if ($profile === null) {
+        set_flash('error', 'Google sign-in failed. Please try again.');
+        redirect($failureUrl);
     }
-    if ($googleId !== '' && empty($user['google_id'])) {
-        if (empty($user['password_hash'])) {
-            db()->prepare('UPDATE users SET google_id = ?, auth_provider = \'google\', updated_at = NOW() WHERE id = ?')
-                ->execute([$googleId, (int) $user['id']]);
-        } else {
-            db()->prepare('UPDATE users SET google_id = ?, updated_at = NOW() WHERE id = ?')
-                ->execute([$googleId, (int) $user['id']]);
+
+    $email = strtolower(trim((string) $profile['email']));
+    $googleId = trim((string) $profile['google_id']);
+    $fullName = trim((string) $profile['name']);
+
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $googleId === '') {
+        set_flash('error', 'Google sign-in failed. Please try again.');
+        redirect($failureUrl);
+    }
+    if (empty($profile['email_verified'])) {
+        set_flash('error', 'Your Google email must be verified before signing in.');
+        redirect($failureUrl);
+    }
+
+    $stmt = db()->prepare('SELECT * FROM users WHERE email = ? OR google_id = ? LIMIT 1');
+    $stmt->execute([$email, $googleId]);
+    $user = $stmt->fetch();
+
+    if ($user) {
+        if (!user_status_allows_login((string) $user['status'], (string) $user['role'])) {
+            set_flash('error', 'Your account is not active. Please contact support.');
+            redirect($failureUrl);
+        }
+
+        if (!empty($user['google_id']) && !hash_equals((string) $user['google_id'], $googleId)) {
+            set_flash('error', 'Google sign-in failed. Please try again.');
+            redirect($failureUrl);
+        }
+
+        $updates = [];
+        $params = [];
+        if (empty($user['google_id'])) {
+            $updates[] = 'google_id = ?';
+            $params[] = $googleId;
+        }
+        if (empty($user['auth_provider']) || $user['auth_provider'] === 'local') {
+            $updates[] = 'auth_provider = ?';
+            $params[] = empty($user['password_hash']) ? 'google' : 'local';
+        }
+        if (db_column_exists('users', 'email_verified_at') && empty($user['email_verified_at'])) {
+            $updates[] = 'email_verified_at = NOW()';
+        }
+        if ($updates) {
+            $updates[] = 'updated_at = NOW()';
+            $params[] = (int) $user['id'];
+            db()->prepare('UPDATE users SET ' . implode(', ', $updates) . ' WHERE id = ?')->execute($params);
+        }
+
+        $user['google_id'] = $googleId;
+        login_user($user, false);
+        log_activity((int) $user['id'], 'login', 'Google OAuth login', $_SERVER['REMOTE_ADDR'] ?? null);
+        set_flash('success', 'Welcome back!');
+        redirect_by_role();
+    }
+
+    $stmt = db()->prepare(
+        'INSERT INTO users (full_name, email, google_id, auth_provider, password_hash, role, status, email_verified_at, created_at, updated_at)
+         VALUES (?,?,?,?,?,\'local_user\',\'active\',NOW(),NOW(),NOW())'
+    );
+    $stmt->execute([
+        $fullName !== '' ? $fullName : $email,
+        $email,
+        $googleId,
+        'google',
+        null,
+    ]);
+    $id = (int) db()->lastInsertId();
+
+    login_user([
+        'id' => $id,
+        'full_name' => $fullName !== '' ? $fullName : $email,
+        'email' => $email,
+        'role' => 'local_user',
+    ], false);
+    log_activity($id, 'register', 'Google OAuth signup', $_SERVER['REMOTE_ADDR'] ?? null);
+    set_flash('success', 'Welcome to LikhaLokal!');
+    redirect_by_role();
+} catch (Throwable $e) {
+    error_log('Google OAuth error: ' . $e->getMessage());
+    set_flash('error', 'Google sign-in failed. Please try again.');
+    redirect($failureUrl);
+}
+
+/**
+ * @return array{google_id:string,email:string,email_verified:bool,name:string}|null
+ */
+function google_oauth_profile_from_code(string $code): ?array
+{
+    $autoload = BASE_PATH . '/vendor/autoload.php';
+    if (is_file($autoload)) {
+        require_once $autoload;
+    }
+
+    if (class_exists('Google\Client')) {
+        return google_oauth_profile_with_client($code);
+    }
+
+    return google_oauth_profile_with_http($code);
+}
+
+/**
+ * @return array{google_id:string,email:string,email_verified:bool,name:string}|null
+ */
+function google_oauth_profile_with_client(string $code): ?array
+{
+    $client = new Google\Client();
+    $client->setClientId(GOOGLE_CLIENT_ID);
+    $client->setClientSecret(GOOGLE_CLIENT_SECRET);
+    $client->setRedirectUri(GOOGLE_REDIRECT_URI);
+    $client->setScopes(['openid', 'email', 'profile']);
+
+    $token = $client->fetchAccessTokenWithAuthCode($code);
+    if (!is_array($token) || empty($token['access_token'])) {
+        return null;
+    }
+
+    $payload = null;
+    if (!empty($token['id_token'])) {
+        $payload = $client->verifyIdToken((string) $token['id_token']);
+    }
+    if (!is_array($payload)) {
+        $oauth = new Google\Service\Oauth2($client);
+        $info = $oauth->userinfo->get();
+        $payload = [
+            'sub' => (string) $info->id,
+            'email' => (string) $info->email,
+            'email_verified' => (bool) $info->verifiedEmail,
+            'name' => (string) $info->name,
+        ];
+    }
+
+    return normalize_google_profile($payload);
+}
+
+/**
+ * @return array{google_id:string,email:string,email_verified:bool,name:string}|null
+ */
+function google_oauth_profile_with_http(string $code): ?array
+{
+    $token = google_http_post('https://oauth2.googleapis.com/token', [
+        'code' => $code,
+        'client_id' => GOOGLE_CLIENT_ID,
+        'client_secret' => GOOGLE_CLIENT_SECRET,
+        'redirect_uri' => GOOGLE_REDIRECT_URI,
+        'grant_type' => 'authorization_code',
+    ]);
+    if (!$token || empty($token['access_token'])) {
+        return null;
+    }
+
+    $payload = null;
+    if (!empty($token['id_token'])) {
+        $payload = google_http_get('https://oauth2.googleapis.com/tokeninfo?id_token=' . rawurlencode((string) $token['id_token']));
+        if (is_array($payload) && (($payload['aud'] ?? '') !== GOOGLE_CLIENT_ID)) {
+            return null;
         }
     }
-    login_user($user, false);
-    log_activity((int) $user['id'], 'login', 'Google OAuth login', $_SERVER['REMOTE_ADDR'] ?? null);
-    if ($user['status'] === 'pending' && $user['role'] !== 'admin') {
-        redirect(BASE_URL . 'complete-account.php');
+
+    if (!is_array($payload)) {
+        $payload = google_http_get('https://www.googleapis.com/oauth2/v3/userinfo', (string) $token['access_token']);
     }
-    set_flash('success', 'Welcome back!');
-    redirect_by_role();
+
+    return is_array($payload) ? normalize_google_profile($payload) : null;
 }
 
-$stmt = db()->prepare(
-    'INSERT INTO users (full_name, email, google_id, auth_provider, password_hash, role, status, created_at, updated_at)
-     VALUES (?,?,?,?,NULL,?,\'active\',NOW(),NOW())'
-);
-$stmt->execute([$fullName, $email, $googleId, 'google', 'local_user']);
-$id = (int) db()->lastInsertId();
+/**
+ * @param array<string,mixed> $payload
+ * @return array{google_id:string,email:string,email_verified:bool,name:string}|null
+ */
+function normalize_google_profile(array $payload): ?array
+{
+    $googleId = (string) ($payload['sub'] ?? $payload['id'] ?? '');
+    $email = strtolower(trim((string) ($payload['email'] ?? '')));
+    $verified = $payload['email_verified'] ?? $payload['verified_email'] ?? false;
+    $name = trim((string) ($payload['name'] ?? $payload['given_name'] ?? $email));
 
-login_user([
-    'id' => $id,
-    'full_name' => $fullName,
-    'email' => $email,
-    'role' => 'local_user',
-], false);
-$_SESSION['needs_role_completion'] = true;
+    if ($googleId === '' || $email === '') {
+        return null;
+    }
 
-log_activity($id, 'register', 'Google OAuth signup', $_SERVER['REMOTE_ADDR'] ?? null);
-redirect(BASE_URL . 'complete-account.php');
+    return [
+        'google_id' => $googleId,
+        'email' => $email,
+        'email_verified' => filter_var($verified, FILTER_VALIDATE_BOOLEAN),
+        'name' => $name,
+    ];
+}
 
 /**
  * @return array<string, mixed>|null
@@ -114,8 +240,9 @@ function google_http_post(string $url, array $fields): ?array
         CURLOPT_TIMEOUT => 20,
     ]);
     $raw = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     curl_close($ch);
-    if ($raw === false) {
+    if ($raw === false || $status < 200 || $status >= 300) {
         return null;
     }
     $data = json_decode($raw, true);
@@ -125,17 +252,22 @@ function google_http_post(string $url, array $fields): ?array
 /**
  * @return array<string, mixed>|null
  */
-function google_http_get(string $url, string $accessToken): ?array
+function google_http_get(string $url, ?string $accessToken = null): ?array
 {
+    $headers = [];
+    if ($accessToken !== null && $accessToken !== '') {
+        $headers[] = 'Authorization: Bearer ' . $accessToken;
+    }
     $ch = curl_init($url);
     curl_setopt_array($ch, [
-        CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $accessToken],
+        CURLOPT_HTTPHEADER => $headers,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => 20,
     ]);
     $raw = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     curl_close($ch);
-    if ($raw === false) {
+    if ($raw === false || $status < 200 || $status >= 300) {
         return null;
     }
     $data = json_decode($raw, true);

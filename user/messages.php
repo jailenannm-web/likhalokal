@@ -28,14 +28,18 @@ if ($view === 'sellers' && $activeBusinessId > 0) {
 }
 
 $apiMessagesUrl = preg_replace('#/public/?$#', '/api/', rtrim(BASE_URL, '/')) . 'messages.php';
+$apiReceiversUrl = preg_replace('#/public/?$#', '/api/', rtrim(BASE_URL, '/')) . 'message-receivers.php';
 $csrf = csrf_token();
 $baseUrl = USER_DASH_URL . 'messages.php';
+$hidePublicFooter = true;
 
 require __DIR__ . '/partials/layout-start.php';
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h1 class="h4 fw-bold mb-0 text-dark">Messages</h1>
-    <a href="<?= e(BASE_URL) ?>products.php" class="btn btn-sm btn-lk-orange"><i class="bi bi-bag me-1"></i> Find sellers</a>
+    <button type="button" class="btn btn-sm btn-lk-orange" data-bs-toggle="modal" data-bs-target="#lkNewMessageModal">
+        <i class="bi bi-pencil-square me-1"></i> New Message
+    </button>
 </div>
 
 <div class="lk-msg-tabs">
@@ -66,17 +70,25 @@ require __DIR__ . '/partials/layout-start.php';
         <?php else: ?>
             <div class="lk-chat-thread-header">
                 <div class="lk-chat-avatar support"><i class="bi bi-headset"></i></div>
-                <div>
+                <div class="flex-grow-1">
                     <div class="fw-bold fs-5">Tourism Admin</div>
                     <span class="badge bg-primary lk-role-badge">Official Support</span>
                     <span class="small text-success ms-2">Responsive</span>
                 </div>
+                <button type="button" class="btn btn-outline-danger btn-sm rounded-circle lk-chat-delete-btn"
+                        title="Delete conversation"
+                        data-delete-conversation
+                        data-conversation-type="admin_support"
+                        data-receiver-id="<?= (int) $adminId ?>"
+                        data-redirect="<?= e($baseUrl) ?>?view=sellers">
+                    <i class="bi bi-trash"></i>
+                </button>
             </div>
             <div id="lkUserChatMessages" class="lk-chat-messages"></div>
-            <div class="p-3 border-top bg-white">
+            <div class="lk-chat-composer">
                 <div id="lkUserChatAttachmentPreview" class="small mb-2"></div>
-                <form id="lkUserChatForm" class="d-flex align-items-center gap-2" enctype="multipart/form-data">
-                    <label class="btn btn-outline-secondary btn-sm rounded-circle mb-0" title="Attach image">
+                <form id="lkUserChatForm" class="lk-chat-form" enctype="multipart/form-data">
+                    <label class="btn btn-outline-secondary btn-sm rounded-circle mb-0 lk-chat-action-btn" title="Attach image">
                         <i class="bi bi-image"></i>
                         <input type="file" id="lkUserChatAttachment" name="attachment" accept="image/*" class="d-none">
                     </label>
@@ -105,26 +117,18 @@ window.LK_USER_CHAT = {
   errorId: "lkUserChatError"
 };
 </script>
-<script src="<?= e(ASSET_URL) ?>js/lk-chat.js?v=4"></script>
 <?php endif; ?>
 
-<?php else: ?>
-<?php if (empty($conversations)): ?>
-<div class="lk-panel p-5 text-center">
-    <i class="bi bi-chat-heart fs-1 text-warning mb-3 d-block"></i>
-    <h2 class="h5">No seller conversations yet</h2>
-    <p class="text-muted">Browse the marketplace and send an inquiry to a local business.</p>
-    <a href="<?= e(BASE_URL) ?>products.php" class="btn btn-lk-orange">Browse Marketplace</a>
-</div>
 <?php else: ?>
 <div class="lk-chat-shell">
     <aside class="lk-chat-list">
         <div class="lk-chat-list-header">Seller Inbox</div>
         <div class="lk-chat-list-scroll">
             <?php foreach ($conversations as $c): ?>
-            <a class="lk-msg-row <?= $activeBusinessId === (int) $c['business_id'] ? 'active' : '' ?> text-decoration-none text-dark"
-               href="<?= e($baseUrl) ?>?view=sellers&business_id=<?= (int) $c['business_id'] ?>">
-                <div class="d-flex justify-content-between align-items-start">
+            <div class="lk-msg-row <?= $activeBusinessId === (int) $c['business_id'] ? 'active' : '' ?>">
+                <a class="lk-msg-row-main d-block text-decoration-none text-dark pe-4"
+                   href="<?= e($baseUrl) ?>?view=sellers&business_id=<?= (int) $c['business_id'] ?>">
+                <div class="d-flex justify-content-between align-items-start pe-3">
                     <strong><?= e($c['business_name'] ?? 'Business') ?></strong>
                     <?php if ((int) ($c['unread_count'] ?? 0) > 0): ?>
                         <span class="badge bg-danger rounded-pill"><?= (int) $c['unread_count'] ?></span>
@@ -132,14 +136,27 @@ window.LK_USER_CHAT = {
                 </div>
                 <p class="small text-muted mb-0 mt-1"><?= e(str_limit($c['last_message'] ?? '', 55)) ?></p>
                 <span class="small text-muted"><?= e(format_datetime_short($c['last_at'] ?? '')) ?></span>
-            </a>
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-danger lk-msg-row-delete"
+                        title="Delete conversation"
+                        data-delete-conversation
+                        data-conversation-type="business_inquiry"
+                        data-business-id="<?= (int) $c['business_id'] ?>"
+                        data-receiver-id="<?= (int) ($c['owner_user_id'] ?? 0) ?>"
+                        data-redirect="<?= e($baseUrl) ?>?view=sellers">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
             <?php endforeach; ?>
+            <?php if (empty($conversations)): ?>
+                <p class="text-muted small text-center py-4 px-3 mb-0">No seller conversations yet.</p>
+            <?php endif; ?>
         </div>
     </aside>
     <section class="lk-chat-thread">
         <?php if (!$activeBusiness): ?>
             <div class="flex-grow-1 d-flex align-items-center justify-content-center text-muted p-5">
-                Select a conversation to view messages.
+                <?= empty($conversations) ? 'Create a new message to start talking with a seller.' : 'Select a conversation to view messages.' ?>
             </div>
         <?php else: ?>
             <div class="lk-chat-thread-header">
@@ -148,12 +165,22 @@ window.LK_USER_CHAT = {
                     <div class="fw-bold fs-5"><?= e($activeBusiness['business_name']) ?></div>
                     <a href="<?= e(vendor_profile_url((int) $activeBusinessId, current_request_return_url())) ?>" class="btn btn-sm btn-outline-secondary mt-1">View shop</a>
                 </div>
+                <button type="button" class="btn btn-outline-danger btn-sm rounded-circle lk-chat-delete-btn"
+                        title="Delete conversation"
+                        data-delete-conversation
+                        data-conversation-type="business_inquiry"
+                        data-business-id="<?= (int) $activeBusinessId ?>"
+                        data-receiver-id="<?= (int) $activeBusiness['owner_user_id'] ?>"
+                        data-redirect="<?= e($baseUrl) ?>?view=sellers">
+                    <i class="bi bi-trash"></i>
+                </button>
             </div>
             <div id="lkUserChatMessages" class="lk-chat-messages"></div>
-            <div class="p-3 border-top bg-white">
+            <div class="lk-chat-composer">
+                <div id="lkUserChatQuickReplies" class="lk-quick-replies d-none"></div>
                 <div id="lkUserChatAttachmentPreview" class="small mb-2"></div>
-                <form id="lkUserChatForm" class="d-flex align-items-center gap-2" enctype="multipart/form-data">
-                    <label class="btn btn-outline-secondary btn-sm rounded-circle mb-0" title="Attach image">
+                <form id="lkUserChatForm" class="lk-chat-form" enctype="multipart/form-data">
+                    <label class="btn btn-outline-secondary btn-sm rounded-circle mb-0 lk-chat-action-btn" title="Attach image">
                         <i class="bi bi-image"></i>
                         <input type="file" id="lkUserChatAttachment" name="attachment" accept="image/*" class="d-none">
                     </label>
@@ -180,12 +207,96 @@ window.LK_USER_CHAT = {
   listId: "lkUserChatMessages",
   fileId: "lkUserChatAttachment",
   previewId: "lkUserChatAttachmentPreview",
+  quickRepliesId: "lkUserChatQuickReplies",
   errorId: "lkUserChatError"
 };
 </script>
-<script src="<?= e(ASSET_URL) ?>js/lk-chat.js?v=4"></script>
 <?php endif; ?>
 <?php endif; ?>
-<?php endif; ?>
+
+<div class="modal fade" id="lkNewMessageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" id="lkNewMessageForm">
+            <div class="modal-header">
+                <h2 class="modal-title h5">New Message</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="lkNewMessageError" class="alert alert-danger py-2 d-none"></div>
+                <label class="form-label">Send to</label>
+                <div class="lk-recipient-search mb-3" data-recipient-search>
+                    <div class="lk-recipient-selected d-none" id="lkNewMessageSelected">
+                        <div>
+                            <strong data-selected-label></strong>
+                            <span data-selected-meta></span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-link text-danger p-0" data-recipient-clear aria-label="Clear selected receiver">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </button>
+                    </div>
+                    <div class="position-relative">
+                        <input type="search" class="form-control" id="lkNewMessageReceiverSearch" placeholder="Search by name, business, or role" autocomplete="off">
+                        <div class="lk-recipient-results" id="lkNewMessageReceiverResults"></div>
+                    </div>
+                    <input type="hidden" id="lkNewMessageConversationType">
+                    <input type="hidden" id="lkNewMessageReceiverId">
+                    <input type="hidden" id="lkNewMessageReceiverRole">
+                    <input type="hidden" id="lkNewMessageBusinessId">
+                    <input type="hidden" id="lkNewMessageRedirect">
+                </div>
+                <label class="form-label">Message</label>
+                <textarea class="form-control" id="lkNewMessageText" rows="4" required placeholder="Type your first message"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-lk-orange" id="lkNewMessageSubmit" disabled><i class="bi bi-send-fill me-1"></i> Send</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+window.LK_USER_CHAT = window.LK_USER_CHAT || {
+  apiUrl: <?= json_encode($apiMessagesUrl) ?>,
+  appBase: <?= json_encode(app_root_url()) ?>,
+  assetBase: <?= json_encode(ASSET_URL) ?>,
+  conversationType: "",
+  me: <?= (int) $uid ?>,
+  csrf: <?= json_encode($csrf) ?>,
+  receiverSearchUrl: <?= json_encode($apiReceiversUrl) ?>,
+  newMessage: {
+    formId: "lkNewMessageForm",
+    searchId: "lkNewMessageReceiverSearch",
+    resultsId: "lkNewMessageReceiverResults",
+    selectedId: "lkNewMessageSelected",
+    conversationTypeId: "lkNewMessageConversationType",
+    receiverIdId: "lkNewMessageReceiverId",
+    roleId: "lkNewMessageReceiverRole",
+    businessIdId: "lkNewMessageBusinessId",
+    redirectId: "lkNewMessageRedirect",
+    inputId: "lkNewMessageText",
+    submitId: "lkNewMessageSubmit",
+    errorId: "lkNewMessageError",
+    defaultRedirect: <?= json_encode($baseUrl) ?>
+  }
+};
+window.LK_USER_CHAT.receiverSearchUrl = <?= json_encode($apiReceiversUrl) ?>;
+window.LK_USER_CHAT.newMessage = window.LK_USER_CHAT.newMessage || {
+  formId: "lkNewMessageForm",
+  searchId: "lkNewMessageReceiverSearch",
+  resultsId: "lkNewMessageReceiverResults",
+  selectedId: "lkNewMessageSelected",
+  conversationTypeId: "lkNewMessageConversationType",
+  receiverIdId: "lkNewMessageReceiverId",
+  roleId: "lkNewMessageReceiverRole",
+  businessIdId: "lkNewMessageBusinessId",
+  redirectId: "lkNewMessageRedirect",
+  inputId: "lkNewMessageText",
+  submitId: "lkNewMessageSubmit",
+  errorId: "lkNewMessageError",
+  defaultRedirect: <?= json_encode($baseUrl) ?>
+};
+</script>
+<script src="<?= e(ASSET_URL) ?>js/lk-chat.js?v=7"></script>
 
 <?php require __DIR__ . '/partials/layout-end.php'; require BASE_PATH . '/includes/footer.php'; ?>

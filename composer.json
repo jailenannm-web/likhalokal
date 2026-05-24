@@ -2,6 +2,7 @@
     "name": "likhalokal/app",
     "description": "Vinzons LikhaLokal web application",
     "require": {
+        "google/apiclient": "^2.16",
         "php": ">=8.1",
         "phpmailer/phpmailer": "^6.9"
     },

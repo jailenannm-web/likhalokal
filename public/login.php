@@ -79,14 +79,20 @@ require BASE_PATH . '/includes/navbar.php';
                     </form>
                     <div class="lk-auth-divider auth-divider"><span>or</span></div>
                     <?php if (google_oauth_configured()): ?>
-                        <a href="<?= e(BASE_URL) ?>google-auth.php" class="btn btn-lk-google google-auth-btn w-100">
+                        <?php
+                        $googleLoginUrl = BASE_URL . 'google-login.php?source=login';
+                        if ($loginRedirect !== null && is_safe_post_login_redirect($loginRedirect)) {
+                            $googleLoginUrl .= '&redirect=' . rawurlencode($loginRedirect);
+                        }
+                        ?>
+                        <a href="<?= e($googleLoginUrl) ?>" class="btn btn-lk-google google-auth-btn w-100">
                             <span class="lk-google-g" aria-hidden="true">G</span> Continue with Google
                         </a>
                     <?php else: ?>
                         <button type="button" class="btn btn-lk-google google-auth-btn w-100" disabled>
                             <span class="lk-google-g" aria-hidden="true">G</span> Continue with Google
                         </button>
-                        <p class="small text-muted text-center mt-2 mb-0">Google login requires OAuth setup.</p>
+                        <p class="small text-muted text-center mt-2 mb-0">Set Google OAuth credentials to enable Google sign-in.</p>
                     <?php endif; ?>
                     <p class="auth-switch-text">Don&rsquo;t have an account? <a href="<?= e(BASE_URL) ?>register.php">Create an account</a></p>
                 </div>

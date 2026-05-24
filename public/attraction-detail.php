@@ -78,8 +78,8 @@ $hasCoords = isset($a['latitude'], $a['longitude'])
     && is_numeric($a['latitude'])
     && is_numeric($a['longitude']);
 $display = static fn($value, string $placeholder = 'Not provided'): string => trim((string) $value) !== '' ? trim((string) $value) : $placeholder;
-$dir = $hasCoords
-    ? 'https://www.google.com/maps/dir/?api=1&destination=' . urlencode($a['latitude'] . ',' . $a['longitude'])
+$googleMapsUrl = $hasCoords
+    ? 'https://www.google.com/maps/search/?api=1&query=' . urlencode($a['latitude'] . ',' . $a['longitude'])
     : '';
 ?>
 
@@ -287,12 +287,12 @@ $dir = $hasCoords
             
             <div>
                 <?php if ($hasCoords): ?>
-                    <a class="btn btn-outline-custom w-100 mb-3 text-center d-block" target="_blank" rel="noopener" href="<?= e($dir) ?>">Get directions</a>
-                    <div id="attMap" class="unified-card shadow-sm" style="height:240px;background:#e9ecef;"></div>
+                    <a class="btn btn-outline-custom w-100 mb-3 text-center d-block" target="_blank" rel="noopener" href="<?= e($googleMapsUrl) ?>">View on Google Maps</a>
+                    <div id="attMap" class="unified-card shadow-sm lk-map-box" style="background:#e9ecef;"></div>
                 <?php else: ?>
-                    <div class="unified-card shadow-sm vendor-map-placeholder" style="height:220px;background:#e9ecef;">
+                    <div class="unified-card shadow-sm vendor-map-placeholder lk-map-box" style="background:#e9ecef;">
                         <i class="fa-solid fa-map-location-dot"></i>
-                        <strong>Location unavailable</strong>
+                        <strong>Location map is not yet available.</strong>
                         <span>Latitude and longitude have not been provided yet.</span>
                     </div>
                 <?php endif; ?>

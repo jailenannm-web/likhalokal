@@ -10,11 +10,19 @@ if (is_logged_in()) {
 }
 
 if (!google_oauth_configured()) {
-    set_flash('error', 'Google login is not configured yet. Use email and password, or set GOOGLE_CLIENT_ID in config/app.php.');
+    set_flash('error', 'Google sign-in is not configured yet. Please set your Google OAuth Client ID and Secret.');
     redirect(BASE_URL . 'login.php');
 }
 
+$source = (string) ($_GET['source'] ?? 'login');
+$source = $source === 'register' ? 'register' : 'login';
+$redirect = (string) ($_GET['redirect'] ?? peek_login_redirect() ?? '');
+if ($redirect !== '' && is_safe_post_login_redirect($redirect)) {
+    $_SESSION['post_login_redirect'] = $redirect;
+}
+
 $_SESSION['google_oauth_state'] = bin2hex(random_bytes(32));
+$_SESSION['google_oauth_source'] = $source;
 $_SESSION['oauth_state'] = $_SESSION['google_oauth_state'];
 
 $params = http_build_query([

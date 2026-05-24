@@ -72,8 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_name'] = $fullName;
         $_SESSION['user_email'] = $email;
         $_SESSION['user_role'] = $role;
+        $_SESSION['role'] = $role;
         log_activity($id, 'register', 'New account via API', $_SERVER['REMOTE_ADDR'] ?? null);
-        $redirect = public_home_url();
+        $redirect = $role === 'seller' ? BASE_URL . 'register-business.php' : public_home_url();
         json_response(['success' => true, 'message' => 'Registered', 'data' => ['redirect' => $redirect]]);
     }
 

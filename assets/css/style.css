@@ -1139,9 +1139,8 @@ p {
 .lk-map-box {
   border-radius: 14px;
   overflow: hidden;
-  height: 240px;
-  max-height: 260px;
-  min-height: 180px;
+  height: 350px;
+  min-height: 350px;
   background: #e9ecef;
 }
 
@@ -1195,18 +1194,16 @@ p {
 
 .vendor-profile-page .vendor-profile-card #vendorMap,
 .vendor-profile-page .vendor-profile-card .lk-map-box {
-  height: 220px;
-  max-height: 230px;
-  min-height: 180px;
+  height: 350px;
+  min-height: 350px;
   width: 100%;
 }
 
 @media (max-width: 767px) {
   .vendor-profile-page .vendor-profile-card #vendorMap,
   .vendor-profile-page .vendor-profile-card .lk-map-box {
-    height: 180px;
-    max-height: 200px;
-    min-height: 170px;
+    height: 320px;
+    min-height: 320px;
   }
 }
 
@@ -1916,7 +1913,7 @@ body.lk-auth-page footer {
 /* Map picker */
 .lk-map-picker {
   width: 100%;
-  min-height: 320px;
+  min-height: 350px;
   border-radius: 18px;
   overflow: hidden;
   background: #e9eef2;
@@ -1924,7 +1921,7 @@ body.lk-auth-page footer {
 }
 @media (max-width: 768px) {
   .lk-map-picker {
-    min-height: 240px;
+    min-height: 320px;
   }
 }
 

@@ -237,6 +237,10 @@ $hasCoords = isset($b['latitude'], $b['longitude'])
 
     && is_numeric($b['longitude']);
 
+$googleMapsUrl = $hasCoords
+    ? 'https://www.google.com/maps/search/?api=1&query=' . urlencode($b['latitude'] . ',' . $b['longitude'])
+    : '';
+
 ?>
 
 
@@ -564,6 +568,10 @@ body {
 
                     <?php if ($hasCoords): ?>
 
+                        <a class="btn btn-outline-success fw-bold mb-3" target="_blank" rel="noopener" href="<?= e($googleMapsUrl) ?>">
+                            <i class="fa-solid fa-map-location-dot me-2"></i>View on Google Maps
+                        </a>
+
                         <div class="lk-map-box shadow-sm" id="vendorMap" data-lat="<?= e((string) $b['latitude']) ?>" data-lng="<?= e((string) $b['longitude']) ?>" data-title="<?= e($b['business_name']) ?>" data-address="<?= e($display($b['address'] ?? '', 'Vinzons, Camarines Norte')) ?>"></div>
 
                     <?php else: ?>
@@ -572,7 +580,7 @@ body {
 
                             <i class="fa-solid fa-map-location-dot"></i>
 
-                            <strong>Location unavailable</strong>
+                            <strong>Location map is not yet available.</strong>
 
                             <span>Latitude and longitude have not been provided yet.</span>
 
