@@ -176,6 +176,45 @@ function enrich_message_row(array $row): array
         $row['attachment_path'] = normalize_message_attachment_path((string) $row['attachment_path']);
         $row['attachment_url'] = message_attachment_url($row['attachment_path']);
     }
+    $row['product'] = null;
+    if (!empty($row['product_id'])) {
+        $stmt = db()->prepare(
+            'SELECT p.id, p.product_name, p.price, p.image, p.availability, p.category, p.business_id, b.business_name
+             FROM products p
+             INNER JOIN businesses b ON b.id = p.business_id
+             WHERE p.id = ? LIMIT 1'
+        );
+        $stmt->execute([(int) $row['product_id']]);
+        $product = $stmt->fetch();
+        if ($product) {
+            $row['product'] = [
+                'id' => (int) $product['id'],
+                'name' => (string) $product['product_name'],
+                'price' => (float) $product['price'] > 0 ? 'PHP ' . number_format((float) $product['price'], 2) : 'Contact seller',
+                'image_url' => media_url($product['image'] ?? null, asset_url('images/likhalokal-logo.png')),
+                'availability' => ucfirst((string) ($product['availability'] ?? 'available')),
+                'category' => product_category_label((string) ($product['category'] ?? 'other')),
+                'business_id' => (int) $product['business_id'],
+                'business_name' => (string) $product['business_name'],
+                'url' => vendor_profile_url((int) $product['business_id']),
+                'shop_url' => vendor_profile_url((int) $product['business_id']),
+            ];
+        }
+    }
+    if (!$row['product'] && ($row['inquiry_context'] ?? '') === 'product_inquiry') {
+        $row['product'] = [
+            'id' => null,
+            'name' => preg_replace('/^Inquiring about:\s*/i', '', (string) ($row['message_content'] ?? 'Product inquiry')),
+            'price' => '',
+            'image_url' => asset_url('images/likhalokal-logo.png'),
+            'availability' => 'Product unavailable',
+            'category' => '',
+            'business_id' => (int) ($row['business_id'] ?? 0),
+            'business_name' => '',
+            'url' => !empty($row['business_id']) ? vendor_profile_url((int) $row['business_id']) : '',
+            'shop_url' => !empty($row['business_id']) ? vendor_profile_url((int) $row['business_id']) : '',
+        ];
+    }
     return $row;
 }
 
@@ -197,15 +236,22 @@ function insert_message(
     ?string $attachmentType,
     ?string $inquiryContext
 ): int {
-    $stmt = db()->prepare(
-        'INSERT INTO messages (sender_id, receiver_id, business_id, product_id, message_content, is_read, is_auto_reply, attachment_path, attachment_type, inquiry_context, conversation_type, created_at)
-         VALUES (?,?,?,?,?,0,?,?,?,?,?,NOW())'
-    );
-    $stmt->execute([
+    $messageType = $isAutoReply
+        ? 'auto_reply'
+        : ($inquiryContext === 'product_inquiry' ? 'product_inquiry' : ($attachmentPath ? 'image' : 'text'));
+    $hasMessageType = db_column_exists('messages', 'message_type');
+    $columns = 'sender_id, receiver_id, business_id, product_id, ' . ($hasMessageType ? 'message_type, ' : '') . 'message_content, is_read, is_auto_reply, attachment_path, attachment_type, inquiry_context, conversation_type, created_at';
+    $marks = '?,?,?,?,?' . ($hasMessageType ? ',?' : '') . ',0,?,?,?,?,?,NOW()';
+    $params = [
         $senderId,
         $receiverId,
         $businessId,
         $productId,
+    ];
+    if ($hasMessageType) {
+        $params[] = $messageType;
+    }
+    $params = array_merge($params, [
         $text,
         $isAutoReply ? 1 : 0,
         $attachmentPath,
@@ -213,7 +259,63 @@ function insert_message(
         $inquiryContext,
         $conversationType,
     ]);
+    $stmt = db()->prepare("INSERT INTO messages ($columns) VALUES ($marks)");
+    $stmt->execute($params);
     return (int) db()->lastInsertId();
+}
+
+function valid_product_for_business(int $productId, int $businessId): ?array
+{
+    if ($productId < 1 || $businessId < 1) {
+        return null;
+    }
+    $stmt = db()->prepare(
+        'SELECT p.*, b.business_name, b.user_id AS owner_user_id
+         FROM products p
+         INNER JOIN businesses b ON b.id = p.business_id
+         WHERE p.id = ? AND p.business_id = ? AND b.status = \'approved\'
+         LIMIT 1'
+    );
+    $stmt->execute([$productId, $businessId]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+function ensure_product_inquiry_message(int $customerId, int $sellerId, int $businessId, int $productId): ?array
+{
+    $product = valid_product_for_business($productId, $businessId);
+    if (!$product || (int) $product['owner_user_id'] !== $sellerId) {
+        return null;
+    }
+
+    $stmt = db()->prepare(
+        'SELECT id FROM messages
+         WHERE sender_id = ? AND receiver_id = ? AND business_id = ? AND product_id = ?
+           AND conversation_type = \'business_inquiry\'
+           AND inquiry_context = \'product_inquiry\'
+           AND created_at >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+         ORDER BY created_at DESC LIMIT 1'
+    );
+    $stmt->execute([$customerId, $sellerId, $businessId, $productId]);
+    $existingId = (int) ($stmt->fetchColumn() ?: 0);
+    if ($existingId > 0) {
+        return fetch_message_row($existingId);
+    }
+
+    restore_conversation_for_user($customerId, 'business_inquiry', $businessId, $sellerId);
+    $id = insert_message(
+        $customerId,
+        $sellerId,
+        $businessId,
+        $productId,
+        'Inquiring about: ' . (string) $product['product_name'],
+        'business_inquiry',
+        false,
+        null,
+        null,
+        'product_inquiry'
+    );
+    return fetch_message_row($id);
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -235,6 +337,7 @@ try {
             if ($businessId < 1) {
                 messages_json(['success' => false, 'message' => 'business_id required'], 400);
             }
+            $productId = isset($_GET['product_id']) ? (int) $_GET['product_id'] : 0;
             $stmt = db()->prepare(
                 "SELECT b.*, u.id AS owner_user_id
                  FROM businesses b
@@ -247,10 +350,14 @@ try {
             if (!$business || (int) $business['owner_user_id'] === $uid) {
                 messages_json(['success' => true, 'message' => '', 'data' => ['quick_replies' => []]]);
             }
+            $product = null;
+            if ($productId > 0) {
+                $product = valid_product_for_business($productId, $businessId);
+            }
             messages_json([
                 'success' => true,
                 'message' => '',
-                'data' => ['quick_replies' => business_quick_replies($business)],
+                'data' => ['quick_replies' => business_quick_replies($business, $product)],
             ]);
         }
         $businessId = isset($_GET['business_id']) ? (int) $_GET['business_id'] : 0;
@@ -443,6 +550,28 @@ try {
             messages_json(['success' => true, 'message' => 'Conversation deleted.', 'data' => []]);
         }
 
+        if ($action === 'start_product_inquiry') {
+            if (!verify_csrf($input['csrf_token'] ?? null)) {
+                messages_json(['success' => false, 'message' => 'Invalid CSRF'], 403);
+            }
+            $me = current_user_id();
+            $role = current_user_role();
+            if ($role !== 'local_user') {
+                messages_json(['success' => false, 'message' => 'Only customers can start product inquiries.'], 403);
+            }
+            $businessId = (int) ($input['business_id'] ?? 0);
+            $productId = (int) ($input['product_id'] ?? 0);
+            $owner = business_owner_id($businessId);
+            if (!$owner || $owner === $me) {
+                messages_json(['success' => false, 'message' => 'Invalid business inquiry.'], 422);
+            }
+            $message = ensure_product_inquiry_message($me, $owner, $businessId, $productId);
+            if (!$message) {
+                messages_json(['success' => false, 'message' => 'Product is not available for this seller.'], 422);
+            }
+            messages_json(['success' => true, 'message' => 'Product inquiry started.', 'data' => ['message' => $message]]);
+        }
+
         if ($action === 'send') {
             if (!verify_csrf($input['csrf_token'] ?? null)) {
                 messages_json(['success' => false, 'message' => 'Invalid CSRF'], 403);
@@ -546,6 +675,9 @@ try {
 
             if ($receiverId === $me) {
                 messages_json(['success' => false, 'message' => 'Invalid receiver'], 422);
+            }
+            if ($productId !== null && !valid_product_for_business($productId, $businessId)) {
+                messages_json(['success' => false, 'message' => 'Product is not available for this seller.'], 422);
             }
 
             restore_conversation_for_user($me, 'business_inquiry', $businessId, $receiverId);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 $pageTitle = 'Register Your Business';
 require_once dirname(__DIR__) . '/bootstrap.php';
 require_once BASE_PATH . '/middleware/auth.php';
+require_once BASE_PATH . '/middleware/csrf.php';
 
 if (!is_logged_in()) {
     set_flash('error', 'Please login or register to continue.');
@@ -14,10 +15,129 @@ $role = current_user_role();
 if ($role === 'admin') {
     redirect_after_login();
 }
-if ($role === 'local_user') {
-    set_flash('error', 'Business registration requires an entrepreneur account. Register as a seller to apply.');
-    redirect(BASE_URL . 'register.php');
+
+$existingBusiness = null;
+if (in_array($role, ['seller', 'local_user'], true)) {
+    $existingBusiness = seller_business_for_user();
+    if ($existingBusiness && $existingBusiness['status'] === 'approved') {
+        redirect($role === 'seller' ? SELLER_URL . 'dashboard.php' : BASE_URL . 'index.php');
+    }
+    if ($role === 'seller' && $existingBusiness && $existingBusiness['status'] === 'pending' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+        redirect(SELLER_URL . 'pending.php');
+    }
 }
+
+function public_business_type_from_form(string $type): string
+{
+    return match ($type) {
+        'Food' => 'food_vendor',
+        'Retail' => 'pasalubong',
+        'Services' => 'service',
+        'Accomodation', 'Accommodation' => 'resort',
+        default => 'service',
+    };
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verify_csrf($_POST['csrf_token'] ?? null)) {
+        set_flash('error', 'Invalid token. Please try again.');
+        redirect(BASE_URL . 'register-business.php');
+    }
+
+    $businessName = trim((string) ($_POST['biz_name'] ?? ''));
+    $businessType = public_business_type_from_form((string) ($_POST['biz_type'] ?? 'Services'));
+    $businessCategory = trim((string) ($_POST['biz_category'] ?? ''));
+    $address = trim((string) ($_POST['biz_address'] ?? ''));
+    $barangay = trim((string) ($_POST['barangay'] ?? ''));
+    $branch = trim((string) ($_POST['biz_branch'] ?? ''));
+    $ownerContact = trim((string) ($_POST['owner_contact'] ?? ''));
+    $ownerEmail = trim((string) ($_POST['owner_email'] ?? current_user()['email'] ?? ''));
+    $latitude = trim((string) ($_POST['latitude'] ?? ''));
+    $longitude = trim((string) ($_POST['longitude'] ?? ''));
+    $operatingHours = trim((string) ($_POST['operating_hours'] ?? ''));
+    $productList = trim((string) ($_POST['product_list'] ?? ''));
+    $priceRange = trim((string) ($_POST['price_range'] ?? ''));
+    $shortDescription = trim((string) ($_POST['biz_short_desc'] ?? ''));
+    $payments = json_encode(array_values($_POST['payments'] ?? []));
+    $methods = array_values($_POST['methods'] ?? []);
+    $descriptionParts = array_filter([
+        $shortDescription,
+        $productList !== '' ? 'Products/services: ' . $productList : '',
+        $priceRange !== '' ? 'Price range: ' . $priceRange : '',
+        !empty($methods) ? 'Order/booking methods: ' . implode(', ', $methods) : '',
+    ]);
+    $description = implode("\n", $descriptionParts);
+
+    $errors = [];
+    if ($businessName === '' || strlen($businessName) > 200) {
+        $errors[] = 'Business name is required.';
+    }
+    if ($address === '') {
+        $errors[] = 'Business address is required.';
+    }
+    if ($ownerEmail !== '' && !filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = 'Please enter a valid owner email.';
+    }
+    if ($latitude !== '' && !is_numeric($latitude)) {
+        $errors[] = 'Latitude must be a valid number.';
+    }
+    if ($longitude !== '' && !is_numeric($longitude)) {
+        $errors[] = 'Longitude must be a valid number.';
+    }
+
+    $logo = $existingBusiness['logo'] ?? null;
+    if (!empty($_FILES['biz_logo']['tmp_name'])) {
+        $upload = save_upload($_FILES['biz_logo'], 'businesses');
+        if ($upload) {
+            $logo = $upload;
+        } else {
+            $errors[] = 'Business logo must be a valid image under the upload limit.';
+        }
+    }
+
+    $cover = $existingBusiness['cover_image'] ?? null;
+    if (!empty($_FILES['product_img']['tmp_name'])) {
+        $upload = save_upload($_FILES['product_img'], 'businesses');
+        if ($upload) {
+            $cover = $upload;
+        }
+    }
+
+    if (!empty($errors)) {
+        set_flash('error', implode(' ', $errors));
+        redirect(BASE_URL . 'register-business.php');
+    }
+
+    $fullAddress = trim($address . ($branch !== '' ? ' - ' . $branch : ''));
+    $hasBusinessCategory = db_column_exists('businesses', 'business_category');
+
+    if ($existingBusiness && in_array($existingBusiness['status'], ['rejected', 'pending'], true)) {
+        $sql = 'UPDATE businesses SET business_name=?, business_type=?, description=?, contact_number=?, email=?, address=?, barangay=?, latitude=?, longitude=?, operating_hours=?, accepted_payments=?, logo=?, cover_image=?, status=\'pending\', rejection_reason=NULL, approved_by=NULL, approved_at=NULL';
+        $params = [$businessName, $businessType, $description, $ownerContact, $ownerEmail, $fullAddress, $barangay, $latitude !== '' ? $latitude : null, $longitude !== '' ? $longitude : null, $operatingHours, $payments, $logo, $cover];
+        if ($hasBusinessCategory) {
+            $sql .= ', business_category=?';
+            $params[] = $businessCategory;
+        }
+        $sql .= ', updated_at=NOW() WHERE id=? AND user_id=?';
+        $params[] = (int) $existingBusiness['id'];
+        $params[] = current_user_id();
+        db()->prepare($sql)->execute($params);
+    } else {
+        $columns = 'user_id, business_name, business_type, description, contact_number, email, address, barangay, latitude, longitude, operating_hours, accepted_payments, logo, cover_image, status, created_at, updated_at';
+        $marks = '?,?,?,?,?,?,?,?,?,?,?,?,?,?,' . "'pending',NOW(),NOW()";
+        $params = [current_user_id(), $businessName, $businessType, $description, $ownerContact, $ownerEmail, $fullAddress, $barangay, $latitude !== '' ? $latitude : null, $longitude !== '' ? $longitude : null, $operatingHours, $payments, $logo, $cover];
+        if ($hasBusinessCategory) {
+            $columns = 'user_id, business_name, business_type, business_category, description, contact_number, email, address, barangay, latitude, longitude, operating_hours, accepted_payments, logo, cover_image, status, created_at, updated_at';
+            $marks = '?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,' . "'pending',NOW(),NOW()";
+            $params = [current_user_id(), $businessName, $businessType, $businessCategory, $description, $ownerContact, $ownerEmail, $fullAddress, $barangay, $latitude !== '' ? $latitude : null, $longitude !== '' ? $longitude : null, $operatingHours, $payments, $logo, $cover];
+        }
+        db()->prepare('INSERT INTO businesses (' . $columns . ') VALUES (' . $marks . ')')->execute($params);
+    }
+
+    set_flash('success', 'Your business registration is under review. Please wait for admin approval before accessing seller features.');
+    redirect($role === 'seller' ? SELLER_URL . 'pending.php' : BASE_URL . 'register-business.php');
+}
+
 require BASE_PATH . '/includes/header.php';
 require BASE_PATH . '/includes/navbar.php';
 ?>
@@ -247,7 +367,10 @@ require BASE_PATH . '/includes/navbar.php';
 </style>
 
 <div class="main-form-wrapper">
-    <form action="process_registration.php" method="POST" enctype="multipart/form-data">
+    <?php if ($m = flash('error')): ?><div class="alert alert-danger"><?= e($m) ?></div><?php endif; ?>
+    <?php if ($m = flash('success')): ?><div class="alert alert-success"><?= e($m) ?></div><?php endif; ?>
+    <form method="POST" enctype="multipart/form-data">
+        <?= csrf_field() ?>
         
         <div class="info-section">
             <div class="section-header">
@@ -285,8 +408,36 @@ require BASE_PATH . '/includes/navbar.php';
                 </div>
 
                 <div class="form-group">
+                    <label>Barangay:</label>
+                    <input type="text" name="barangay" class="form-control" placeholder="Example: Poblacion">
+                </div>
+
+                <div class="form-group">
                     <label>Branch (if any):</label>
                     <input type="text" name="biz_branch" class="form-control" placeholder="">
+                </div>
+
+                <div class="form-group">
+                    <label>Operating Hours:</label>
+                    <input type="text" name="operating_hours" class="form-control" placeholder="Example: Mon-Sat 8:00 AM - 6:00 PM">
+                </div>
+
+                <div class="form-group" style="align-items: flex-start;">
+                    <label style="margin-top: 10px;">Map Location:</label>
+                    <div>
+                        <div id="businessMapPicker" class="lk-map-picker" style="height:350px;border-radius:12px;overflow:hidden;border:1px solid #ced4da;"></div>
+                        <p class="small text-muted mt-2 mb-0">Tap the map or edit the coordinates to set the business location.</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Latitude:</label>
+                    <input type="text" name="latitude" id="businessLatitude" class="form-control" placeholder="14.1720">
+                </div>
+
+                <div class="form-group">
+                    <label>Longitude:</label>
+                    <input type="text" name="longitude" id="businessLongitude" class="form-control" placeholder="122.9450">
                 </div>
             </div>
         </div>
@@ -515,6 +666,13 @@ require BASE_PATH . '/includes/navbar.php';
                 this.parentElement.style.borderColor = "#f2a63d";
             }
         });
+    });
+</script>
+
+<script src="<?= e(asset_url('js/maps.js')) ?>"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.initMapPickers) window.initMapPickers();
     });
 </script>
 

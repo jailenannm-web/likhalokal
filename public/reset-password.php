@@ -27,6 +27,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         set_flash('error', 'Invalid or expired reset link.');
         redirect(BASE_URL . 'forgot-password.php');
     }
+    $ustmt = db()->prepare('SELECT id, password_hash, auth_provider, google_id FROM users WHERE email = ? LIMIT 1');
+    $ustmt->execute([$email]);
+    $user = $ustmt->fetch();
+    $isGoogleOnly = $user
+        && (string) ($user['auth_provider'] ?? '') === 'google'
+        && !empty($user['google_id']);
+    if (!$user || $isGoogleOnly) {
+        mark_password_reset_used((int) $row['id']);
+        set_flash('error', 'This account uses Google sign-in. Please use Continue with Google to log in.');
+        redirect(BASE_URL . 'login.php');
+    }
     $hash = password_hash($password, PASSWORD_DEFAULT);
     db()->prepare('UPDATE users SET password_hash = ?, updated_at = NOW() WHERE email = ?')->execute([$hash, $email]);
     mark_password_reset_used((int) $row['id']);
@@ -38,6 +49,16 @@ $row = ($email !== '' && $token !== '') ? validate_password_reset($email, $token
 if (!$row) {
     set_flash('error', 'Invalid or expired reset link.');
     redirect(BASE_URL . 'forgot-password.php');
+}
+$ustmt = db()->prepare('SELECT id, password_hash, auth_provider, google_id FROM users WHERE email = ? LIMIT 1');
+$ustmt->execute([$email]);
+$user = $ustmt->fetch();
+$isGoogleOnly = $user
+    && (string) ($user['auth_provider'] ?? '') === 'google'
+    && !empty($user['google_id']);
+if (!$user || $isGoogleOnly) {
+    set_flash('error', 'This account uses Google sign-in. Please use Continue with Google to log in.');
+    redirect(BASE_URL . 'login.php');
 }
 
 require_once BASE_PATH . '/middleware/csrf.php';

@@ -63,7 +63,7 @@ if ($method === 'POST') {
     $action = $input['action'] ?? $action;
 
     if ($action === 'create') {
-        api_require_roles(['seller']);
+        api_require_roles(['seller', 'local_user']);
         if (!verify_csrf($input['csrf_token'] ?? null)) {
             json_response(['success' => false, 'message' => 'Invalid CSRF', 'data' => []], 403);
         }
@@ -148,6 +148,8 @@ if ($method === 'POST') {
                 "UPDATE businesses SET status='approved', approved_by=?, approved_at=NOW(), rejection_reason=NULL, updated_at=NOW() WHERE id=?"
             );
             $stmt->execute([current_user_id(), $bid]);
+            db()->prepare("UPDATE users SET role='seller', updated_at=NOW() WHERE id=? AND role='local_user'")
+                ->execute([(int) $biz['user_id']]);
             notify_user((int) $biz['user_id'], 'Business approved', 'Your business "' . $biz['business_name'] . '" is now live on LikhaLokal.', 'success');
         } elseif ($action === 'reject') {
             $reason = trim((string) ($input['rejection_reason'] ?? ''));

@@ -147,6 +147,72 @@
       }
     }
 
+    function renderProductInquiryCard(m) {
+      const product = m.product || {};
+      const card = document.createElement("div");
+      card.className = "lk-product-inquiry-card";
+
+      const image = document.createElement("img");
+      image.src = product.image_url || (cfg.assetBase ? cfg.assetBase + "images/likhalokal-logo.png" : "");
+      image.alt = "";
+      image.loading = "lazy";
+      image.onerror = function () {
+        image.style.display = "none";
+      };
+      card.appendChild(image);
+
+      const body = document.createElement("div");
+      body.className = "lk-product-inquiry-body";
+
+      const eyebrow = document.createElement("div");
+      eyebrow.className = "lk-product-inquiry-eyebrow";
+      eyebrow.textContent = "Inquiring about";
+      body.appendChild(eyebrow);
+
+      const name = document.createElement("strong");
+      name.textContent = product.name || (m.message_content || "Product inquiry").replace(/^Inquiring about:\s*/i, "");
+      body.appendChild(name);
+
+      const meta = document.createElement("div");
+      meta.className = "lk-product-inquiry-meta";
+      meta.textContent = [product.price, product.availability, product.category].filter(Boolean).join(" - ");
+      body.appendChild(meta);
+
+      if (product.business_name) {
+        const shop = document.createElement("div");
+        shop.className = "lk-product-inquiry-shop";
+        shop.textContent = product.business_name;
+        body.appendChild(shop);
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "d-flex flex-wrap gap-2 mt-2";
+      if (product.url) {
+        const link = document.createElement("a");
+        link.href = product.url;
+        link.className = "btn btn-sm btn-outline-success rounded-pill mt-2";
+        link.textContent = product.id ? "View Product" : "Shop Info";
+        actions.appendChild(link);
+      }
+      if (product.shop_url && product.shop_url !== product.url) {
+        const shopLink = document.createElement("a");
+        shopLink.href = product.shop_url;
+        shopLink.className = "btn btn-sm btn-outline-secondary rounded-pill mt-2";
+        shopLink.textContent = "Shop Info";
+        actions.appendChild(shopLink);
+      } else if (product.shop_url && product.id) {
+        const shopLink = document.createElement("a");
+        shopLink.href = product.shop_url;
+        shopLink.className = "btn btn-sm btn-outline-secondary rounded-pill mt-2";
+        shopLink.textContent = "Shop Info";
+        actions.appendChild(shopLink);
+      }
+      if (actions.children.length) body.appendChild(actions);
+
+      card.appendChild(body);
+      return card;
+    }
+
     function render(messages) {
       const signature = messages && messages.length ? messages[messages.length - 1].id + ":" + messages.length : "empty";
       if (signature === lastRenderedSignature) {
@@ -169,9 +235,14 @@
           "p-3 shadow-sm " + (mine ? "lk-bubble-out chat-bubble-out is-mine" : "lk-bubble-in chat-bubble-in");
         bubble.style.maxWidth = "78%";
 
+        if (m.inquiry_context === "product_inquiry") {
+          bubble.classList.add("lk-product-inquiry-bubble");
+          bubble.appendChild(renderProductInquiryCard(m));
+        }
+
         const text = (m.message_content || "").trim();
         const isPlaceholderOnly =
-          text === "" || /^attachment\.?$/i.test(text) || text === "[Image]";
+          text === "" || /^attachment\.?$/i.test(text) || text === "[Image]" || m.inquiry_context === "product_inquiry";
 
         if (!isPlaceholderOnly) {
           const body = document.createElement("div");
@@ -286,6 +357,28 @@
       }
     }
 
+    async function startProductInquiryIfNeeded() {
+      if (!cfg.startProductInquiry || !cfg.businessId || !cfg.productId) return;
+      try {
+        const fd = new FormData();
+        fd.append("action", "start_product_inquiry");
+        fd.append("csrf_token", cfg.csrf || "");
+        fd.append("business_id", String(cfg.businessId));
+        fd.append("product_id", String(cfg.productId));
+        if (cfg.receiverId) fd.append("receiver_id", String(cfg.receiverId));
+        const res = await fetch(apiUrl, { method: "POST", credentials: "same-origin", body: fd });
+        const json = await res.json();
+        if (!json.success) {
+          showError(json.message || "Could not start product inquiry.");
+        }
+      } catch (err) {
+        console.error("Product inquiry start failed:", err);
+        showError("Could not start product inquiry. Please refresh.");
+      } finally {
+        cfg.startProductInquiry = false;
+      }
+    }
+
     function renderQuickReplies(items) {
       if (!quickRepliesEl) return;
       quickRepliesEl.innerHTML = "";
@@ -315,6 +408,7 @@
         const params = new URLSearchParams();
         params.set("action", "quick_replies");
         params.set("business_id", cfg.businessId);
+        if (cfg.productId) params.set("product_id", cfg.productId);
         const res = await fetch(apiUrl + "?" + params.toString(), { credentials: "same-origin" });
         const json = await res.json();
         const items = json.success && json.data && Array.isArray(json.data.quick_replies)
@@ -379,7 +473,7 @@
       }
 
       if (cfg.conversationType === "admin_support" || cfg.businessId) {
-        load();
+        startProductInquiryIfNeeded().then(load);
         loadQuickReplies();
         setInterval(load, cfg.pollMs || 3500);
       }

@@ -7,6 +7,7 @@ require_once BASE_PATH . '/middleware/auth.php';
 require_login();
 require_once BASE_PATH . '/middleware/role.php';
 require_role(['seller']);
+enforce_seller_business_access();
 
 $isDashboardLayout = true;
 $extraHead = ($extraHead ?? '') . '<link rel="stylesheet" href="' . e(asset_url('css/dashboard.css')) . '?v=4">';

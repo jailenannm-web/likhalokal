@@ -22,15 +22,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             db()->prepare(
                 "UPDATE businesses SET status='approved', approved_by=?, approved_at=NOW(), rejection_reason=NULL, updated_at=NOW() WHERE id=?"
             )->execute([current_user_id(), $id]);
+            db()->prepare("UPDATE users SET role='seller', updated_at=NOW() WHERE id=? AND role='local_user'")
+                ->execute([(int) $biz['user_id']]);
             notify_user((int) $biz['user_id'], 'Business approved', 'Your listing is now public.', 'success');
             log_activity(current_user_id(), 'admin_business', 'approve #' . $id, $_SERVER['REMOTE_ADDR'] ?? null);
             set_flash('success', 'Application approved. The business now appears under Manage Businesses.');
         } elseif ($act === 'reject') {
             $reason = trim((string) ($_POST['rejection_reason'] ?? ''));
+            if ($reason === '') {
+                set_flash('error', 'Please provide a rejection reason.');
+                redirect(ADMIN_URL . 'business-applications.php');
+            }
             db()->prepare(
                 "UPDATE businesses SET status='rejected', rejection_reason=?, updated_at=NOW() WHERE id=?"
-            )->execute([$reason !== '' ? $reason : null, $id]);
-            notify_user((int) $biz['user_id'], 'Business rejected', 'Your business application was rejected.', 'error');
+            )->execute([$reason, $id]);
+            notify_user((int) $biz['user_id'], 'Business rejected', 'Your business application was rejected: ' . $reason, 'error');
             log_activity(current_user_id(), 'admin_business', 'reject #' . $id, $_SERVER['REMOTE_ADDR'] ?? null);
             set_flash('success', 'Application rejected.');
         }

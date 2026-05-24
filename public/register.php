@@ -77,7 +77,7 @@ require BASE_PATH . '/includes/navbar.php';
                         <?= csrf_field() ?>
                         <div class="mb-3">
                             <label class="form-label">Account type</label>
-                            <select name="account_type" class="form-select" required>
+                            <select name="account_type" id="registerAccountType" class="form-select" required>
                                 <option value="local_user">Local User / Tourist</option>
                                 <option value="seller">Entrepreneur / Business Owner</option>
                             </select>
@@ -106,9 +106,13 @@ require BASE_PATH . '/includes/navbar.php';
                     </form>
                     <div class="lk-auth-divider auth-divider"><span>or</span></div>
                     <?php if (google_oauth_configured()): ?>
-                        <a href="<?= e(BASE_URL) ?>google-login.php?source=register" class="btn btn-lk-google google-auth-btn w-100">
-                            <span class="lk-google-g" aria-hidden="true">G</span> Continue with Google
-                        </a>
+                        <form method="get" action="<?= e(BASE_URL) ?>google-login.php" id="googleRegisterForm">
+                            <input type="hidden" name="source" value="register">
+                            <input type="hidden" name="account_type" id="googleAccountType" value="local_user">
+                            <button type="submit" class="btn btn-lk-google google-auth-btn w-100">
+                                <span class="lk-google-g" aria-hidden="true">G</span> Continue with Google
+                            </button>
+                        </form>
                     <?php else: ?>
                         <button type="button" class="btn btn-lk-google google-auth-btn w-100" disabled>
                             <span class="lk-google-g" aria-hidden="true">G</span> Continue with Google
@@ -121,4 +125,16 @@ require BASE_PATH . '/includes/navbar.php';
         </div>
     </div>
 </div>
+<script>
+(function () {
+    const accountType = document.getElementById('registerAccountType');
+    const googleAccountType = document.getElementById('googleAccountType');
+    if (!accountType || !googleAccountType) return;
+    function syncGoogleAccountType() {
+        googleAccountType.value = accountType.value === 'seller' ? 'seller' : 'local_user';
+    }
+    accountType.addEventListener('change', syncGoogleAccountType);
+    syncGoogleAccountType();
+})();
+</script>
 <?php require BASE_PATH . '/includes/footer.php'; ?>

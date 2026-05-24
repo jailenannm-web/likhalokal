@@ -16,9 +16,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $email = strtolower(trim((string) ($_POST['email'] ?? '')));
     if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $stmt = db()->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+        $stmt = db()->prepare('SELECT id, password_hash, auth_provider, google_id FROM users WHERE email = ? LIMIT 1');
         $stmt->execute([$email]);
-        if ($stmt->fetch()) {
+        $user = $stmt->fetch();
+        $isGoogleOnly = $user
+            && (string) ($user['auth_provider'] ?? '') === 'google'
+            && !empty($user['google_id']);
+
+        if ($isGoogleOnly) {
+            $_SESSION['flash_google_reset_notice'] = true;
+            redirect(BASE_URL . 'forgot-password.php');
+        }
+
+        if ($user && !$isGoogleOnly && !empty($user['password_hash'])) {
             $token = create_password_reset($email);
             if ($token) {
                 $resetUrl = rtrim(
@@ -50,6 +60,8 @@ require BASE_PATH . '/includes/header.php';
 require BASE_PATH . '/includes/navbar.php';
 $debugReset = $_SESSION['flash_debug_reset'] ?? null;
 unset($_SESSION['flash_debug_reset']);
+$googleResetNotice = !empty($_SESSION['flash_google_reset_notice']);
+unset($_SESSION['flash_google_reset_notice']);
 ?>
 <div class="lk-auth-wrap">
     <div class="row justify-content-center w-100">
@@ -59,6 +71,16 @@ unset($_SESSION['flash_debug_reset']);
                     <h1 class="h4 mb-3">Forgot password</h1>
                     <?php if ($m = flash('success')): ?><div class="alert alert-success"><?= e($m) ?></div><?php endif; ?>
                     <?php if ($m = flash('error')): ?><div class="alert alert-danger"><?= e($m) ?></div><?php endif; ?>
+                    <?php if ($googleResetNotice): ?>
+                        <div class="alert alert-info">
+                            This account uses Google sign-in. Please use Continue with Google to log in.
+                            <div class="mt-2">
+                                <a class="btn btn-sm btn-lk-google google-auth-btn" href="<?= e(BASE_URL) ?>google-login.php?source=login">
+                                    <span class="lk-google-g" aria-hidden="true">G</span> Continue with Google
+                                </a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                     <?php if ($debugReset): ?><div class="alert alert-info small"><strong>Debug reset link:</strong><br><a href="<?= e($debugReset) ?>"><?= e($debugReset) ?></a></div><?php endif; ?>
                     <p class="text-muted small">Enter your email and we&rsquo;ll send reset instructions if an account exists.</p>
                     <form method="post">

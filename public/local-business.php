@@ -858,7 +858,7 @@ body {
                 </div>
             </div>
 
-            <a href="register-business.php" class="apply-btn">APPLY BUSINESS <i class="fa-solid fa-chevron-right"></i></a>
+            <a href="<?= e(BASE_URL) ?>register-business.php" class="apply-btn">APPLY BUSINESS <i class="fa-solid fa-chevron-right"></i></a>
             <a href="<?= e(BASE_URL) ?>about.php" class="help-link">Need Help?</a>
         </div>
     </div>

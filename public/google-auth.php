@@ -16,6 +16,8 @@ if (!google_oauth_configured()) {
 
 $source = (string) ($_GET['source'] ?? 'login');
 $source = $source === 'register' ? 'register' : 'login';
+$accountType = (string) ($_GET['account_type'] ?? 'local_user');
+$accountType = ($source === 'register' && $accountType === 'seller') ? 'seller' : 'local_user';
 $redirect = (string) ($_GET['redirect'] ?? peek_login_redirect() ?? '');
 if ($redirect !== '' && is_safe_post_login_redirect($redirect)) {
     $_SESSION['post_login_redirect'] = $redirect;
@@ -23,6 +25,7 @@ if ($redirect !== '' && is_safe_post_login_redirect($redirect)) {
 
 $_SESSION['google_oauth_state'] = bin2hex(random_bytes(32));
 $_SESSION['google_oauth_source'] = $source;
+$_SESSION['google_oauth_account_type'] = $accountType;
 $_SESSION['oauth_state'] = $_SESSION['google_oauth_state'];
 
 $params = http_build_query([

@@ -1970,6 +1970,91 @@ body.lk-auth-page footer {
   background: rgba(255, 255, 255, 0.18);
 }
 
+.lk-product-inquiry-bubble {
+  background: #ffffff !important;
+  color: var(--lk-navy, #001f3f) !important;
+  border: 1px solid rgba(27, 67, 50, 0.16);
+}
+
+.lk-product-inquiry-card {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+  min-width: min(320px, 72vw);
+  max-width: 100%;
+}
+
+.lk-product-inquiry-card img {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 31, 63, 0.08);
+  background: #f8f9fa;
+}
+
+.lk-product-inquiry-body {
+  min-width: 0;
+}
+
+.lk-product-inquiry-eyebrow {
+  color: #f39200;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.lk-product-inquiry-body strong {
+  display: block;
+  color: #1b4332;
+  line-height: 1.25;
+}
+
+.lk-product-inquiry-meta,
+.lk-product-inquiry-shop {
+  color: #6c757d;
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+
+.lk-quick-replies {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.lk-quick-replies-label {
+  flex: 0 0 auto;
+  color: #6c757d;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.lk-quick-reply-chip {
+  flex: 0 0 auto;
+  border: 1px solid rgba(243, 146, 0, 0.45);
+  border-radius: 999px;
+  background: #fff8ee;
+  color: #1b4332;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.4rem 0.75rem;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.lk-quick-reply-chip:hover,
+.lk-quick-reply-chip:focus {
+  background: #f39200;
+  border-color: #f39200;
+  color: #001f3f;
+  transform: translateY(-1px);
+}
+
 /* ==========================================================================
    GLOBAL SCROLL REVEAL & INTERACTIVE MICRO-ANIMATIONS
    ========================================================================== */

@@ -90,6 +90,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sql .= ', business_category=?';
             $params[] = $businessCategory;
         }
+        if (($b['status'] ?? '') === 'rejected') {
+            $sql .= ", status='pending', rejection_reason=NULL, approved_by=NULL, approved_at=NULL";
+        }
         $sql .= ', updated_at=NOW() WHERE id=? AND user_id=?';
         $params[] = (int) $b['id'];
         $params[] = $uid;
@@ -109,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         $stmt->execute($params);
     }
-    set_flash('success', 'Profile saved.');
+    set_flash('success', (($b['status'] ?? '') === 'rejected') ? 'Application updated and resubmitted for review.' : 'Profile saved.');
     redirect(SELLER_URL . 'business-profile.php');
 }
 

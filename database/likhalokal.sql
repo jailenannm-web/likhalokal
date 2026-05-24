@@ -196,6 +196,7 @@ CREATE TABLE messages (
   receiver_id INT UNSIGNED NOT NULL,
   business_id INT UNSIGNED DEFAULT NULL,
   product_id INT UNSIGNED DEFAULT NULL,
+  message_type VARCHAR(50) NOT NULL DEFAULT 'text',
   message_content TEXT NOT NULL,
   is_read TINYINT(1) NOT NULL DEFAULT 0,
   is_auto_reply TINYINT(1) NOT NULL DEFAULT 0,

@@ -180,20 +180,14 @@ $isInternalProfile = is_internal_return_context($requestedReturn);
 
 $backUrl = resolve_return_url($requestedReturn, BASE_URL . 'local-business.php');
 
-$bodyClass = trim(($bodyClass ?? '') . ' vendor-profile-page' . ($isInternalProfile ? ' lk-internal-workspace' : ' vendor-profile-has-nav'));
+$bodyClass = trim(($bodyClass ?? '') . ' vendor-profile-page vendor-profile-standalone' . ($isInternalProfile ? ' lk-internal-workspace' : ''));
 
-$showPublicNavbar = !$isInternalProfile;
-$isDashboardLayout = !$showPublicNavbar;
+$showPublicNavbar = false;
+$isDashboardLayout = true;
 
 
 
 require BASE_PATH . '/includes/header.php';
-
-
-
-if ($showPublicNavbar) {
-    require BASE_PATH . '/includes/navbar.php';
-}
 $flashSuccess = flash('success');
 $flashError = flash('error');
 

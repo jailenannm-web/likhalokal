@@ -6,6 +6,8 @@ require_once dirname(__DIR__) . '/bootstrap.php';
 require_once BASE_PATH . '/middleware/auth.php';
 
 $oauthSource = (string) ($_SESSION['google_oauth_source'] ?? 'login');
+$oauthAccountType = (string) ($_SESSION['google_oauth_account_type'] ?? 'local_user');
+$oauthAccountType = ($oauthSource === 'register' && $oauthAccountType === 'seller') ? 'seller' : 'local_user';
 $failureUrl = BASE_URL . ($oauthSource === 'register' ? 'register.php' : 'login.php');
 
 if (!google_oauth_configured()) {
@@ -16,11 +18,11 @@ if (!google_oauth_configured()) {
 $state = (string) ($_GET['state'] ?? '');
 $expectedState = (string) ($_SESSION['google_oauth_state'] ?? $_SESSION['oauth_state'] ?? '');
 if ($state === '' || $expectedState === '' || !hash_equals($expectedState, $state)) {
-    unset($_SESSION['google_oauth_state'], $_SESSION['oauth_state'], $_SESSION['google_oauth_source']);
+    unset($_SESSION['google_oauth_state'], $_SESSION['oauth_state'], $_SESSION['google_oauth_source'], $_SESSION['google_oauth_account_type']);
     set_flash('error', 'Google sign-in failed. Please try again.');
     redirect($failureUrl);
 }
-unset($_SESSION['google_oauth_state'], $_SESSION['oauth_state'], $_SESSION['google_oauth_source']);
+unset($_SESSION['google_oauth_state'], $_SESSION['oauth_state'], $_SESSION['google_oauth_source'], $_SESSION['google_oauth_account_type']);
 
 if (isset($_GET['error'])) {
     set_flash('error', 'Google sign-in was cancelled.');
@@ -90,13 +92,20 @@ try {
         $user['google_id'] = $googleId;
         login_user($user, false);
         log_activity((int) $user['id'], 'login', 'Google OAuth login', $_SERVER['REMOTE_ADDR'] ?? null);
+
+        if ($oauthSource === 'register' && $oauthAccountType === 'seller' && $user['role'] === 'local_user') {
+            set_flash('error', 'This Google email is already registered as a local user. Please use a seller account to submit a business application.');
+            redirect(public_home_url());
+        }
+
         set_flash('success', 'Welcome back!');
-        redirect_by_role();
+        redirect_after_google_auth((string) $user['role'], $oauthSource, $oauthAccountType, false);
     }
 
+    $newRole = ($oauthSource === 'register' && $oauthAccountType === 'seller') ? 'seller' : 'local_user';
     $stmt = db()->prepare(
         'INSERT INTO users (full_name, email, google_id, auth_provider, password_hash, role, status, email_verified_at, created_at, updated_at)
-         VALUES (?,?,?,?,?,\'local_user\',\'active\',NOW(),NOW(),NOW())'
+         VALUES (?,?,?,?,?,?,\'active\',NOW(),NOW(),NOW())'
     );
     $stmt->execute([
         $fullName !== '' ? $fullName : $email,
@@ -104,6 +113,7 @@ try {
         $googleId,
         'google',
         null,
+        $newRole,
     ]);
     $id = (int) db()->lastInsertId();
 
@@ -111,15 +121,24 @@ try {
         'id' => $id,
         'full_name' => $fullName !== '' ? $fullName : $email,
         'email' => $email,
-        'role' => 'local_user',
+        'role' => $newRole,
     ], false);
     log_activity($id, 'register', 'Google OAuth signup', $_SERVER['REMOTE_ADDR'] ?? null);
-    set_flash('success', 'Welcome to LikhaLokal!');
-    redirect_by_role();
+    set_flash('success', $newRole === 'seller' ? 'Account created. Please submit your business application.' : 'Welcome to LikhaLokal!');
+    redirect_after_google_auth($newRole, $oauthSource, $oauthAccountType, true);
 } catch (Throwable $e) {
     error_log('Google OAuth error: ' . $e->getMessage());
     set_flash('error', 'Google sign-in failed. Please try again.');
     redirect($failureUrl);
+}
+
+function redirect_after_google_auth(string $role, string $oauthSource, string $oauthAccountType, bool $isNewUser): void
+{
+    if ($isNewUser && $role === 'seller' && $oauthSource === 'register' && $oauthAccountType === 'seller') {
+        redirect(BASE_URL . 'register-business.php');
+    }
+
+    redirect(public_home_url());
 }
 
 /**

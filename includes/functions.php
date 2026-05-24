@@ -408,6 +408,21 @@ function user_message_conversations(int $userId): array
                        LIMIT 1
                    ), \'1000-01-01 00:00:00\')
                  ORDER BY m2.created_at DESC LIMIT 1) AS last_message,
+                (SELECT p.product_name FROM messages mp
+                 INNER JOIN products p ON p.id = mp.product_id
+                 WHERE mp.business_id = m.business_id
+                   AND mp.conversation_type = \'business_inquiry\'
+                   AND mp.inquiry_context = \'product_inquiry\'
+                   AND (mp.sender_id = ? OR mp.receiver_id = ?)
+                   AND mp.created_at > COALESCE((
+                       SELECT d3.deleted_at FROM message_conversation_deletions d3
+                       WHERE d3.user_id = ?
+                         AND d3.conversation_type = \'business_inquiry\'
+                         AND d3.business_id = mp.business_id
+                         AND d3.peer_user_id = b.user_id
+                       LIMIT 1
+                   ), \'1000-01-01 00:00:00\')
+                 ORDER BY mp.created_at DESC LIMIT 1) AS inquiry_product_name,
                 SUM(CASE WHEN m.receiver_id = ? AND m.is_read = 0 THEN 1 ELSE 0 END) AS unread_count
          FROM messages m
          INNER JOIN businesses b ON b.id = m.business_id
@@ -425,7 +440,7 @@ function user_message_conversations(int $userId): array
          GROUP BY m.business_id, b.business_name, b.user_id
          ORDER BY last_at DESC'
     );
-    $stmt->execute([$userId, $userId, $userId, $userId, $userId, $userId, $userId]);
+    $stmt->execute([$userId, $userId, $userId, $userId, $userId, $userId, $userId, $userId, $userId, $userId]);
     return $stmt->fetchAll();
 }
 
@@ -569,6 +584,14 @@ function seller_message_threads(int $sellerUserId, int $businessId): array
                AND (m2.sender_id = u.id OR m2.receiver_id = u.id)
                AND m2.created_at > COALESCE(d.deleted_at, \'1000-01-01 00:00:00\')
              ORDER BY m2.created_at DESC LIMIT 1) AS last_message,
+            (SELECT p.product_name FROM messages mp
+             INNER JOIN products p ON p.id = mp.product_id
+             WHERE mp.business_id = ?
+               AND mp.conversation_type = \'business_inquiry\'
+               AND mp.inquiry_context = \'product_inquiry\'
+               AND (mp.sender_id = u.id OR mp.receiver_id = u.id)
+               AND mp.created_at > COALESCE(d.deleted_at, \'1000-01-01 00:00:00\')
+             ORDER BY mp.created_at DESC LIMIT 1) AS inquiry_product_name,
             SUM(CASE WHEN m.receiver_id = ? AND m.is_read = 0 THEN 1 ELSE 0 END) AS unread_count
          FROM messages m
          INNER JOIN users u ON u.id = CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END
@@ -588,6 +611,7 @@ function seller_message_threads(int $sellerUserId, int $businessId): array
     );
     $stmt->execute([
         $sellerUserId,
+        $businessId,
         $businessId,
         $sellerUserId,
         $sellerUserId,
@@ -710,20 +734,30 @@ function business_faq_label(string $type): string
 }
 
 /** @return list<array{type:string,label:string}> */
-function business_quick_replies(array $business): array
+function business_quick_replies(array $business, ?array $product = null): array
 {
     if (!business_auto_reply_enabled($business)) {
         return [];
     }
 
     $items = [];
-    foreach (['price', 'availability', 'location', 'payment', 'pickup_delivery', 'hours', 'custom'] as $type) {
-        if (business_faq_value($business, $type) === '') {
+    $labels = [
+        'availability' => 'Is this available?',
+        'price' => 'How much?',
+        'custom' => 'Can I reserve?',
+        'location' => 'Where is your location?',
+        'payment' => 'What payment methods do you accept?',
+        'pickup_delivery' => 'Is pickup or delivery available?',
+        'hours' => 'What are your hours?',
+    ];
+    foreach (['availability', 'price', 'custom', 'location', 'payment', 'pickup_delivery', 'hours'] as $type) {
+        $hasProductAnswer = $product && in_array($type, ['availability', 'price'], true);
+        if (!$hasProductAnswer && business_faq_value($business, $type) === '' && $type !== 'custom') {
             continue;
         }
         $items[] = [
             'type' => $type,
-            'label' => business_faq_label($type),
+            'label' => $labels[$type],
         ];
     }
     return $items;
@@ -790,11 +824,30 @@ function detect_auto_reply_type(string $message): string
 }
 
 /** @return array{type:string,text:string} */
-function build_auto_reply_payload(array $business, string $userMessage, ?string $productName = null, ?string $forcedType = null): array
+function build_auto_reply_payload(array $business, string $userMessage, ?array $product = null, ?string $forcedType = null): array
 {
     $type = $forcedType !== null && $forcedType !== '' ? $forcedType : detect_auto_reply_type($userMessage);
     if (!in_array($type, ['price', 'availability', 'location', 'payment', 'pickup_delivery', 'hours', 'custom', 'default'], true)) {
         $type = 'default';
+    }
+
+    $productName = $product && trim((string) ($product['product_name'] ?? '')) !== ''
+        ? trim((string) $product['product_name'])
+        : null;
+    if ($product && $type === 'price' && isset($product['price']) && (float) $product['price'] > 0) {
+        return [
+            'type' => 'price',
+            'text' => 'The price of ' . ($productName ?: 'this item') . ' is PHP ' . number_format((float) $product['price'], 2) . '.',
+        ];
+    }
+    if ($product && $type === 'availability' && isset($product['availability'])) {
+        $status = strtolower((string) $product['availability']) === 'available'
+            ? 'currently available'
+            : 'currently unavailable';
+        return [
+            'type' => 'availability',
+            'text' => ($productName ?: 'This item') . ' is ' . $status . '.',
+        ];
     }
 
     if ($type === 'default') {
@@ -831,7 +884,8 @@ function build_auto_reply_payload(array $business, string $userMessage, ?string 
 
 function build_auto_reply_text(array $business, string $userMessage, ?string $productName = null): string
 {
-    return build_auto_reply_payload($business, $userMessage, $productName)['text'];
+    $product = $productName !== null ? ['product_name' => $productName] : null;
+    return build_auto_reply_payload($business, $userMessage, $product)['text'];
 }
 
 function should_send_auto_reply(int $businessId, int $sellerId, int $customerId, string $replyType = 'default'): bool
@@ -906,15 +960,15 @@ function insert_business_auto_reply(
     if (!$business || !business_auto_reply_enabled($business)) {
         return null;
     }
-    $productName = null;
+    $product = null;
     if ($productId) {
-        $ps = db()->prepare('SELECT product_name FROM products WHERE id = ? LIMIT 1');
+        $ps = db()->prepare('SELECT product_name, price, availability FROM products WHERE id = ? LIMIT 1');
         $ps->execute([$productId]);
         $pr = $ps->fetch();
-        $productName = $pr['product_name'] ?? null;
+        $product = $pr ?: null;
     }
 
-    $payload = build_auto_reply_payload($business, $userMessage, $productName, $forcedType);
+    $payload = build_auto_reply_payload($business, $userMessage, $product, $forcedType);
     $replyType = $payload['type'];
     $content = trim($payload['text']);
     if ($content === '') {
@@ -925,19 +979,28 @@ function insert_business_auto_reply(
         return null;
     }
 
-    if (db_column_exists('messages', 'auto_reply_type')) {
-        $stmt = db()->prepare(
-            'INSERT INTO messages (sender_id, receiver_id, business_id, product_id, message_content, is_read, is_auto_reply, auto_reply_type, attachment_path, attachment_type, inquiry_context, conversation_type, created_at)
-             VALUES (?,?,?,?,?,0,1,?,NULL,NULL,NULL,\'business_inquiry\',NOW())'
-        );
-        $stmt->execute([$sellerId, $customerId, $businessId, $productId, $content, $replyType]);
-    } else {
-        $stmt = db()->prepare(
-            'INSERT INTO messages (sender_id, receiver_id, business_id, product_id, message_content, is_read, is_auto_reply, attachment_path, attachment_type, inquiry_context, conversation_type, created_at)
-             VALUES (?,?,?,?,?,0,1,NULL,NULL,NULL,\'business_inquiry\',NOW())'
-        );
-        $stmt->execute([$sellerId, $customerId, $businessId, $productId, $content]);
+    $hasAutoReplyType = db_column_exists('messages', 'auto_reply_type');
+    $hasMessageType = db_column_exists('messages', 'message_type');
+    $columns = ['sender_id', 'receiver_id', 'business_id', 'product_id'];
+    $values = ['?', '?', '?', '?'];
+    $params = [$sellerId, $customerId, $businessId, $productId];
+    if ($hasMessageType) {
+        $columns[] = 'message_type';
+        $values[] = '?';
+        $params[] = 'auto_reply';
     }
+    $columns = array_merge($columns, ['message_content', 'is_read', 'is_auto_reply']);
+    $values = array_merge($values, ['?', '0', '1']);
+    $params[] = $content;
+    if ($hasAutoReplyType) {
+        $columns[] = 'auto_reply_type';
+        $values[] = '?';
+        $params[] = $replyType;
+    }
+    $columns = array_merge($columns, ['attachment_path', 'attachment_type', 'inquiry_context', 'conversation_type', 'created_at']);
+    $values = array_merge($values, ['NULL', 'NULL', 'NULL', '\'business_inquiry\'', 'NOW()']);
+    $stmt = db()->prepare('INSERT INTO messages (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $values) . ')');
+    $stmt->execute($params);
 
     return (int) db()->lastInsertId();
 }

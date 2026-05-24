@@ -134,6 +134,9 @@ window.LK_USER_CHAT = {
                         <span class="badge bg-danger rounded-pill"><?= (int) $c['unread_count'] ?></span>
                     <?php endif; ?>
                 </div>
+                <?php if (!empty($c['inquiry_product_name'])): ?>
+                    <p class="small fw-semibold mb-0 mt-1" style="color:#1b4332;">Inquiring about: <?= e(str_limit((string) $c['inquiry_product_name'], 42)) ?></p>
+                <?php endif; ?>
                 <p class="small text-muted mb-0 mt-1"><?= e(str_limit($c['last_message'] ?? '', 55)) ?></p>
                 <span class="small text-muted"><?= e(format_datetime_short($c['last_at'] ?? '')) ?></span>
                 </a>
@@ -163,6 +166,18 @@ window.LK_USER_CHAT = {
                 <div class="lk-chat-avatar"><?= e(strtoupper(substr((string) $activeBusiness['business_name'], 0, 1))) ?></div>
                 <div class="flex-grow-1">
                     <div class="fw-bold fs-5"><?= e($activeBusiness['business_name']) ?></div>
+                    <?php
+                    $activeInquiryProduct = null;
+                    foreach ($conversations as $conversationRow) {
+                        if ((int) $conversationRow['business_id'] === (int) $activeBusinessId) {
+                            $activeInquiryProduct = $conversationRow['inquiry_product_name'] ?? null;
+                            break;
+                        }
+                    }
+                    ?>
+                    <?php if (!empty($activeInquiryProduct)): ?>
+                        <div class="small fw-semibold" style="color:#f39200;">Inquiring about: <?= e((string) $activeInquiryProduct) ?></div>
+                    <?php endif; ?>
                     <a href="<?= e(vendor_profile_url((int) $activeBusinessId, current_request_return_url())) ?>" class="btn btn-sm btn-outline-secondary mt-1">View shop</a>
                 </div>
                 <button type="button" class="btn btn-outline-danger btn-sm rounded-circle lk-chat-delete-btn"
@@ -297,6 +312,6 @@ window.LK_USER_CHAT.newMessage = window.LK_USER_CHAT.newMessage || {
   defaultRedirect: <?= json_encode($baseUrl) ?>
 };
 </script>
-<script src="<?= e(ASSET_URL) ?>js/lk-chat.js?v=7"></script>
+<script src="<?= e(ASSET_URL) ?>js/lk-chat.js?v=8"></script>
 
 <?php require __DIR__ . '/partials/layout-end.php'; require BASE_PATH . '/includes/footer.php'; ?>

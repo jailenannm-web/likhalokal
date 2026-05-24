@@ -9,6 +9,15 @@ require_once BASE_PATH . '/middleware/csrf.php';
 
 $hasBusinessCategory = db_column_exists('businesses', 'business_category');
 
+function promote_business_owner_if_approved(int $userId): void
+{
+    if ($userId <= 0) {
+        return;
+    }
+    db()->prepare("UPDATE users SET role='seller', updated_at=NOW() WHERE id=? AND role='local_user'")
+        ->execute([$userId]);
+}
+
 // Handle POST actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf($_POST['csrf_token'] ?? null)) {
@@ -34,7 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$id]);
         $biz = $stmt->fetch();
         if ($biz) {
-            db()->prepare("UPDATE businesses SET status='approved' WHERE id=?")->execute([$id]);
+            db()->prepare("UPDATE businesses SET status='approved', approved_by=?, approved_at=COALESCE(approved_at, NOW()), rejection_reason=NULL, updated_at=NOW() WHERE id=?")
+                ->execute([current_user_id(), $id]);
+            promote_business_owner_if_approved((int) $biz['user_id']);
             log_activity(current_user_id(), 'admin_business', 'reactivate #' . $id, $_SERVER['REMOTE_ADDR'] ?? null);
             set_flash('success', 'Business reactivated successfully.');
         }
@@ -77,9 +88,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $operatingHours = trim((string) ($_POST['operating_hours'] ?? ''));
         $acceptedPayments = $_POST['pay'] ?? [];
         $status = trim((string) ($_POST['status'] ?? 'approved'));
+        $allowedStatuses = ['pending', 'approved', 'rejected', 'suspended'];
         
         if (empty($businessName) || empty($businessType) || empty($userId)) {
             set_flash('error', 'Business name, type, and owner are required.');
+            redirect(ADMIN_URL . 'businesses.php');
+        }
+        if (!in_array($status, $allowedStatuses, true)) {
+            set_flash('error', 'Invalid business status.');
+            redirect(ADMIN_URL . 'businesses.php');
+        }
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            set_flash('error', 'Please enter a valid business email.');
+            redirect(ADMIN_URL . 'businesses.php');
+        }
+        if ($latitude !== '' && !is_numeric($latitude)) {
+            set_flash('error', 'Latitude must be a valid number.');
+            redirect(ADMIN_URL . 'businesses.php');
+        }
+        if ($longitude !== '' && !is_numeric($longitude)) {
+            set_flash('error', 'Longitude must be a valid number.');
+            redirect(ADMIN_URL . 'businesses.php');
+        }
+        $ownerStmt = db()->prepare("SELECT id FROM users WHERE id=? AND role IN ('seller','local_user') LIMIT 1");
+        $ownerStmt->execute([$userId]);
+        if (!$ownerStmt->fetch()) {
+            set_flash('error', 'Select a valid seller or local user as owner.');
             redirect(ADMIN_URL . 'businesses.php');
         }
         
@@ -129,16 +163,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newId = (int) db()->lastInsertId();
             if ($status === 'approved' && $newId > 0) {
                 db()->prepare('UPDATE businesses SET approved_by = ?, approved_at = NOW() WHERE id = ?')->execute([current_user_id(), $newId]);
+                promote_business_owner_if_approved($userId);
             }
             log_activity(current_user_id(), 'admin_business', 'add business', $_SERVER['REMOTE_ADDR'] ?? null);
             set_flash('success', 'Business added successfully.');
         } elseif ($act === 'edit') {
             $updates = 'business_name=?, business_type=?, description=?, contact_number=?, email=?, address=?, barangay=?, latitude=?, longitude=?, operating_hours=?, accepted_payments=?, status=?, updated_at=NOW()';
-            $params = [$businessName, $businessType, $description, $contactNumber, $email, $address, $barangay, $latitude ?: null, $longitude ?: null, $operatingHours, $paymentsJson, $status, $id];
+            $params = [$businessName, $businessType, $description, $contactNumber, $email, $address, $barangay, $latitude ?: null, $longitude ?: null, $operatingHours, $paymentsJson, $status];
             
             if ($hasBusinessCategory) {
                 $updates = 'business_name=?, business_type=?, business_category=?, description=?, contact_number=?, email=?, address=?, barangay=?, latitude=?, longitude=?, operating_hours=?, accepted_payments=?, status=?, updated_at=NOW()';
-                $params = [$businessName, $businessType, $businessCategory ?: null, $description, $contactNumber, $email, $address, $barangay, $latitude ?: null, $longitude ?: null, $operatingHours, $paymentsJson, $status, $id];
+                $params = [$businessName, $businessType, $businessCategory ?: null, $description, $contactNumber, $email, $address, $barangay, $latitude ?: null, $longitude ?: null, $operatingHours, $paymentsJson, $status];
             }
             
             if ($logoPath) {
@@ -149,8 +184,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $updates .= ', cover_image=?';
                 $params[] = $coverPath;
             }
+            if ($status === 'approved') {
+                $updates .= ', approved_by=COALESCE(approved_by, ?), approved_at=COALESCE(approved_at, NOW()), rejection_reason=NULL';
+                $params[] = current_user_id();
+            } elseif ($status === 'rejected') {
+                $updates .= ', approved_by=NULL, approved_at=NULL';
+            }
+            $params[] = $id;
             
             db()->prepare("UPDATE businesses SET $updates WHERE id=?")->execute($params);
+            if ($status === 'approved') {
+                promote_business_owner_if_approved($userId);
+            }
             log_activity(current_user_id(), 'admin_business', 'edit #' . $id, $_SERVER['REMOTE_ADDR'] ?? null);
             set_flash('success', 'Business updated successfully.');
         }
@@ -167,8 +212,8 @@ if ($editId > 0) {
     $editBusiness = $stmt->fetch();
 }
 
-// Get seller users for dropdown
-$sellers = db()->query("SELECT id, full_name, email FROM users WHERE role='seller' ORDER BY full_name ASC")->fetchAll();
+// Owners can be approved sellers or local users applying for their first business.
+$owners = db()->query("SELECT id, full_name, email, role FROM users WHERE role IN ('seller','local_user') ORDER BY full_name ASC")->fetchAll();
 
 // Get business list based on tab
 $tab = $_GET['tab'] ?? 'approved';
@@ -208,8 +253,8 @@ if ($editBusiness):
     <div class="col-md-6">
         <label class="form-label">Owner</label>
         <select class="form-select" name="user_id" required>
-            <?php foreach ($sellers as $s): ?>
-                <option value="<?= (int) $s['id'] ?>" <?= (int) $editBusiness['user_id'] === (int) $s['id'] ? 'selected' : '' ?>><?= e($s['full_name'] . ' (' . $s['email'] . ')') ?></option>
+            <?php foreach ($owners as $s): ?>
+                <option value="<?= (int) $s['id'] ?>" <?= (int) $editBusiness['user_id'] === (int) $s['id'] ? 'selected' : '' ?>><?= e($s['full_name'] . ' (' . $s['email'] . ') - ' . ucwords(str_replace('_', ' ', (string) $s['role']))) ?></option>
             <?php endforeach; ?>
         </select>
     </div>
@@ -314,9 +359,9 @@ if ($editBusiness):
     <div class="col-md-6">
         <label class="form-label">Owner</label>
         <select class="form-select" name="user_id" required>
-            <option value="">Select seller</option>
-            <?php foreach ($sellers as $s): ?>
-                <option value="<?= (int) $s['id'] ?>"><?= e($s['full_name'] . ' (' . $s['email'] . ')') ?></option>
+            <option value="">Select owner</option>
+            <?php foreach ($owners as $s): ?>
+                <option value="<?= (int) $s['id'] ?>"><?= e($s['full_name'] . ' (' . $s['email'] . ') - ' . ucwords(str_replace('_', ' ', (string) $s['role']))) ?></option>
             <?php endforeach; ?>
         </select>
     </div>

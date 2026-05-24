@@ -147,7 +147,7 @@ function dashboard_url_for_role(?string $role): string
 {
     return match ($role) {
         'admin' => ADMIN_URL . 'dashboard.php',
-        'seller' => SELLER_URL . 'dashboard.php',
+        'seller' => seller_landing_url(),
         'local_user' => USER_DASH_URL . 'dashboard.php',
         default => public_home_url(),
     };
@@ -162,7 +162,70 @@ function redirect_to_role_dashboard(): void
 /** After login/register — safe public return URL, else public home. */
 function redirect_by_role(): void
 {
-    redirect_after_login(consume_login_redirect());
+    consume_login_redirect();
+    if (current_user_role() === 'admin') {
+        redirect(ADMIN_URL . 'dashboard.php');
+    }
+    redirect(public_home_url());
+}
+
+function seller_business_for_user(?int $userId = null): ?array
+{
+    $userId = $userId ?? current_user_id();
+    if (!$userId) {
+        return null;
+    }
+
+    $stmt = db()->prepare(
+        "SELECT * FROM businesses
+         WHERE user_id = ?
+         ORDER BY CASE status WHEN 'approved' THEN 0 WHEN 'pending' THEN 1 WHEN 'rejected' THEN 2 ELSE 3 END, id ASC
+         LIMIT 1"
+    );
+    $stmt->execute([$userId]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+function seller_landing_url(?int $userId = null): string
+{
+    $business = seller_business_for_user($userId);
+    if (!$business) {
+        return BASE_URL . 'register-business.php';
+    }
+
+    return match ((string) $business['status']) {
+        'approved' => SELLER_URL . 'dashboard.php',
+        'pending' => SELLER_URL . 'pending.php',
+        'rejected' => SELLER_URL . 'rejected.php',
+        default => SELLER_URL . 'pending.php',
+    };
+}
+
+function enforce_seller_business_access(): void
+{
+    if (current_user_role() !== 'seller') {
+        return;
+    }
+
+    $script = basename((string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+    $allowedWhilePending = ['pending.php', 'rejected.php', 'business-profile.php'];
+    $business = seller_business_for_user();
+
+    if (!$business) {
+        redirect(BASE_URL . 'register-business.php');
+    }
+
+    $status = (string) $business['status'];
+    if ($status === 'approved') {
+        return;
+    }
+
+    if (in_array($script, $allowedWhilePending, true)) {
+        return;
+    }
+
+    redirect($status === 'rejected' ? SELLER_URL . 'rejected.php' : SELLER_URL . 'pending.php');
 }
 
 function user_status_allows_login(string $status, ?string $role = null): bool

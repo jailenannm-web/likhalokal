@@ -46,9 +46,12 @@ if ($role === 'local_user') {
 // Product Context
 $productContext = null;
 if ($productId > 0) {
-    $pstmt = db()->prepare('SELECT product_name, image, price FROM products WHERE id = ? AND business_id = ? LIMIT 1');
+    $pstmt = db()->prepare('SELECT product_name, image, price, availability, category FROM products WHERE id = ? AND business_id = ? LIMIT 1');
     $pstmt->execute([$productId, $businessId]);
     $productContext = $pstmt->fetch();
+    if (!$productContext) {
+        $productId = 0;
+    }
 }
 
 $requestedReturn = isset($_GET['return']) ? (string) $_GET['return'] : null;
@@ -136,8 +139,19 @@ body {
             
             <?php if($productContext): ?>
                 <div class="bg-white p-3 border-bottom d-flex align-items-center justify-content-center shadow-sm" style="z-index: 5;">
-                    <div class="badge rounded-pill fw-bold text-dark px-4 py-2 border shadow-sm" style="background: #fdf9f1; font-family: 'Montserrat', sans-serif; font-size: 0.85rem;">
-                        <i class="fa-solid fa-circle-info me-2 text-warning"></i> Inquiring about: <span style="color: #1b4332;"><?= e($productContext['product_name']) ?></span>
+                    <div class="d-flex align-items-center gap-3 border rounded-4 shadow-sm p-2 p-md-3 w-100" style="max-width: 620px; background: #fdf9f1;">
+                        <img src="<?= e(media_url($productContext['image'] ?? null, asset_url('images/likhalokal-logo.png'))) ?>" alt="" class="rounded-3 object-fit-cover" style="width:64px;height:64px;">
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="small fw-bold text-uppercase text-muted">Inquiring about</div>
+                            <div class="fw-bold text-truncate" style="color:#1b4332; font-family:'Montserrat', sans-serif;"><?= e($productContext['product_name']) ?></div>
+                            <div class="small text-muted">
+                                <?= e((float) $productContext['price'] > 0 ? 'PHP ' . number_format((float) $productContext['price'], 2) : 'Contact seller') ?>
+                                <span class="mx-1">·</span>
+                                <?= e(product_category_label((string) ($productContext['category'] ?? 'other'))) ?>
+                                <span class="mx-1">·</span>
+                                <?= e(ucfirst((string) ($productContext['availability'] ?? 'available'))) ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
             <?php endif; ?>
@@ -147,6 +161,7 @@ body {
             
             <!-- Input Area -->
             <div class="p-3 bg-white" style="border-top: 2px solid rgba(27,67,50,0.1);">
+                <div id="lkChatQuickReplies" class="lk-quick-replies d-none mb-2"></div>
                 <div id="chatAttachmentPreview" class="px-2 small"></div>
                 <form id="chatForm" class="d-flex align-items-center bg-light border rounded-pill px-3 py-2 shadow-sm" style="border-color: rgba(27,67,50,0.2) !important;" enctype="multipart/form-data">
                     <label class="btn btn-link text-secondary p-0 me-2 mb-0" title="Attach image"><i class="fa-solid fa-image"></i><input type="file" id="chatAttachment" name="attachment" accept="image/*" class="d-none"></label>
@@ -169,12 +184,14 @@ window.LK_CHAT = {
   conversationType: "business_inquiry",
   businessId: <?= (int) $businessId ?>,
   productId: <?= $productId ?: 'null' ?>,
+  startProductInquiry: <?= $productContext && $role === 'local_user' ? 'true' : 'false' ?>,
   customerId: <?= $customerId ?: 'null' ?>,
   receiverId: <?= $receiverJs !== null ? (int) $receiverJs : 'null' ?>,
   me: <?= (int) $me ?>,
   csrf: <?= json_encode($csrf) ?>,
   fileId: "chatAttachment",
-  previewId: "chatAttachmentPreview"
+  previewId: "chatAttachmentPreview",
+  quickRepliesId: "lkChatQuickReplies"
 };
 
 <?php if($productContext): ?>
@@ -185,5 +202,5 @@ document.addEventListener('DOMContentLoaded', () => {
 <?php endif; ?>
 </script>
 <?php
-$extraScripts = '<script src="' . e(ASSET_URL) . 'js/lk-chat.js?v=3"></script>';
+$extraScripts = '<script src="' . e(ASSET_URL) . 'js/lk-chat.js?v=8"></script>';
 require BASE_PATH . '/includes/footer.php';
